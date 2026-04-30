@@ -108,7 +108,7 @@ function createFloor(index, defaultTilePrice = 50) {
     utilityDoors: 0,
     poojaRoom: false,
     kitchens: 1,
-    staircaseType: 'chain',
+    staircaseType: 'normal',
     staircaseSteps: 19,
     tilesSquft: '',
     tilesPricePerSqft: defaultTilePrice,

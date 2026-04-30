@@ -81,7 +81,7 @@ function getDefaultDoors(floorType) {
 }
 
 function createFloor(index) {
-  return { index, name: FLOOR_NAMES[index], type: '', sqft: '', mainDoor: 'teak_3x7', bedroomDoors: 1, washroomDoors: 1, toilets: 1, balconyDoors: 0, utilityDoors: 0, poojaRoom: false, poojaRoomPrice: '', kitchens: 1, staircaseType: 'chain', staircaseSteps: 19, tilesSquft: '', tilesPricePerSqft: 50, railingType: '', railingRft: 25, acPoints: 0, windowSqft: '' }
+  return { index, name: FLOOR_NAMES[index], type: '', sqft: '', mainDoor: 'teak_3x7', bedroomDoors: 1, washroomDoors: 1, toilets: 1, balconyDoors: 0, utilityDoors: 0, poojaRoom: false, poojaRoomPrice: '', kitchens: 1, staircaseType: 'normal', staircaseSteps: 19, tilesSquft: '', tilesPricePerSqft: 50, railingType: '', railingRft: 25, acPoints: 0, windowSqft: '' }
 }
 
 const isParking = (type) => ['parking_only', 'parking_lift', 'commercial_parking'].includes(type)
