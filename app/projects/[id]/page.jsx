@@ -81,7 +81,7 @@ function getDefaultDoors(floorType) {
 }
 
 function createFloor(index) {
-  return { index, name: FLOOR_NAMES[index], type: '', sqft: '', mainDoor: 'teak_3x7', bedroomDoors: 1, washroomDoors: 1, toilets: 1, balconyDoors: 0, utilityDoors: 0, poojaRoom: false, kitchens: 1, staircaseType: 'chain', staircaseSteps: 19, tilesSquft: '', tilesPricePerSqft: 50, railingType: '', railingRft: 25, acPoints: 0, windowSqft: '' }
+  return { index, name: FLOOR_NAMES[index], type: '', sqft: '', mainDoor: 'teak_3x7', bedroomDoors: 1, washroomDoors: 1, toilets: 1, balconyDoors: 0, utilityDoors: 0, poojaRoom: false, poojaRoomPrice: '', kitchens: 1, staircaseType: 'chain', staircaseSteps: 19, tilesSquft: '', tilesPricePerSqft: 50, railingType: '', railingRft: 25, acPoints: 0, windowSqft: '' }
 }
 
 const isParking = (type) => ['parking_only', 'parking_lift', 'commercial_parking'].includes(type)
@@ -751,7 +751,19 @@ export default function ProjectPage() {
                             ))}
                             <div className="space-y-1.5">
                               <Label className="text-xs">Pooja Room Door</Label>
-                              <div className="h-10 flex items-center gap-2"><Switch checked={floor.poojaRoom} onCheckedChange={v => updateFloor(index, 'poojaRoom', v)} /><span className="text-xs text-gray-400">₹20,000</span></div>
+                              <div className="h-10 flex items-center gap-2">
+                                <Switch checked={floor.poojaRoom} onCheckedChange={v => updateFloor(index, 'poojaRoom', v)} />
+                                {floor.poojaRoom && (
+                                  <Input
+                                    type="number"
+                                    placeholder="20000"
+                                    value={floor.poojaRoomPrice}
+                                    onChange={e => updateFloor(index, 'poojaRoomPrice', e.target.value)}
+                                    className="w-28 h-8 text-sm"
+                                  />
+                                )}
+                                <span className="text-xs text-gray-400">{floor.poojaRoom && floor.poojaRoomPrice ? `₹${parseFloat(floor.poojaRoomPrice).toLocaleString('en-IN')}` : '₹20,000 default'}</span>
+                              </div>
                             </div>
                           </div>
                         </>
