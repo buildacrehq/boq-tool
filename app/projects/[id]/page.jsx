@@ -115,9 +115,9 @@ export default function ProjectPage() {
   const [floors, setFloors] = useState([createFloor(0)])
   // Edit form — Optional
   const [hasLift, setHasLift] = useState(false)
-  const [hasSump, setHasSump] = useState(false)
+  const [hasSump, setHasSump] = useState(true)
   const [sumpCapacity, setSumpCapacity] = useState('')
-  const [sumpType, setSumpType] = useState('block')
+  const [sumpType, setSumpType] = useState('rcc')
   const [hasSsm, setHasSsm] = useState(false)
   const [ssmCourses, setSsmCourses] = useState('')
   // Edit form — Services

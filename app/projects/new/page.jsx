@@ -196,9 +196,9 @@ export default function NewProjectPage() {
 
   // Section 4 — Optional
   const [hasLift, setHasLift] = useState(false)
-  const [hasSump, setHasSump] = useState(false)
+  const [hasSump, setHasSump] = useState(true)
   const [sumpCapacity, setSumpCapacity] = useState('')
-  const [sumpType, setSumpType] = useState('block')
+  const [sumpType, setSumpType] = useState('rcc')
   const [hasSsm, setHasSsm] = useState(false)
   const [ssmCourses, setSsmCourses] = useState('')
 
