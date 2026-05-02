@@ -90,7 +90,6 @@ export default function ProjectPage() {
   const router = useRouter()
   const { id } = useParams()
 
-  const [activeTab, setActiveTab] = useState('boq')
   const [boqOverrides, setBoqOverrides] = useState({})
   const saveTimeoutRef = useRef(null)
 
@@ -356,7 +355,6 @@ export default function ProjectPage() {
     await supabase.from('projects').update({ boq_overrides: {} }).eq('id', id)
     await fetchAll()
     setBoqOverrides({})
-    setActiveTab('boq')
     setSaving(false)
   }
 
@@ -460,40 +458,16 @@ export default function ProjectPage() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <div className="flex bg-gray-100 rounded-lg p-1 mr-2">
-              <button
-                onClick={() => setActiveTab('boq')}
-                className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${activeTab === 'boq' ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
-              >
-                BOQ View
-              </button>
-              <button
-                onClick={() => setActiveTab('edit')}
-                className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${activeTab === 'edit' ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
-              >
-                Edit Project
-              </button>
-            </div>
-            {activeTab === 'boq' ? (
-              <>
-                {hasAnyOverride && (
-                  <Button variant="outline" size="sm" onClick={() => { setBoqOverrides({}); saveOverrides({}) }}>Reset Overrides</Button>
-                )}
-                <Button variant="outline" onClick={exportToExcel}>Export Excel</Button>
-                <Button>Export PDF</Button>
-              </>
-            ) : (
-              <>
-                <Button variant="outline" onClick={() => setActiveTab('boq')}>Cancel</Button>
-                <Button onClick={handleUpdate} disabled={saving}>{saving ? 'Saving...' : 'Save Changes'}</Button>
-              </>
+            {hasAnyOverride && (
+              <Button variant="outline" size="sm" onClick={() => { setBoqOverrides({}); saveOverrides({}) }}>Reset Overrides</Button>
             )}
+            <Button variant="outline" onClick={exportToExcel}>Export Excel</Button>
+            <Button>Export PDF</Button>
+            <Button onClick={handleUpdate} disabled={saving}>{saving ? 'Saving...' : 'Save Changes'}</Button>
           </div>
         </div>
 
-        {/* ── BOQ TAB ── */}
-        {activeTab === 'boq' && (
-          <div className="max-w-5xl mx-auto px-6 py-8 space-y-6">
+        <div className="max-w-5xl mx-auto px-6 py-8 space-y-6">
 
             {/* Project Details */}
             <div className="bg-white border border-gray-200 rounded-xl p-6">
@@ -527,8 +501,8 @@ export default function ProjectPage() {
             </div>
 
             {hasAnyOverride && (
-              <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 text-sm text-amber-700">
-                Some quantities/prices are manually adjusted. These are local only — not saved to database.
+              <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 text-sm text-blue-700">
+                Some quantities/prices have been manually adjusted and saved. All admins see these values.
               </div>
             )}
 
@@ -536,7 +510,7 @@ export default function ProjectPage() {
             <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
               <div className="px-6 py-4 border-b border-gray-100">
                 <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Bill of Quantities</h2>
-                <p className="text-xs text-gray-400 mt-0.5">Edit Qty or Unit Price inline — changes stay local, not saved to database</p>
+                <p className="text-xs text-gray-400 mt-0.5">Edit Qty or Unit Price inline — changes auto-save and are visible to all admins</p>
               </div>
 
               <table className="w-full text-sm">
@@ -616,12 +590,12 @@ export default function ProjectPage() {
                 </tfoot>
               </table>
             </div>
-          </div>
-        )}
 
-        {/* ── EDIT TAB ── */}
-        {activeTab === 'edit' && (
-          <div className="max-w-4xl mx-auto px-6 py-8 space-y-6">
+            {/* ── Edit Project ── */}
+            <div className="relative my-2">
+              <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-gray-300" /></div>
+              <div className="relative flex justify-center"><span className="px-4 bg-gray-50 text-xs font-semibold text-gray-400 uppercase tracking-widest">Edit Project</span></div>
+            </div>
 
             {/* Section 1 — Client */}
             <Card>
@@ -1005,12 +979,10 @@ export default function ProjectPage() {
             </Card>
 
             <div className="flex justify-end gap-3 pb-8">
-              <Button variant="outline" onClick={() => setActiveTab('boq')}>Cancel</Button>
               <Button size="lg" onClick={handleUpdate} disabled={saving}>{saving ? 'Saving...' : 'Save Changes'}</Button>
             </div>
 
           </div>
-        )}
 
       </div>
     </AppLayout>
