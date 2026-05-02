@@ -500,97 +500,6 @@ export default function ProjectPage() {
               </div>
             </div>
 
-            {hasAnyOverride && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 text-sm text-blue-700">
-                Some quantities/prices have been manually adjusted and saved. All admins see these values.
-              </div>
-            )}
-
-            {/* BOQ Table */}
-            <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-              <div className="px-6 py-4 border-b border-gray-100">
-                <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Bill of Quantities</h2>
-                <p className="text-xs text-gray-400 mt-0.5">Edit Qty or Unit Price inline — changes auto-save and are visible to all admins</p>
-              </div>
-
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="bg-gray-50 border-b border-gray-100">
-                    <th className="text-left px-6 py-3 text-xs font-medium text-gray-500">Item</th>
-                    <th className="text-right px-4 py-3 text-xs font-medium text-gray-500">Unit</th>
-                    <th className="text-right px-4 py-3 text-xs font-medium text-gray-500">Qty</th>
-                    <th className="text-right px-4 py-3 text-xs font-medium text-gray-500">Unit Price</th>
-                    <th className="text-right px-6 py-3 text-xs font-medium text-gray-500">Total</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {Object.entries(grouped).map(([stage, items]) => (
-                    <>
-                      <tr key={stage} className="bg-blue-50">
-                        <td colSpan={5} className="px-6 py-2 text-xs font-semibold text-blue-700 uppercase tracking-wide">{stage}</td>
-                      </tr>
-                      {items.map((item) => {
-                        const ov = boqOverrides[item._idx]
-                        const qtyOverridden = ov?.quantity !== undefined
-                        const upOverridden = ov?.unit_price !== undefined
-                        const isFixed = item.unit === 'fixed'
-                        return (
-                          <tr key={item._idx} className={`border-b border-gray-50 hover:bg-gray-50/70 ${ov ? 'bg-amber-50/30' : ''}`}>
-                            <td className="px-6 py-2 text-gray-700">{item.item_name}</td>
-                            <td className="px-4 py-2 text-right text-gray-500 text-xs">{isFixed ? 'Lumpsum' : item.unit || '—'}</td>
-                            <td className="px-4 py-2 text-right">
-                              {isFixed && item.quantity == null ? (
-                                <span className="text-gray-300 text-xs">—</span>
-                              ) : (
-                                <input
-                                  type="number"
-                                  value={qtyOverridden ? ov.quantity : (item.quantity ?? '')}
-                                  onChange={e => handleOverride(item._idx, 'quantity', e.target.value)}
-                                  className={`w-24 text-right px-2 py-1 border rounded text-xs focus:outline-none focus:ring-1 focus:ring-blue-300 ${qtyOverridden ? 'border-amber-300 bg-amber-50 text-amber-800' : 'border-gray-200 bg-white text-gray-600'}`}
-                                />
-                              )}
-                            </td>
-                            <td className="px-4 py-2 text-right">
-                              <input
-                                type="number"
-                                value={upOverridden ? ov.unit_price : (item.unit_price ?? '')}
-                                onChange={e => handleOverride(item._idx, 'unit_price', e.target.value)}
-                                className={`w-28 text-right px-2 py-1 border rounded text-xs focus:outline-none focus:ring-1 focus:ring-blue-300 ${upOverridden ? 'border-amber-300 bg-amber-50 text-amber-800' : 'border-gray-200 bg-white text-gray-600'}`}
-                              />
-                            </td>
-                            <td className="px-6 py-2 text-right font-medium text-gray-800">{formatCurrency(getDisplayTotal(item))}</td>
-                          </tr>
-                        )
-                      })}
-                    </>
-                  ))}
-
-                  {customItems.length > 0 && (
-                    <>
-                      <tr className="bg-amber-50">
-                        <td colSpan={5} className="px-6 py-2 text-xs font-semibold text-amber-700 uppercase tracking-wide">Custom Add-on Items</td>
-                      </tr>
-                      {customItems.map((item, i) => (
-                        <tr key={i} className="border-b border-gray-50 hover:bg-gray-50">
-                          <td className="px-6 py-3 text-gray-700">{item.item_name}</td>
-                          <td className="px-4 py-3 text-right text-gray-500">—</td>
-                          <td className="px-4 py-3 text-right text-gray-600">{item.quantity}</td>
-                          <td className="px-4 py-3 text-right text-gray-600">{formatCurrency(item.unit_price)}</td>
-                          <td className="px-6 py-3 text-right font-medium text-gray-800">{formatCurrency(item.total_price)}</td>
-                        </tr>
-                      ))}
-                    </>
-                  )}
-                </tbody>
-                <tfoot>
-                  <tr className="bg-gray-800">
-                    <td colSpan={4} className="px-6 py-4 text-white font-semibold">Grand Total</td>
-                    <td className="px-6 py-4 text-right text-white font-bold text-base">{formatCurrency(overriddenGrandTotal)}</td>
-                  </tr>
-                </tfoot>
-              </table>
-            </div>
-
             {/* ── Edit Project ── */}
             <div className="relative my-2">
               <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-gray-300" /></div>
@@ -978,8 +887,103 @@ export default function ProjectPage() {
               </CardContent>
             </Card>
 
-            <div className="flex justify-end gap-3 pb-8">
+            <div className="flex justify-end gap-3 pb-4">
               <Button size="lg" onClick={handleUpdate} disabled={saving}>{saving ? 'Saving...' : 'Save Changes'}</Button>
+            </div>
+
+            {/* ── Bill of Quantities ── */}
+            <div className="relative my-2">
+              <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-gray-300" /></div>
+              <div className="relative flex justify-center"><span className="px-4 bg-gray-50 text-xs font-semibold text-gray-400 uppercase tracking-widest">Bill of Quantities</span></div>
+            </div>
+
+            {hasAnyOverride && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 text-sm text-blue-700">
+                Some quantities/prices have been manually adjusted and saved. All admins see these values.
+              </div>
+            )}
+
+            {/* BOQ Table */}
+            <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-100">
+                <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Bill of Quantities</h2>
+                <p className="text-xs text-gray-400 mt-0.5">Edit Qty or Unit Price inline — changes auto-save and are visible to all admins</p>
+              </div>
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-gray-50 border-b border-gray-100">
+                    <th className="text-left px-6 py-3 text-xs font-medium text-gray-500">Item</th>
+                    <th className="text-right px-4 py-3 text-xs font-medium text-gray-500">Unit</th>
+                    <th className="text-right px-4 py-3 text-xs font-medium text-gray-500">Qty</th>
+                    <th className="text-right px-4 py-3 text-xs font-medium text-gray-500">Unit Price</th>
+                    <th className="text-right px-6 py-3 text-xs font-medium text-gray-500">Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {Object.entries(grouped).map(([stage, items]) => (
+                    <>
+                      <tr key={stage} className="bg-blue-50">
+                        <td colSpan={5} className="px-6 py-2 text-xs font-semibold text-blue-700 uppercase tracking-wide">{stage}</td>
+                      </tr>
+                      {items.map((item) => {
+                        const ov = boqOverrides[item._idx]
+                        const qtyOverridden = ov?.quantity !== undefined
+                        const upOverridden = ov?.unit_price !== undefined
+                        const isFixed = item.unit === 'fixed'
+                        return (
+                          <tr key={item._idx} className={`border-b border-gray-50 hover:bg-gray-50/70 ${ov ? 'bg-amber-50/30' : ''}`}>
+                            <td className="px-6 py-2 text-gray-700">{item.item_name}</td>
+                            <td className="px-4 py-2 text-right text-gray-500 text-xs">{isFixed ? 'Lumpsum' : item.unit || '—'}</td>
+                            <td className="px-4 py-2 text-right">
+                              {isFixed && item.quantity == null ? (
+                                <span className="text-gray-300 text-xs">—</span>
+                              ) : (
+                                <input
+                                  type="number"
+                                  value={qtyOverridden ? ov.quantity : (item.quantity ?? '')}
+                                  onChange={e => handleOverride(item._idx, 'quantity', e.target.value)}
+                                  className={`w-24 text-right px-2 py-1 border rounded text-xs focus:outline-none focus:ring-1 focus:ring-blue-300 ${qtyOverridden ? 'border-amber-300 bg-amber-50 text-amber-800' : 'border-gray-200 bg-white text-gray-600'}`}
+                                />
+                              )}
+                            </td>
+                            <td className="px-4 py-2 text-right">
+                              <input
+                                type="number"
+                                value={upOverridden ? ov.unit_price : (item.unit_price ?? '')}
+                                onChange={e => handleOverride(item._idx, 'unit_price', e.target.value)}
+                                className={`w-28 text-right px-2 py-1 border rounded text-xs focus:outline-none focus:ring-1 focus:ring-blue-300 ${upOverridden ? 'border-amber-300 bg-amber-50 text-amber-800' : 'border-gray-200 bg-white text-gray-600'}`}
+                              />
+                            </td>
+                            <td className="px-6 py-2 text-right font-medium text-gray-800">{formatCurrency(getDisplayTotal(item))}</td>
+                          </tr>
+                        )
+                      })}
+                    </>
+                  ))}
+                  {customItems.length > 0 && (
+                    <>
+                      <tr className="bg-amber-50">
+                        <td colSpan={5} className="px-6 py-2 text-xs font-semibold text-amber-700 uppercase tracking-wide">Custom Add-on Items</td>
+                      </tr>
+                      {customItems.map((item, i) => (
+                        <tr key={i} className="border-b border-gray-50 hover:bg-gray-50">
+                          <td className="px-6 py-3 text-gray-700">{item.item_name}</td>
+                          <td className="px-4 py-3 text-right text-gray-500">—</td>
+                          <td className="px-4 py-3 text-right text-gray-600">{item.quantity}</td>
+                          <td className="px-4 py-3 text-right text-gray-600">{formatCurrency(item.unit_price)}</td>
+                          <td className="px-6 py-3 text-right font-medium text-gray-800">{formatCurrency(item.total_price)}</td>
+                        </tr>
+                      ))}
+                    </>
+                  )}
+                </tbody>
+                <tfoot>
+                  <tr className="bg-gray-800">
+                    <td colSpan={4} className="px-6 py-4 text-white font-semibold">Grand Total</td>
+                    <td className="px-6 py-4 text-right text-white font-bold text-base">{formatCurrency(overriddenGrandTotal)}</td>
+                  </tr>
+                </tfoot>
+              </table>
             </div>
 
           </div>
