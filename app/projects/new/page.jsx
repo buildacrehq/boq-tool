@@ -107,6 +107,7 @@ function createFloor(index, defaultTilePrice = 50) {
     balconyDoors: 0,
     utilityDoors: 0,
     poojaRoom: false,
+    poojaRoomPrice: '',
     kitchens: 1,
     staircaseType: 'normal',
     staircaseSteps: 19,
@@ -673,9 +674,19 @@ export default function NewProjectPage() {
                           </div>
                           <div className="space-y-1.5">
                             <Label className="text-xs">Pooja Room Door</Label>
-                            <div className="h-10 flex items-center gap-2">
-                              <Switch checked={floor.poojaRoom} onCheckedChange={val => updateFloor(index, 'poojaRoom', val)} />
-                              <span className="text-xs text-gray-400">{fmt(r.poojaRoomDoor)}</span>
+                            <div className="flex flex-col gap-1.5">
+                              <div className="h-10 flex items-center gap-2">
+                                <Switch checked={floor.poojaRoom} onCheckedChange={val => updateFloor(index, 'poojaRoom', val)} />
+                                <span className="text-xs text-gray-400">Market: {fmt(r.poojaRoomDoor)}</span>
+                              </div>
+                              {floor.poojaRoom && (
+                                <Input
+                                  type="number"
+                                  placeholder={`Custom price (default: ${r.poojaRoomDoor})`}
+                                  value={floor.poojaRoomPrice}
+                                  onChange={e => updateFloor(index, 'poojaRoomPrice', e.target.value)}
+                                />
+                              )}
                             </div>
                           </div>
                         </div>
