@@ -34,33 +34,33 @@ const UPPER_TYPES = [
 ]
 
 const MAIN_DOOR_TYPES = [
-  { value: 'teak_3x7', label: 'Teak 3×7 — ₹50,000' },
-  { value: 'teak_3x7_window', label: 'Teak 3×7 with Window — ₹70,000' },
-  { value: 'teak_4x8', label: 'Teak 4×8 — ₹70,000' },
-  { value: 'teak_4x8_window', label: 'Teak 4×8 with Window — ₹1,00,000' },
-  { value: 'teak_5x8', label: 'Teak 5×8 — ₹1,20,000' },
-  { value: 'teak_5x8_window', label: 'Teak 5×8 with Window — ₹1,35,000' },
-  { value: 'normal', label: 'Normal Door — ₹15,000' },
+  { value: 'teak_3x7',        label: 'Teak 3×7',                  priceKey: 'Main Door Teak 3x7',        fallback: 50000 },
+  { value: 'teak_3x7_window', label: 'Teak 3×7 with Window',       priceKey: 'Main Door Teak 3x7 Window', fallback: 70000 },
+  { value: 'teak_4x8',        label: 'Teak 4×8',                  priceKey: 'Main Door Teak 4x8',        fallback: 70000 },
+  { value: 'teak_4x8_window', label: 'Teak 4×8 with Window',       priceKey: 'Main Door Teak 4x8 Window', fallback: 100000 },
+  { value: 'teak_5x8',        label: 'Teak 5×8',                  priceKey: 'Main Door Teak 5x8',        fallback: 120000 },
+  { value: 'teak_5x8_window', label: 'Teak 5×8 with Window',       priceKey: 'Main Door Teak 5x8 Window', fallback: 135000 },
+  { value: 'normal',          label: 'Normal Door',                priceKey: 'Main Door Normal',          fallback: 15000 },
 ]
 
 const RAILING_TYPES = [
-  { value: 'ms', label: 'MS Railing — ₹600/rft' },
-  { value: 'ss', label: 'SS Railing — ₹900/rft' },
-  { value: 'ss_glass', label: 'SS with Glass — ₹1,300/rft' },
-  { value: 'glass_wood', label: 'Glass with Wooden Top — ₹1,800/rft' },
+  { value: 'ms',         label: 'MS Railing',              priceKey: 'Railing MS',         fallback: 600 },
+  { value: 'ss',         label: 'SS Railing',              priceKey: 'Railing SS',         fallback: 900 },
+  { value: 'ss_glass',   label: 'SS with Glass',           priceKey: 'Railing SS Glass',   fallback: 1300 },
+  { value: 'glass_wood', label: 'Glass with Wooden Top',   priceKey: 'Railing Glass Wood', fallback: 1800 },
 ]
 
 const PAINTING_TYPES = [
-  { value: 'premium_emulsion', label: 'Interior Premium + Exterior Emulsion — ₹8,500/chadra' },
-  { value: 'tractor_emulsion', label: 'Interior Tractor + Exterior Emulsion — ₹7,500/chadra' },
-  { value: 'royal_emulsion', label: 'Interior Royal + Exterior Emulsion — ₹10,000/chadra' },
-  { value: 'royal_ultima', label: 'Interior Royal + Exterior Ultima — ₹13,000/chadra' },
+  { value: 'premium_emulsion', label: 'Interior Premium + Exterior Emulsion', priceKey: 'Painting Premium+Emulsion', fallback: 8500 },
+  { value: 'tractor_emulsion', label: 'Interior Tractor + Exterior Emulsion', priceKey: 'Painting Tractor+Emulsion', fallback: 7500 },
+  { value: 'royal_emulsion',   label: 'Interior Royal + Exterior Emulsion',   priceKey: 'Painting Royal+Emulsion',   fallback: 10000 },
+  { value: 'royal_ultima',     label: 'Interior Royal + Exterior Ultima',     priceKey: 'Painting Royal+Ultima',     fallback: 13000 },
 ]
 
 const WINDOW_TYPES = [
-  { value: 'upvc_white', label: 'UPVC White Profile — ₹600/sqft' },
-  { value: 'upvc_wood', label: 'UPVC Wooden Profile — ₹1,000/sqft' },
-  { value: 'wood_saal', label: 'Wooden Saal Wood — ₹1,500/sqft' },
+  { value: 'upvc_white', label: 'UPVC White Profile',  priceKey: 'Window UPVC White', fallback: 600 },
+  { value: 'upvc_wood',  label: 'UPVC Wooden Profile', priceKey: 'Window UPVC Wood',  fallback: 1000 },
+  { value: 'wood_saal',  label: 'Wooden Saal Wood',    priceKey: 'Window Wood Saal',  fallback: 1500 },
 ]
 
 const OHT_OPTIONS = ['500', '1000', '2000', '5000', '10000', 'custom']
@@ -124,6 +124,36 @@ export default function NewProjectPage() {
   const [saving, setSaving] = useState(false)
   const [user, setUser] = useState(null)
   const [marketPrices, setMarketPrices] = useState({})
+
+  const mp = (key, fallback) => parseFloat(marketPrices[key]) || fallback
+  const fmt = (n) => `₹${Math.round(n).toLocaleString('en-IN')}`
+
+  const r = {
+    bedroomDoor:   mp('Bedroom Door', 12000),
+    washroomDoor:  mp('Washroom Door', 10000),
+    balconyDoor:   mp('Balcony Door', 12000),
+    utilityDoor:   mp('Utility Door', 10000),
+    poojaRoomDoor: mp('Pooja Room Door', 20000),
+    oht:           mp('OHT Water Tank', 7),
+    sumpRcc:       mp('Sump RCC', 13),
+    sumpBlock:     mp('Sump Block', 30000),
+    rainwater:     mp('Rainwater Harvesting', 20000),
+    gas:           mp('Gas Pipeline', 200),
+    mainGateS:     mp('Main Gate Small', 30000),
+    mainGateL:     mp('Main Gate Large', 50000),
+    ac:            mp('AC Provision', 10000),
+    cctv:          mp('CCTV Provision', 10000),
+    ev:            mp('EV Charging Point', 10000),
+    solar:         mp('Solar Provision', 30000),
+    ups:           mp('UPS Provision', 20000),
+    wifi:          mp('Wifi Cable Provision', 10000),
+    railing: {
+      ms:         mp('Railing MS', 600),
+      ss:         mp('Railing SS', 900),
+      ss_glass:   mp('Railing SS Glass', 1300),
+      glass_wood: mp('Railing Glass Wood', 1800),
+    },
+  }
 
   useEffect(() => {
     const stored = localStorage.getItem('boq_user')
@@ -599,7 +629,7 @@ export default function NewProjectPage() {
                             >
                               <option value="">No main door</option>
                               {MAIN_DOOR_TYPES.map(t => (
-                                <option key={t.value} value={t.value}>{t.label}</option>
+                                <option key={t.value} value={t.value}>{t.label} — {fmt(mp(t.priceKey, t.fallback))}</option>
                               ))}
                             </select>
                           </div>
@@ -607,14 +637,14 @@ export default function NewProjectPage() {
                             <Label className="text-xs">Bedroom Doors</Label>
                             <Input type="number" min="0" value={floor.bedroomDoors} onChange={e => updateFloor(index, 'bedroomDoors', e.target.value)} />
                             <p className="text-xs text-gray-400">
-                              {parseInt(floor.bedroomDoors) > 0 ? `${floor.bedroomDoors} × ₹12,000 = ₹${(parseInt(floor.bedroomDoors) * 12000).toLocaleString('en-IN')}` : 'Typical: ₹12,000/door'}
+                              {parseInt(floor.bedroomDoors) > 0 ? `${floor.bedroomDoors} × ${fmt(r.bedroomDoor)} = ${fmt(parseInt(floor.bedroomDoors) * r.bedroomDoor)}` : `Typical: ${fmt(r.bedroomDoor)}/door`}
                             </p>
                           </div>
                           <div className="space-y-1.5">
                             <Label className="text-xs">Washroom Doors</Label>
                             <Input type="number" min="0" value={floor.washroomDoors} onChange={e => updateFloor(index, 'washroomDoors', e.target.value)} />
                             <p className="text-xs text-gray-400">
-                              {parseInt(floor.washroomDoors) > 0 ? `${floor.washroomDoors} × ₹10,000 = ₹${(parseInt(floor.washroomDoors) * 10000).toLocaleString('en-IN')}` : 'Typical: ₹10,000/door'}
+                              {parseInt(floor.washroomDoors) > 0 ? `${floor.washroomDoors} × ${fmt(r.washroomDoor)} = ${fmt(parseInt(floor.washroomDoors) * r.washroomDoor)}` : `Typical: ${fmt(r.washroomDoor)}/door`}
                             </p>
                           </div>
                           <div className="space-y-1.5">
@@ -626,14 +656,14 @@ export default function NewProjectPage() {
                             <Label className="text-xs">Balcony Doors</Label>
                             <Input type="number" min="0" value={floor.balconyDoors} onChange={e => updateFloor(index, 'balconyDoors', e.target.value)} />
                             <p className="text-xs text-gray-400">
-                              {parseInt(floor.balconyDoors) > 0 ? `${floor.balconyDoors} × ₹12,000 = ₹${(parseInt(floor.balconyDoors) * 12000).toLocaleString('en-IN')}` : 'Typical: ₹12,000/door'}
+                              {parseInt(floor.balconyDoors) > 0 ? `${floor.balconyDoors} × ${fmt(r.balconyDoor)} = ${fmt(parseInt(floor.balconyDoors) * r.balconyDoor)}` : `Typical: ${fmt(r.balconyDoor)}/door`}
                             </p>
                           </div>
                           <div className="space-y-1.5">
                             <Label className="text-xs">Utility Doors</Label>
                             <Input type="number" min="0" value={floor.utilityDoors} onChange={e => updateFloor(index, 'utilityDoors', e.target.value)} />
                             <p className="text-xs text-gray-400">
-                              {parseInt(floor.utilityDoors) > 0 ? `${floor.utilityDoors} × ₹10,000 = ₹${(parseInt(floor.utilityDoors) * 10000).toLocaleString('en-IN')}` : 'Typical: ₹10,000/door'}
+                              {parseInt(floor.utilityDoors) > 0 ? `${floor.utilityDoors} × ${fmt(r.utilityDoor)} = ${fmt(parseInt(floor.utilityDoors) * r.utilityDoor)}` : `Typical: ${fmt(r.utilityDoor)}/door`}
                             </p>
                           </div>
                           <div className="space-y-1.5">
@@ -645,7 +675,7 @@ export default function NewProjectPage() {
                             <Label className="text-xs">Pooja Room Door</Label>
                             <div className="h-10 flex items-center gap-2">
                               <Switch checked={floor.poojaRoom} onCheckedChange={val => updateFloor(index, 'poojaRoom', val)} />
-                              <span className="text-xs text-gray-400">₹20,000</span>
+                              <span className="text-xs text-gray-400">{fmt(r.poojaRoomDoor)}</span>
                             </div>
                           </div>
                         </div>
@@ -728,7 +758,7 @@ export default function NewProjectPage() {
                             >
                               <option value="">No windows / decide later</option>
                               {WINDOW_TYPES.map(t => (
-                                <option key={t.value} value={t.value}>{t.label}</option>
+                                <option key={t.value} value={t.value}>{t.label} — {fmt(mp(t.priceKey, t.fallback))}/sqft</option>
                               ))}
                             </select>
                           </div>
@@ -763,7 +793,7 @@ export default function NewProjectPage() {
                             >
                               <option value="">No railing on this floor</option>
                               {RAILING_TYPES.map(t => (
-                                <option key={t.value} value={t.value}>{t.label}</option>
+                                <option key={t.value} value={t.value}>{t.label} — {fmt(mp(t.priceKey, t.fallback))}/rft</option>
                               ))}
                             </select>
                           </div>
@@ -777,10 +807,9 @@ export default function NewProjectPage() {
                                 onChange={e => updateFloor(index, 'railingRft', e.target.value)}
                               />
                               <p className="text-xs text-gray-400">
-                                {floor.railingRft && (() => {
-                                  const rates = { ms: 600, ss: 900, ss_glass: 1300, glass_wood: 1800 }
-                                  return `Cost: ₹${((parseFloat(floor.railingRft) || 0) * (rates[floor.railingType] || 0)).toLocaleString('en-IN')}`
-                                })()}
+                                {floor.railingRft && floor.railingType
+                                  ? `${floor.railingRft} rft × ${fmt(r.railing[floor.railingType] || 0)} = ${fmt((parseFloat(floor.railingRft) || 0) * (r.railing[floor.railingType] || 0))}`
+                                  : 'Enter running feet'}
                               </p>
                             </div>
                           )}
@@ -803,7 +832,9 @@ export default function NewProjectPage() {
                             value={floor.acPoints}
                             onChange={e => updateFloor(index, 'acPoints', e.target.value)}
                           />
-                          <p className="text-xs text-gray-400">₹10,000 per AC point</p>
+                          <p className="text-xs text-gray-400">
+                            {parseInt(floor.acPoints) > 0 ? `${floor.acPoints} × ${fmt(r.ac)} = ${fmt(parseInt(floor.acPoints) * r.ac)}` : `${fmt(r.ac)} per AC point`}
+                          </p>
                         </div>
                       </div>
                     </>
@@ -872,13 +903,19 @@ export default function NewProjectPage() {
                   <div className="space-y-1.5">
                     <Label>Capacity (litres)</Label>
                     <Input type="number" placeholder="e.g. 5000" value={sumpCapacity} onChange={e => setSumpCapacity(e.target.value)} />
-                    <p className="text-xs text-gray-400">RCC: ₹13/litre · Block: ₹30,000 fixed</p>
+                    <p className="text-xs text-gray-400">
+                      {sumpCapacity
+                        ? sumpType === 'rcc'
+                          ? `${sumpCapacity}L × ${fmt(r.sumpRcc)}/L = ${fmt(parseFloat(sumpCapacity) * r.sumpRcc)}`
+                          : `Fixed cost: ${fmt(r.sumpBlock)}`
+                        : `RCC: ${fmt(r.sumpRcc)}/litre · Block: ${fmt(r.sumpBlock)} fixed`}
+                    </p>
                   </div>
                   <div className="space-y-1.5">
                     <Label>Sump Type</Label>
                     <select className="w-full h-10 px-3 border border-gray-200 rounded-lg text-sm bg-white" value={sumpType} onChange={e => setSumpType(e.target.value)}>
-                      <option value="rcc">RCC Sump (₹13 per litre)</option>
-                      <option value="block">Block Sump (₹30,000 fixed)</option>
+                      <option value="rcc">RCC Sump ({fmt(r.sumpRcc)}/litre)</option>
+                      <option value="block">Block Sump ({fmt(r.sumpBlock)} fixed)</option>
                     </select>
                   </div>
                 </div>
@@ -929,14 +966,14 @@ export default function NewProjectPage() {
               },
               {
                 label: 'Main Gate',
-                sub: 'Entry gate for the site — ₹30,000 to ₹50,000',
+                sub: `Entry gate — ${fmt(r.mainGateS)} (small site) to ${fmt(r.mainGateL)} (large site)`,
                 state: hasMainGate,
                 set: setHasMainGate,
                 isDefault: true,
               },
               {
                 label: 'Overhead Tank (OHT)',
-                sub: 'Water storage on terrace. Cost = capacity × ₹7',
+                sub: `Water storage on terrace. Formula: capacity × ${fmt(r.oht)}/litre`,
                 state: hasOht,
                 set: setHasOht,
                 isDefault: true,
@@ -950,11 +987,9 @@ export default function NewProjectPage() {
                           value={ohtCapacity}
                           onChange={e => setOhtCapacity(e.target.value)}
                         >
-                          <option value="500">500 Litres — ₹3,500</option>
-                          <option value="1000">1,000 Litres — ₹7,000</option>
-                          <option value="2000">2,000 Litres — ₹14,000</option>
-                          <option value="5000">5,000 Litres — ₹35,000</option>
-                          <option value="10000">10,000 Litres — ₹70,000</option>
+                          {[500, 1000, 2000, 5000, 10000].map(cap => (
+                            <option key={cap} value={String(cap)}>{cap.toLocaleString('en-IN')} Litres — {fmt(cap * r.oht)}</option>
+                          ))}
                           <option value="custom">Custom capacity</option>
                         </select>
                       </div>
@@ -967,7 +1002,7 @@ export default function NewProjectPage() {
                             value={ohtCustom}
                             onChange={e => setOhtCustom(e.target.value)}
                           />
-                          {ohtCustom && <p className="text-xs text-gray-400">Cost: ₹{(parseFloat(ohtCustom) * 7).toLocaleString('en-IN')}</p>}
+                          {ohtCustom && <p className="text-xs text-gray-400">{ohtCustom}L × {fmt(r.oht)}/L = {fmt(parseFloat(ohtCustom) * r.oht)}</p>}
                         </div>
                       )}
                     </div>
@@ -976,14 +1011,14 @@ export default function NewProjectPage() {
               },
               {
                 label: 'Rainwater Harvesting',
-                sub: 'Drain covers, pit and recharge system — ₹20,000',
+                sub: `Drain covers, pit and recharge system — ${fmt(r.rainwater)}`,
                 state: hasRainwater,
                 set: setHasRainwater,
                 isDefault: true,
               },
               {
                 label: 'Gas Pipeline',
-                sub: 'Pipeline from ground floor. Each floor adds 15 rft @ ₹200/rft',
+                sub: `Pipeline from ground floor. Each floor adds 15 rft @ ${fmt(r.gas)}/rft`,
                 state: hasGas,
                 set: setHasGas,
                 isDefault: true,
@@ -997,35 +1032,35 @@ export default function NewProjectPage() {
               },
               {
                 label: 'CCTV Provision',
-                sub: 'Conduit and wiring for CCTV cameras — ₹10,000 per floor',
+                sub: `Conduit and wiring for CCTV cameras — ${fmt(r.cctv)} per floor`,
                 state: hasCctv,
                 set: setHasCctv,
                 isDefault: false,
               },
               {
                 label: 'EV Charging Point',
-                sub: 'Electric vehicle charging wiring — ₹10,000 per unit',
+                sub: `Electric vehicle charging wiring — ${fmt(r.ev)} per unit`,
                 state: hasEv,
                 set: setHasEv,
                 isDefault: false,
               },
               {
                 label: 'Solar Provision',
-                sub: 'Wiring and mounting structure for solar panels — ₹30,000',
+                sub: `Wiring and mounting structure for solar panels — ${fmt(r.solar)}`,
                 state: hasSolar,
                 set: setHasSolar,
                 isDefault: false,
               },
               {
                 label: 'UPS Provision',
-                sub: 'Wiring for UPS/inverter connection — ₹20,000',
+                sub: `Wiring for UPS/inverter connection — ${fmt(r.ups)}`,
                 state: hasUps,
                 set: setHasUps,
                 isDefault: false,
               },
               {
                 label: 'WiFi & Cable Provision',
-                sub: 'Conduit and junction boxes for WiFi and cable TV — ₹10,000',
+                sub: `Conduit and junction boxes for WiFi and cable TV — ${fmt(r.wifi)}`,
                 state: hasWifi,
                 set: setHasWifi,
                 isDefault: false,
@@ -1072,7 +1107,7 @@ export default function NewProjectPage() {
               >
                 <option value="">— Select painting grade —</option>
                 {PAINTING_TYPES.map(t => (
-                  <option key={t.value} value={t.value}>{t.label}</option>
+                  <option key={t.value} value={t.value}>{t.label} — {fmt(mp(t.priceKey, t.fallback))}/chadra</option>
                 ))}
               </select>
               <p className="text-xs text-gray-400">Cost is calculated per chadra (1 chadra = 100 sqft of slab area)</p>
