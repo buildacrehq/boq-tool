@@ -606,12 +606,16 @@ export default function NewProjectPage() {
                           <div className="space-y-1.5">
                             <Label className="text-xs">Bedroom Doors</Label>
                             <Input type="number" min="0" value={floor.bedroomDoors} onChange={e => updateFloor(index, 'bedroomDoors', e.target.value)} />
-                            <p className="text-xs text-gray-400">₹12,000 each</p>
+                            <p className="text-xs text-gray-400">
+                              {parseInt(floor.bedroomDoors) > 0 ? `${floor.bedroomDoors} × ₹12,000 = ₹${(parseInt(floor.bedroomDoors) * 12000).toLocaleString('en-IN')}` : 'Typical: ₹12,000/door'}
+                            </p>
                           </div>
                           <div className="space-y-1.5">
                             <Label className="text-xs">Washroom Doors</Label>
                             <Input type="number" min="0" value={floor.washroomDoors} onChange={e => updateFloor(index, 'washroomDoors', e.target.value)} />
-                            <p className="text-xs text-gray-400">₹10,000 each</p>
+                            <p className="text-xs text-gray-400">
+                              {parseInt(floor.washroomDoors) > 0 ? `${floor.washroomDoors} × ₹10,000 = ₹${(parseInt(floor.washroomDoors) * 10000).toLocaleString('en-IN')}` : 'Typical: ₹10,000/door'}
+                            </p>
                           </div>
                           <div className="space-y-1.5">
                             <Label className="text-xs">Toilets / Bathrooms</Label>
@@ -621,12 +625,16 @@ export default function NewProjectPage() {
                           <div className="space-y-1.5">
                             <Label className="text-xs">Balcony Doors</Label>
                             <Input type="number" min="0" value={floor.balconyDoors} onChange={e => updateFloor(index, 'balconyDoors', e.target.value)} />
-                            <p className="text-xs text-gray-400">₹12,000 each</p>
+                            <p className="text-xs text-gray-400">
+                              {parseInt(floor.balconyDoors) > 0 ? `${floor.balconyDoors} × ₹12,000 = ₹${(parseInt(floor.balconyDoors) * 12000).toLocaleString('en-IN')}` : 'Typical: ₹12,000/door'}
+                            </p>
                           </div>
                           <div className="space-y-1.5">
                             <Label className="text-xs">Utility Doors</Label>
                             <Input type="number" min="0" value={floor.utilityDoors} onChange={e => updateFloor(index, 'utilityDoors', e.target.value)} />
-                            <p className="text-xs text-gray-400">₹10,000 each</p>
+                            <p className="text-xs text-gray-400">
+                              {parseInt(floor.utilityDoors) > 0 ? `${floor.utilityDoors} × ₹10,000 = ₹${(parseInt(floor.utilityDoors) * 10000).toLocaleString('en-IN')}` : 'Typical: ₹10,000/door'}
+                            </p>
                           </div>
                           <div className="space-y-1.5">
                             <Label className="text-xs">Kitchens</Label>
@@ -656,11 +664,13 @@ export default function NewProjectPage() {
                             <Label className="text-xs text-gray-500">Tiles Area (sqft)</Label>
                             <Input
                               type="number"
-                              placeholder={floor.sqft || 'Enter sqft'}
+                              placeholder={floor.sqft
+                                ? `Auto: ${Math.ceil(parseFloat(floor.sqft) * 1.15 + 200 * (parseInt(floor.toilets) || 0) + 80 * (parseInt(floor.kitchens) || 0))} sqft`
+                                : 'Enter sqft'}
                               value={floor.tilesSquft}
                               onChange={e => updateFloor(index, 'tilesSquft', e.target.value)}
                             />
-                            <p className="text-xs text-gray-400">Total area to be tiled on this floor</p>
+                            <p className="text-xs text-gray-400">Leave empty to auto-calc (floor × 1.15 + washroom + kitchen area)</p>
                           </div>
                           <div className="space-y-1.5">
                             <Label className="text-xs text-gray-500">Tile Type</Label>
@@ -685,7 +695,16 @@ export default function NewProjectPage() {
                               onChange={e => updateFloor(index, 'tilesPricePerSqft', e.target.value)}
                             />
                             <p className="text-xs text-gray-400">
-                              Total: ₹{((parseFloat(floor.tilesSquft) || 0) * (parseFloat(floor.tilesPricePerSqft) || 0)).toLocaleString('en-IN')}
+                              {(() => {
+                                const autoArea = floor.sqft
+                                  ? Math.ceil(parseFloat(floor.sqft) * 1.15 + 200 * (parseInt(floor.toilets) || 0) + 80 * (parseInt(floor.kitchens) || 0))
+                                  : 0
+                                const usedArea = parseFloat(floor.tilesSquft) || autoArea
+                                const price = parseFloat(floor.tilesPricePerSqft) || 0
+                                return usedArea > 0 && price > 0
+                                  ? `Total: ₹${(usedArea * price).toLocaleString('en-IN')} (${usedArea} sqft)`
+                                  : 'Enter price per sqft'
+                              })()}
                             </p>
                           </div>
                         </div>
