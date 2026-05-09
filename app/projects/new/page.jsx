@@ -1,6 +1,6 @@
 'use client'
 import AppLayout from '@/components/layout/AppLayout'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -120,11 +120,16 @@ function createFloor(index, defaultTilePrice = 50) {
   }
 }
 
+const DRAFT_KEY = 'boq_new_draft'
+
 export default function NewProjectPage() {
   const router = useRouter()
   const [saving, setSaving] = useState(false)
   const [user, setUser] = useState(null)
   const [marketPrices, setMarketPrices] = useState({})
+  const [showRestorePrompt, setShowRestorePrompt] = useState(false)
+  const [showDiscardModal, setShowDiscardModal] = useState(false)
+  const autoSaveReady = useRef(false)
 
   const mp = (key, fallback) => parseFloat(marketPrices[key]) || fallback
   const fmt = (n) => `₹${Math.round(n).toLocaleString('en-IN')}`
@@ -161,7 +166,85 @@ export default function NewProjectPage() {
     if (!stored) { router.push('/login'); return }
     setUser(JSON.parse(stored))
     fetchMarketPrices()
+    if (localStorage.getItem(DRAFT_KEY)) setShowRestorePrompt(true)
+    setTimeout(() => { autoSaveReady.current = true }, 500)
   }, [])
+
+  // Auto-save draft to localStorage
+  useEffect(() => {
+    if (!autoSaveReady.current) return
+    const draft = {
+      clientName, clientPhone, clientLocation, width, length, masonryType,
+      floorCount, floors, hasLift, hasSump, sumpCapacity, sumpType, hasSsm, ssmCourses,
+      hasCompoundWall, hasRainwater, hasGas, hasOht, ohtCapacity, ohtCustom,
+      hasMainGate, hasAc, hasCctv, hasEv, hasSolar, hasUps, hasWifi,
+      paintingGrade, windowType, railingType, flooringType, customItems,
+    }
+    localStorage.setItem(DRAFT_KEY, JSON.stringify(draft))
+  }, [clientName, clientPhone, clientLocation, width, length, masonryType,
+      floorCount, floors, hasLift, hasSump, sumpCapacity, sumpType, hasSsm, ssmCourses,
+      hasCompoundWall, hasRainwater, hasGas, hasOht, ohtCapacity, ohtCustom,
+      hasMainGate, hasAc, hasCctv, hasEv, hasSolar, hasUps, hasWifi,
+      paintingGrade, windowType, railingType, flooringType, customItems])
+
+  // Warn on browser back / tab close
+  useEffect(() => {
+    const handle = (e) => {
+      if (clientName || width || length) { e.preventDefault(); e.returnValue = '' }
+    }
+    window.addEventListener('beforeunload', handle)
+    return () => window.removeEventListener('beforeunload', handle)
+  }, [clientName, width, length])
+
+  function restoreDraft() {
+    try {
+      const d = JSON.parse(localStorage.getItem(DRAFT_KEY) || '{}')
+      if (d.clientName !== undefined) setClientName(d.clientName)
+      if (d.clientPhone !== undefined) setClientPhone(d.clientPhone)
+      if (d.clientLocation !== undefined) setClientLocation(d.clientLocation)
+      if (d.width !== undefined) setWidth(d.width)
+      if (d.length !== undefined) setLength(d.length)
+      if (d.masonryType !== undefined) setMasonryType(d.masonryType)
+      if (d.floorCount !== undefined) setFloorCount(d.floorCount)
+      if (d.floors !== undefined) setFloors(d.floors)
+      if (d.hasLift !== undefined) setHasLift(d.hasLift)
+      if (d.hasSump !== undefined) setHasSump(d.hasSump)
+      if (d.sumpCapacity !== undefined) setSumpCapacity(d.sumpCapacity)
+      if (d.sumpType !== undefined) setSumpType(d.sumpType)
+      if (d.hasSsm !== undefined) setHasSsm(d.hasSsm)
+      if (d.ssmCourses !== undefined) setSsmCourses(d.ssmCourses)
+      if (d.hasCompoundWall !== undefined) setHasCompoundWall(d.hasCompoundWall)
+      if (d.hasRainwater !== undefined) setHasRainwater(d.hasRainwater)
+      if (d.hasGas !== undefined) setHasGas(d.hasGas)
+      if (d.hasOht !== undefined) setHasOht(d.hasOht)
+      if (d.ohtCapacity !== undefined) setOhtCapacity(d.ohtCapacity)
+      if (d.ohtCustom !== undefined) setOhtCustom(d.ohtCustom)
+      if (d.hasMainGate !== undefined) setHasMainGate(d.hasMainGate)
+      if (d.hasAc !== undefined) setHasAc(d.hasAc)
+      if (d.hasCctv !== undefined) setHasCctv(d.hasCctv)
+      if (d.hasEv !== undefined) setHasEv(d.hasEv)
+      if (d.hasSolar !== undefined) setHasSolar(d.hasSolar)
+      if (d.hasUps !== undefined) setHasUps(d.hasUps)
+      if (d.hasWifi !== undefined) setHasWifi(d.hasWifi)
+      if (d.paintingGrade !== undefined) setPaintingGrade(d.paintingGrade)
+      if (d.windowType !== undefined) setWindowType(d.windowType)
+      if (d.railingType !== undefined) setRailingType(d.railingType)
+      if (d.flooringType !== undefined) setFlooringType(d.flooringType)
+      if (d.customItems !== undefined) setCustomItems(d.customItems)
+    } catch {}
+    setShowRestorePrompt(false)
+  }
+
+  function discardDraft() {
+    localStorage.removeItem(DRAFT_KEY)
+    setShowRestorePrompt(false)
+  }
+
+  function handleCancel() {
+    const hasData = clientName || width || length || floors.some(f => f.type)
+    if (hasData) setShowDiscardModal(true)
+    else { localStorage.removeItem(DRAFT_KEY); router.push('/projects') }
+  }
 
   async function fetchMarketPrices() {
     const { data } = await supabase.from('market_prices').select('*')
@@ -371,6 +454,7 @@ export default function NewProjectPage() {
       )
     }
 
+    localStorage.removeItem(DRAFT_KEY)
     router.push('/projects')
     setSaving(false)
   }
@@ -379,6 +463,33 @@ export default function NewProjectPage() {
     <AppLayout>
     <div className="min-h-screen bg-gray-50">
 
+      {/* Restore draft prompt */}
+      {showRestorePrompt && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-white border border-blue-200 rounded-xl shadow-lg px-6 py-4 flex items-center gap-4">
+          <div>
+            <p className="text-sm font-semibold text-gray-800">Unsaved draft found</p>
+            <p className="text-xs text-gray-400">You have a previous unfinished BOQ. Restore it?</p>
+          </div>
+          <button onClick={restoreDraft} className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700">Restore</button>
+          <button onClick={discardDraft} className="px-4 py-2 bg-gray-100 text-gray-600 text-sm rounded-lg hover:bg-gray-200">Discard</button>
+        </div>
+      )}
+
+      {/* Discard confirmation modal */}
+      {showDiscardModal && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center">
+          <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm mx-4 space-y-4">
+            <h3 className="text-base font-semibold text-gray-800">Unsaved changes</h3>
+            <p className="text-sm text-gray-500">You have unsaved data. What would you like to do?</p>
+            <div className="flex flex-col gap-2">
+              <button onClick={() => { setShowDiscardModal(false); handleSave() }} className="w-full py-2.5 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-700">Save & Close</button>
+              <button onClick={() => { localStorage.removeItem(DRAFT_KEY); router.push('/projects') }} className="w-full py-2.5 bg-red-50 text-red-600 rounded-lg text-sm font-medium hover:bg-red-100">Discard & Close</button>
+              <button onClick={() => setShowDiscardModal(false)} className="w-full py-2.5 bg-gray-50 text-gray-600 rounded-lg text-sm font-medium hover:bg-gray-100">Stay & Continue Editing</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Top bar */}
       <div className="bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center sticky top-0 z-10">
         <div>
@@ -386,7 +497,7 @@ export default function NewProjectPage() {
           <p className="text-sm text-gray-400 mt-0.5">Fill all details to generate estimate</p>
         </div>
         <div className="flex gap-3">
-          <Button variant="outline" onClick={() => router.push('/projects')}>Cancel</Button>
+          <Button variant="outline" onClick={handleCancel}>Cancel</Button>
           <Button onClick={handleSave} disabled={saving}>
             {saving ? 'Saving...' : 'Save & Generate BOQ'}
           </Button>
@@ -1172,7 +1283,7 @@ export default function NewProjectPage() {
 
         {/* Bottom Save */}
         <div className="flex justify-end gap-3 pb-8">
-          <Button variant="outline" onClick={() => router.push('/projects')}>Cancel</Button>
+          <Button variant="outline" onClick={handleCancel}>Cancel</Button>
           <Button size="lg" onClick={handleSave} disabled={saving}>
             {saving ? 'Saving...' : 'Save & Generate BOQ'}
           </Button>
