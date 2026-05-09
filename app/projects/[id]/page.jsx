@@ -22,7 +22,7 @@ const GROUND_TYPES = [
   { value: '1bhk_parking', label: '1 BHK + Parking' },
   { value: '2bhk_parking', label: '2 BHK + Parking' },
   { value: 'duplex_gf', label: 'Duplex Starts in GF' },
-  { value: 'commercial_parking', label: 'Commercial + Parking' },
+  { value: 'commercial_parking', label: 'Commercial + Parking (same BOQ as Only Parking)' },
 ]
 
 const UPPER_TYPES = [
