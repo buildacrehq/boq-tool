@@ -1156,7 +1156,7 @@ export default function ProjectPage() {
             <div className="px-4 py-2 flex items-center gap-3">
               <span className="text-xs text-gray-400 shrink-0">Grand Total</span>
               {liveMetrics && (
-                <span className="text-xs text-gray-600 hidden md:block truncate">
+                <span className="text-xs text-gray-300 hidden md:block truncate">
                   {liveMetrics.totalSlabArea.toLocaleString('en-IN')} sqft · {liveMetrics.chadra} chadra · {liveMetrics.steelTonnes}T steel
                 </span>
               )}
