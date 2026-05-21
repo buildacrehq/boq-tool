@@ -174,14 +174,14 @@ export default function NewProjectPage() {
   useEffect(() => {
     if (!autoSaveReady.current) return
     const draft = {
-      clientName, clientPhone, clientLocation, width, length, masonryType,
+      clientName, clientPhone, clientLocation, width, length, isIrregular, sideFront, sideBack, sideLeft, sideRight, masonryType,
       floorCount, floors, hasLift, hasSump, sumpCapacity, sumpType, hasSsm, ssmCourses,
       hasCompoundWall, hasRainwater, hasGas, hasOht, ohtCapacity, ohtCustom,
       hasMainGate, hasAc, hasCctv, hasEv, hasSolar, hasUps, hasWifi,
       paintingGrade, windowType, railingType, flooringType, customItems,
     }
     localStorage.setItem(DRAFT_KEY, JSON.stringify(draft))
-  }, [clientName, clientPhone, clientLocation, width, length, masonryType,
+  }, [clientName, clientPhone, clientLocation, width, length, isIrregular, sideFront, sideBack, sideLeft, sideRight, masonryType,
       floorCount, floors, hasLift, hasSump, sumpCapacity, sumpType, hasSsm, ssmCourses,
       hasCompoundWall, hasRainwater, hasGas, hasOht, ohtCapacity, ohtCustom,
       hasMainGate, hasAc, hasCctv, hasEv, hasSolar, hasUps, hasWifi,
@@ -204,6 +204,11 @@ export default function NewProjectPage() {
       if (d.clientLocation !== undefined) setClientLocation(d.clientLocation)
       if (d.width !== undefined) setWidth(d.width)
       if (d.length !== undefined) setLength(d.length)
+      if (d.isIrregular !== undefined) setIsIrregular(d.isIrregular)
+      if (d.sideFront !== undefined) setSideFront(d.sideFront)
+      if (d.sideBack !== undefined) setSideBack(d.sideBack)
+      if (d.sideLeft !== undefined) setSideLeft(d.sideLeft)
+      if (d.sideRight !== undefined) setSideRight(d.sideRight)
       if (d.masonryType !== undefined) setMasonryType(d.masonryType)
       if (d.floorCount !== undefined) setFloorCount(d.floorCount)
       if (d.floors !== undefined) setFloors(d.floors)
@@ -268,8 +273,23 @@ export default function NewProjectPage() {
   // Section 2
   const [width, setWidth] = useState('')
   const [length, setLength] = useState('')
-  const sqft = width && length ? parseFloat(width) * parseFloat(length) : null
+  const [isIrregular, setIsIrregular] = useState(false)
+  const [sideFront, setSideFront] = useState('')
+  const [sideBack, setSideBack] = useState('')
+  const [sideLeft, setSideLeft] = useState('')
+  const [sideRight, setSideRight] = useState('')
   const [masonryType, setMasonryType] = useState('block')
+
+  function brahmaguptaArea(a, b, c, d) {
+    const s = (a + b + c + d) / 2
+    return Math.sqrt((s - a) * (s - b) * (s - c) * (s - d))
+  }
+
+  const sqft = isIrregular
+    ? (sideFront && sideBack && sideLeft && sideRight
+        ? Math.round(brahmaguptaArea(parseFloat(sideFront), parseFloat(sideBack), parseFloat(sideLeft), parseFloat(sideRight)))
+        : null)
+    : (width && length ? parseFloat(width) * parseFloat(length) : null)
 
 
   // Section 3 — Floors
@@ -388,9 +408,14 @@ export default function NewProjectPage() {
       client_name: clientName,
       client_phone: clientPhone,
       site_address: clientLocation,
-      dimension_width: parseFloat(width),
-      dimension_length: parseFloat(length),
+      dimension_width: isIrregular ? parseFloat(sideFront) : parseFloat(width),
+      dimension_length: isIrregular ? parseFloat(sideLeft) : parseFloat(length),
       total_sqft: sqft,
+      is_irregular: isIrregular,
+      side_front: isIrregular ? parseFloat(sideFront) : null,
+      side_back: isIrregular ? parseFloat(sideBack) : null,
+      side_left: isIrregular ? parseFloat(sideLeft) : null,
+      side_right: isIrregular ? parseFloat(sideRight) : null,
       floors: floorCount,
       floor_count: floorCount,
       floors_data: floors,
@@ -536,25 +561,58 @@ export default function NewProjectPage() {
             <CardTitle className="text-base flex items-center gap-2">
               <Badge variant="outline">2</Badge>
               Site Dimension
+              <button
+                onClick={() => setIsIrregular(p => !p)}
+                className={`ml-auto text-xs px-3 py-1 rounded-full border transition-all ${isIrregular ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'}`}
+              >
+                {isIrregular ? 'Irregular Site' : 'Regular Site'}
+              </button>
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 items-end">
-              <div className="space-y-1.5">
-                <Label>Width (ft) *</Label>
-                <Input type="number" placeholder="e.g. 30" value={width} onChange={e => setWidth(e.target.value)} />
+          <CardContent className="space-y-4">
+            {!isIrregular ? (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 items-end">
+                <div className="space-y-1.5">
+                  <Label>Width (ft) *</Label>
+                  <Input type="number" placeholder="e.g. 30" value={width} onChange={e => setWidth(e.target.value)} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Length (ft) *</Label>
+                  <Input type="number" placeholder="e.g. 40" value={length} onChange={e => setLength(e.target.value)} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Total Area</Label>
+                  <div className="h-10 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg text-blue-700 font-semibold text-sm flex items-center">
+                    {sqft ? `${sqft} sq.ft` : '— sq.ft'}
+                  </div>
+                </div>
               </div>
-              <div className="space-y-1.5">
-                <Label>Length (ft) *</Label>
-                <Input type="number" placeholder="e.g. 40" value={length} onChange={e => setLength(e.target.value)} />
-              </div>
-              <div className="space-y-1.5">
-                <Label>Total Area</Label>
-                <div className="h-10 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg text-blue-700 font-semibold text-sm flex items-center">
+            ) : (
+              <div className="space-y-3">
+                <p className="text-xs text-gray-400">Enter all 4 side measurements. Area calculated using Brahmagupta's formula.</p>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="space-y-1.5">
+                    <Label>Front (ft) *</Label>
+                    <Input type="number" placeholder="e.g. 30" value={sideFront} onChange={e => setSideFront(e.target.value)} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Back (ft) *</Label>
+                    <Input type="number" placeholder="e.g. 32" value={sideBack} onChange={e => setSideBack(e.target.value)} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Left (ft) *</Label>
+                    <Input type="number" placeholder="e.g. 40" value={sideLeft} onChange={e => setSideLeft(e.target.value)} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Right (ft) *</Label>
+                    <Input type="number" placeholder="e.g. 42" value={sideRight} onChange={e => setSideRight(e.target.value)} />
+                  </div>
+                </div>
+                <div className="h-10 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg text-blue-700 font-semibold text-sm flex items-center w-48">
                   {sqft ? `${sqft} sq.ft` : '— sq.ft'}
                 </div>
               </div>
-            </div>
+            )}
           </CardContent>
         </Card>
 
