@@ -1,8 +1,9 @@
 'use client'
 import AppLayout from '@/components/layout/AppLayout'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import { calculateFullBOQ } from '@/lib/calculate'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -421,6 +422,69 @@ export default function NewProjectPage() {
   const isParking = (type) => ['parking_only', 'parking_lift', 'commercial_parking'].includes(type)
   const isPureParking = (type) => ['parking_only', 'parking_lift'].includes(type)
 
+  const LIVE_STAGE_NORMALIZE = (stage) => {
+    const floorNames = ['Ground Floor', 'First Floor', 'Second Floor', 'Third Floor', 'Fourth Floor', 'Fifth Floor', 'Sixth Floor']
+    if (floorNames.includes(stage)) return 'Floor Structure'
+    if (stage.startsWith('Flooring')) return 'Flooring'
+    if (stage.startsWith('Doors')) return 'Doors'
+    if (stage.startsWith('Plumbing')) return 'Plumbing'
+    return stage
+  }
+
+  const { liveTotal, stageTotals, liveMetrics } = useMemo(() => {
+    if (!sqft) return { liveTotal: 0, stageTotals: {}, liveMetrics: null }
+
+    const td = floors.reduce((acc, f) => ({
+      bedroom: acc.bedroom + (parseInt(f.bedroomDoors) || 0),
+      washroom: acc.washroom + (parseInt(f.washroomDoors) || 0),
+      toilets: acc.toilets + (parseInt(f.toilets) || 0),
+      balcony: acc.balcony + (parseInt(f.balconyDoors) || 0),
+      utility: acc.utility + (parseInt(f.utilityDoors) || 0),
+      kitchens: acc.kitchens + (parseInt(f.kitchens) || 0),
+      poojaRoom: acc.poojaRoom + (f.poojaRoom ? 1 : 0),
+    }), { bedroom: 0, washroom: 0, toilets: 0, balcony: 0, utility: 0, kitchens: 0, poojaRoom: 0 })
+
+    const project = {
+      dimension_width: isIrregular ? parseFloat(sideFront) : parseFloat(width),
+      dimension_length: isIrregular ? parseFloat(sideLeft) : parseFloat(length),
+      floors: floorCount,
+      masonry_type: masonryType,
+      floors_data: floors.map((f, i) => i === 0 && sumpRateOverride ? { ...f, sumpRateOverride: parseFloat(sumpRateOverride) } : f),
+      has_sump: hasSump, sump_capacity: sumpCapacity || null, sump_type: sumpType,
+      has_ssm: hasSsm, ssm_courses: ssmCourses || null,
+      has_compound_wall: hasCompoundWall,
+      has_rainwater: hasRainwater, has_gas: hasGas,
+      has_oht: hasOht, oht_capacity: ohtCapacity === 'custom' ? parseFloat(ohtCustom) : parseFloat(ohtCapacity),
+      has_main_gate: hasMainGate, has_ac: hasAc, has_cctv: hasCctv,
+      has_ev: (parseInt(floors[0]?.evPoints) || 0) > 0,
+      has_solar: hasSolar, has_ups: hasUps, has_wifi: hasWifi,
+      painting_grade: paintingGrade, flooring_type: flooringType,
+      window_type: windowType, railing_type: railingType,
+      bedroom_doors: td.bedroom, washroom_doors: td.washroom,
+      balcony_doors: td.balcony, utility_doors: td.utility,
+      has_pooja_room_door: td.poojaRoom > 0,
+    }
+
+    const items = calculateFullBOQ(project, marketPrices)
+    const liveTotal = items.reduce((s, i) => s + (i.total_price || 0), 0)
+
+    const stageTotals = items.reduce((acc, item) => {
+      const s = LIVE_STAGE_NORMALIZE(item.stage)
+      acc[s] = (acc[s] || 0) + (item.total_price || 0)
+      return acc
+    }, {})
+
+    const totalSlabArea = floors.reduce((sum, f) => sum + (parseFloat(f.sqft) || sqft), 0)
+    const chadra = Math.round(totalSlabArea / 100)
+    const steelTonnes = Math.ceil(totalSlabArea * 4.5 / 1000)
+
+    return { liveTotal, stageTotals, liveMetrics: { sqft, chadra, steelTonnes } }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sqft, floors, masonryType, floorCount, sumpRateOverride, hasSump, sumpCapacity, sumpType,
+      hasSsm, ssmCourses, hasCompoundWall, hasRainwater, hasGas, hasOht, ohtCapacity, ohtCustom,
+      hasMainGate, hasAc, hasCctv, hasSolar, hasUps, hasWifi, paintingGrade, flooringType,
+      windowType, railingType, marketPrices])
+
   async function handleSave() {
     const hasDimensions = isIrregular
       ? (sideFront && sideBack && sideLeft && sideRight)
@@ -511,7 +575,7 @@ export default function NewProjectPage() {
     }
 
     localStorage.removeItem(DRAFT_KEY)
-    router.push('/projects')
+    router.push(`/projects/${project.id}`)
     setSaving(false)
   }
 
@@ -560,7 +624,9 @@ export default function NewProjectPage() {
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-6 py-8 space-y-6">
+      <div className="max-w-7xl mx-auto px-4 py-6">
+      <div className="lg:grid lg:grid-cols-[1fr_320px] lg:gap-6 lg:items-start">
+      <div className="space-y-6">
 
         {/* Section 1 — Client Details */}
         <Card>
@@ -1492,7 +1558,73 @@ export default function NewProjectPage() {
           </Button>
         </div>
 
-      </div>
+      </div>{/* end form column */}
+
+      {/* Live Preview Panel */}
+      <div className="hidden lg:block sticky top-[73px] self-start">
+        <div className="rounded-2xl overflow-hidden border border-gray-200 shadow-sm bg-white">
+          {/* Header — total */}
+          <div className="bg-gray-900 px-5 py-4 text-white">
+            <p className="text-xs text-gray-400 uppercase tracking-widest font-medium">Live Estimate</p>
+            {liveTotal > 0 ? (
+              <>
+                <div className="text-4xl font-bold mt-2 tabular-nums">
+                  ₹{(liveTotal / 100000).toFixed(1)}<span className="text-xl font-semibold text-gray-300 ml-1">L</span>
+                </div>
+                <div className="text-sm text-gray-400 mt-0.5">₹{Math.round(liveTotal).toLocaleString('en-IN')}</div>
+              </>
+            ) : (
+              <div className="text-sm text-gray-500 mt-3">Enter site dimensions<br/>to see live estimate</div>
+            )}
+          </div>
+
+          {/* Key metrics */}
+          {liveMetrics && (
+            <div className="grid grid-cols-3 divide-x border-b text-center py-3 bg-gray-50">
+              <div className="px-2">
+                <div className="text-xs text-gray-400">Site</div>
+                <div className="font-semibold text-sm text-gray-800">{liveMetrics.sqft} sqft</div>
+              </div>
+              <div className="px-2">
+                <div className="text-xs text-gray-400">Chadra</div>
+                <div className="font-semibold text-sm text-gray-800">{liveMetrics.chadra}</div>
+              </div>
+              <div className="px-2">
+                <div className="text-xs text-gray-400">Steel</div>
+                <div className="font-semibold text-sm text-gray-800">{liveMetrics.steelTonnes} T</div>
+              </div>
+            </div>
+          )}
+
+          {/* Stage breakdown */}
+          {Object.keys(stageTotals).length > 0 && (
+            <div className="overflow-y-auto max-h-[55vh] divide-y">
+              {Object.entries(stageTotals)
+                .sort(([, a], [, b]) => b - a)
+                .map(([stage, total]) => {
+                  const pct = liveTotal > 0 ? Math.round((total / liveTotal) * 100) : 0
+                  return (
+                    <div key={stage} className="px-4 py-2.5 flex items-center gap-3">
+                      <div className="flex-1 min-w-0">
+                        <div className="text-xs text-gray-700 font-medium truncate">{stage}</div>
+                        <div className="mt-1 h-1 rounded-full bg-gray-100 overflow-hidden">
+                          <div className="h-full rounded-full bg-blue-500" style={{ width: `${pct}%` }} />
+                        </div>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <div className="text-xs font-semibold text-gray-800 tabular-nums">₹{(total / 100000).toFixed(1)}L</div>
+                        <div className="text-xs text-gray-400">{pct}%</div>
+                      </div>
+                    </div>
+                  )
+                })}
+            </div>
+          )}
+        </div>
+      </div>{/* end live panel */}
+
+      </div>{/* end grid */}
+      </div>{/* end max-w-7xl */}
     </div>
     </AppLayout>
   )
