@@ -31,6 +31,7 @@ const UPPER_TYPES = [
   { value: '3bhk', label: '3 BHK' },
   { value: 'duplex_ff', label: 'Duplex Starts in FF' },
   { value: 'duplex_sf', label: 'Duplex Starts in SF' },
+  { value: 'duplex_end', label: 'Duplex End (Upper Floor)' },
 ]
 
 const MAIN_DOOR_TYPES = [
@@ -85,10 +86,12 @@ function getDefaultDoors(floorType) {
     case 'duplex_ff':
     case 'duplex_sf':
       return { mainDoor: 'teak_4x8', bedroomDoors: 3, washroomDoors: 3, toilets: 3, balconyDoors: 2, utilityDoors: 1, poojaRoom: true, kitchens: 1 }
+    case 'duplex_end':
+      return { mainDoor: '', bedroomDoors: 3, washroomDoors: 3, toilets: 3, balconyDoors: 2, utilityDoors: 0, poojaRoom: false, kitchens: 0 }
     case 'parking_only':
     case 'parking_lift':
     case 'commercial_parking':
-      return { mainDoor: '', bedroomDoors: 0, washroomDoors: 0, toilets: 0, balconyDoors: 0, utilityDoors: 0, poojaRoom: false, kitchens: 0 }
+      return { mainDoor: '', bedroomDoors: 0, washroomDoors: 1, toilets: 1, balconyDoors: 0, utilityDoors: 0, poojaRoom: false, kitchens: 0 }
     default:
       return { mainDoor: 'teak_3x7', bedroomDoors: 1, washroomDoors: 1, toilets: 1, balconyDoors: 0, utilityDoors: 0, poojaRoom: false, kitchens: 1 }
   }
@@ -116,6 +119,7 @@ function createFloor(index, defaultTilePrice = 50) {
     railingType: '',
     railingRft: 25,
     acPoints: 0,
+    upsUnits: 1,
     windowSqft: '',
   }
 }
@@ -175,14 +179,14 @@ export default function NewProjectPage() {
     if (!autoSaveReady.current) return
     const draft = {
       clientName, clientPhone, clientLocation, width, length, isIrregular, sideFront, sideBack, sideLeft, sideRight, masonryType,
-      floorCount, floors, hasLift, hasSump, sumpCapacity, sumpType, hasSsm, ssmCourses,
+      floorCount, floors, hasLift, hasSump, sumpCapacity, sumpType, sumpRateOverride, hasSsm, ssmCourses,
       hasCompoundWall, hasRainwater, hasGas, hasOht, ohtCapacity, ohtCustom,
       hasMainGate, hasAc, hasCctv, hasEv, hasSolar, hasUps, hasWifi,
       paintingGrade, windowType, railingType, flooringType, customItems,
     }
     localStorage.setItem(DRAFT_KEY, JSON.stringify(draft))
   }, [clientName, clientPhone, clientLocation, width, length, isIrregular, sideFront, sideBack, sideLeft, sideRight, masonryType,
-      floorCount, floors, hasLift, hasSump, sumpCapacity, sumpType, hasSsm, ssmCourses,
+      floorCount, floors, hasLift, hasSump, sumpCapacity, sumpType, sumpRateOverride, hasSsm, ssmCourses,
       hasCompoundWall, hasRainwater, hasGas, hasOht, ohtCapacity, ohtCustom,
       hasMainGate, hasAc, hasCctv, hasEv, hasSolar, hasUps, hasWifi,
       paintingGrade, windowType, railingType, flooringType, customItems])
@@ -216,6 +220,7 @@ export default function NewProjectPage() {
       if (d.hasSump !== undefined) setHasSump(d.hasSump)
       if (d.sumpCapacity !== undefined) setSumpCapacity(d.sumpCapacity)
       if (d.sumpType !== undefined) setSumpType(d.sumpType)
+      if (d.sumpRateOverride !== undefined) setSumpRateOverride(d.sumpRateOverride)
       if (d.hasSsm !== undefined) setHasSsm(d.hasSsm)
       if (d.ssmCourses !== undefined) setSsmCourses(d.ssmCourses)
       if (d.hasCompoundWall !== undefined) setHasCompoundWall(d.hasCompoundWall)
@@ -307,6 +312,40 @@ export default function NewProjectPage() {
     setFloors(prev => {
       const updated = [...prev]
       updated[index] = { ...updated[index], type, ...defaults }
+      if (['duplex_ff', 'duplex_sf'].includes(type) && index + 1 < updated.length) {
+        const endDefaults = getDefaultDoors('duplex_end')
+        updated[index + 1] = { ...updated[index + 1], type: 'duplex_end', ...endDefaults }
+      }
+      return updated
+    })
+  }
+
+  function copyFloor(fromIndex, toIndex) {
+    setFloors(prev => {
+      const updated = [...prev]
+      const from = updated[fromIndex]
+      updated[toIndex] = {
+        ...updated[toIndex],
+        sqft: from.sqft,
+        mainDoor: from.mainDoor,
+        bedroomDoors: from.bedroomDoors,
+        washroomDoors: from.washroomDoors,
+        toilets: from.toilets,
+        balconyDoors: from.balconyDoors,
+        utilityDoors: from.utilityDoors,
+        poojaRoom: from.poojaRoom,
+        poojaRoomPrice: from.poojaRoomPrice,
+        kitchens: from.kitchens,
+        staircaseType: from.staircaseType,
+        staircaseSteps: from.staircaseSteps,
+        tilesSquft: from.tilesSquft,
+        tilesPricePerSqft: from.tilesPricePerSqft,
+        railingType: from.railingType,
+        railingRft: from.railingRft,
+        acPoints: from.acPoints,
+        upsUnits: from.upsUnits,
+        windowSqft: from.windowSqft,
+      }
       return updated
     })
   }
@@ -333,6 +372,7 @@ export default function NewProjectPage() {
   const [hasSump, setHasSump] = useState(true)
   const [sumpCapacity, setSumpCapacity] = useState('')
   const [sumpType, setSumpType] = useState('rcc')
+  const [sumpRateOverride, setSumpRateOverride] = useState('')
   const [hasSsm, setHasSsm] = useState(false)
   const [ssmCourses, setSsmCourses] = useState('')
 
@@ -394,9 +434,13 @@ export default function NewProjectPage() {
   }), { bedroom: 0, washroom: 0, toilets: 0, balcony: 0, utility: 0, kitchens: 0, poojaRoom: 0 })
 
   const isParking = (type) => ['parking_only', 'parking_lift', 'commercial_parking'].includes(type)
+  const isPureParking = (type) => ['parking_only', 'parking_lift'].includes(type)
 
   async function handleSave() {
-    if (!clientName || !width || !length) {
+    const hasDimensions = isIrregular
+      ? (sideFront && sideBack && sideLeft && sideRight)
+      : (width && length)
+    if (!clientName || !hasDimensions) {
       alert('Please fill Client Name and Dimensions')
       return
     }
@@ -418,7 +462,9 @@ export default function NewProjectPage() {
       side_right: isIrregular ? parseFloat(sideRight) : null,
       floors: floorCount,
       floor_count: floorCount,
-      floors_data: floors,
+      floors_data: floors.map((f, i) => i === 0 && sumpRateOverride
+        ? { ...f, sumpRateOverride: parseFloat(sumpRateOverride) }
+        : f),
       ground_floor_type: floors[0]?.type || '',
       upper_floor_type: floors[1]?.type || '',
       has_lift: hasLift,
@@ -650,7 +696,7 @@ export default function NewProjectPage() {
         >
           <p className="font-semibold text-gray-800">Bricks</p>
           <p className="text-xs text-gray-400 mt-1">Red clay bricks · ₹8 per brick</p>
-          <p className="text-xs text-gray-400">Traditional · stronger walls</p>
+          <p className="text-xs text-gray-400">Traditional · higher labour (₹40K/chadra)</p>
         </button>
       </div>
       <p className="text-xs text-gray-400">
@@ -704,9 +750,20 @@ export default function NewProjectPage() {
                   <div className="w-2 h-2 rounded-full bg-blue-400"></div>
                   <span className="text-sm font-semibold">{floor.name}</span>
                   {floor.type && (
-                    <Badge className="ml-2 bg-blue-600 text-white text-xs border-0">
+                    <Badge className={`ml-2 text-xs border-0 ${floor.type === 'duplex_end' ? 'bg-purple-600' : 'bg-blue-600'} text-white`}>
                       {[...GROUND_TYPES, ...UPPER_TYPES].find(t => t.value === floor.type)?.label || floor.type}
                     </Badge>
+                  )}
+                  {floor.type === 'duplex_end' && (
+                    <span className="text-xs text-purple-300 ml-1">auto-paired</span>
+                  )}
+                  {index > 0 && floor.type !== 'duplex_end' && floors[index - 1]?.type && (
+                    <button
+                      onClick={() => copyFloor(index - 1, index)}
+                      className="ml-auto text-xs px-2 py-0.5 rounded bg-blue-700 text-blue-100 hover:bg-blue-600"
+                    >
+                      ↓ Copy {floors[index - 1].name}
+                    </button>
                   )}
                 </div>
 
@@ -783,26 +840,51 @@ export default function NewProjectPage() {
                     </div>
                   </div>
 
+                  {/* Guard Washroom — for parking floors */}
+                  {isParking(floor.type) && (
+                    <>
+                      <Separator />
+                      <div className="p-3 bg-gray-50 rounded-lg">
+                        <p className="text-xs font-medium text-gray-500 mb-2">Guard / Security Washroom</p>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="space-y-1.5">
+                            <Label className="text-xs">Toilets</Label>
+                            <Input type="number" min="0" value={floor.toilets} onChange={e => updateFloor(index, 'toilets', e.target.value)} />
+                          </div>
+                          <div className="space-y-1.5">
+                            <Label className="text-xs">Washroom Doors</Label>
+                            <Input type="number" min="0" value={floor.washroomDoors} onChange={e => updateFloor(index, 'washroomDoors', e.target.value)} />
+                          </div>
+                        </div>
+                      </div>
+                    </>
+                  )}
+
                   {/* Doors + Rooms — skip for parking */}
                   {!isParking(floor.type) && (
                     <>
                       <Separator />
                       <div>
-                        <p className="text-sm font-medium text-gray-700 mb-3">Doors &amp; Rooms</p>
+                        <p className="text-sm font-medium text-gray-700 mb-3">
+                          Doors &amp; Rooms
+                          {floor.type === 'duplex_end' && <span className="text-xs font-normal text-purple-500 ml-2">Upper duplex — no main door / kitchen</span>}
+                        </p>
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                          <div className="space-y-1.5">
-                            <Label className="text-xs">Main Door Type</Label>
-                            <select
-                              className="w-full h-10 px-3 border border-gray-200 rounded-lg text-sm bg-white"
-                              value={floor.mainDoor}
-                              onChange={e => updateFloor(index, 'mainDoor', e.target.value)}
-                            >
-                              <option value="">No main door</option>
-                              {MAIN_DOOR_TYPES.map(t => (
-                                <option key={t.value} value={t.value}>{t.label} — {fmt(mp(t.priceKey, t.fallback))}</option>
-                              ))}
-                            </select>
-                          </div>
+                          {floor.type !== 'duplex_end' && (
+                            <div className="space-y-1.5">
+                              <Label className="text-xs">Main Door Type</Label>
+                              <select
+                                className="w-full h-10 px-3 border border-gray-200 rounded-lg text-sm bg-white"
+                                value={floor.mainDoor}
+                                onChange={e => updateFloor(index, 'mainDoor', e.target.value)}
+                              >
+                                <option value="">No main door</option>
+                                {MAIN_DOOR_TYPES.map(t => (
+                                  <option key={t.value} value={t.value}>{t.label} — {fmt(mp(t.priceKey, t.fallback))}</option>
+                                ))}
+                              </select>
+                            </div>
+                          )}
                           <div className="space-y-1.5">
                             <Label className="text-xs">Bedroom Doors</Label>
                             <Input type="number" min="0" value={floor.bedroomDoors} onChange={e => updateFloor(index, 'bedroomDoors', e.target.value)} />
@@ -836,11 +918,13 @@ export default function NewProjectPage() {
                               {parseInt(floor.utilityDoors) > 0 ? `${floor.utilityDoors} × ${fmt(r.utilityDoor)} = ${fmt(parseInt(floor.utilityDoors) * r.utilityDoor)}` : `Typical: ${fmt(r.utilityDoor)}/door`}
                             </p>
                           </div>
-                          <div className="space-y-1.5">
-                            <Label className="text-xs">Kitchens</Label>
-                            <Input type="number" min="0" value={floor.kitchens} onChange={e => updateFloor(index, 'kitchens', e.target.value)} />
-                            <p className="text-xs text-gray-400">For plumbing calculation</p>
-                          </div>
+                          {floor.type !== 'duplex_end' && (
+                            <div className="space-y-1.5">
+                              <Label className="text-xs">Kitchens</Label>
+                              <Input type="number" min="0" value={floor.kitchens} onChange={e => updateFloor(index, 'kitchens', e.target.value)} />
+                              <p className="text-xs text-gray-400">For plumbing calculation</p>
+                            </div>
+                          )}
                           <div className="space-y-1.5">
                             <Label className="text-xs">Pooja Room Door</Label>
                             <div className="flex flex-col gap-1.5">
@@ -923,7 +1007,7 @@ export default function NewProjectPage() {
                   )}
 
                   {/* Windows */}
-                  {!isParking(floor.type) && (
+                  {!isPureParking(floor.type) && (
                     <>
                       <Separator />
                       <div>
@@ -958,7 +1042,7 @@ export default function NewProjectPage() {
                   )}
 
                   {/* Railing */}
-                  {!isParking(floor.type) && (
+                  {!isPureParking(floor.type) && (
                     <>
                       <Separator />
                       <div>
@@ -1020,29 +1104,76 @@ export default function NewProjectPage() {
                     </>
                   )}
 
+                  {/* UPS Units — only if UPS is ON */}
+                  {hasUps && !isParking(floor.type) && (
+                    <>
+                      <Separator />
+                      <div className="p-3 bg-gray-50 rounded-lg">
+                        <div className="space-y-1.5">
+                          <Label className="text-xs text-gray-500">UPS / Inverter Units on this floor</Label>
+                          <Input
+                            type="number"
+                            min="1"
+                            placeholder="e.g. 1"
+                            value={floor.upsUnits}
+                            onChange={e => updateFloor(index, 'upsUnits', e.target.value)}
+                          />
+                          <p className="text-xs text-gray-400">
+                            {parseInt(floor.upsUnits) > 0 ? `${floor.upsUnits} unit(s) × ${fmt(r.ups)} = ${fmt(parseInt(floor.upsUnits) * r.ups)}` : `${fmt(r.ups)} per unit`}
+                          </p>
+                        </div>
+                      </div>
+                    </>
+                  )}
+
                 </div>
               </div>
             ))}
 
-            {/* Doors summary */}
-            <div className="bg-blue-50 border border-blue-100 rounded-xl p-4">
-              <p className="text-xs font-semibold text-blue-600 uppercase mb-3">Total Summary Across All Floors</p>
-              <div className="grid grid-cols-3 md:grid-cols-7 gap-3 text-center">
-                {[
-                  { label: 'Bedroom Doors', value: totalDoors.bedroom },
-                  { label: 'Washroom Doors', value: totalDoors.washroom },
-                  { label: 'Toilets', value: totalDoors.toilets },
-                  { label: 'Balcony Doors', value: totalDoors.balcony },
-                  { label: 'Utility Doors', value: totalDoors.utility },
-                  { label: 'Kitchens', value: totalDoors.kitchens },
-                  { label: 'Pooja Room', value: totalDoors.poojaRoom },
-                ].map((item, i) => (
-                  <div key={i} className="bg-white rounded-lg p-2 border border-blue-100">
-                    <p className="text-lg font-bold text-blue-700">{item.value}</p>
-                    <p className="text-xs text-blue-500 mt-0.5">{item.label}</p>
-                  </div>
-                ))}
+            {/* Doors + Slab summary */}
+            <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 space-y-4">
+              <div>
+                <p className="text-xs font-semibold text-blue-600 uppercase mb-3">Total Summary Across All Floors</p>
+                <div className="grid grid-cols-3 md:grid-cols-7 gap-3 text-center">
+                  {[
+                    { label: 'Bedroom Doors', value: totalDoors.bedroom },
+                    { label: 'Washroom Doors', value: totalDoors.washroom },
+                    { label: 'Toilets', value: totalDoors.toilets },
+                    { label: 'Balcony Doors', value: totalDoors.balcony },
+                    { label: 'Utility Doors', value: totalDoors.utility },
+                    { label: 'Kitchens', value: totalDoors.kitchens },
+                    { label: 'Pooja Room', value: totalDoors.poojaRoom },
+                  ].map((item, i) => (
+                    <div key={i} className="bg-white rounded-lg p-2 border border-blue-100">
+                      <p className="text-lg font-bold text-blue-700">{item.value}</p>
+                      <p className="text-xs text-blue-500 mt-0.5">{item.label}</p>
+                    </div>
+                  ))}
+                </div>
               </div>
+              {floors.some(f => f.type) && (
+                <div className="border-t border-blue-100 pt-3">
+                  <p className="text-xs font-semibold text-blue-600 uppercase mb-2">Slab Area Breakdown</p>
+                  <div className="flex flex-wrap gap-2">
+                    {floors.filter(f => f.type).map((f, i) => {
+                      const area = parseFloat(f.sqft) || sqft || 0
+                      return (
+                        <span key={i} className="bg-white text-blue-700 border border-blue-100 text-xs px-2.5 py-1 rounded-lg">
+                          {f.name.replace(' Floor', '')}: {area ? `${area} sqft` : '—'}
+                        </span>
+                      )
+                    })}
+                    {(() => {
+                      const total = floors.reduce((sum, f) => sum + (parseFloat(f.sqft) || sqft || 0), 0)
+                      return total > 0 ? (
+                        <span className="bg-blue-600 text-white text-xs px-2.5 py-1 rounded-lg font-semibold">
+                          Total: {total.toLocaleString('en-IN')} sqft
+                        </span>
+                      ) : null
+                    })()}
+                  </div>
+                </div>
+              )}
             </div>
 
           </CardContent>
@@ -1098,6 +1229,20 @@ export default function NewProjectPage() {
                       <option value="block">Block Sump ({fmt(r.sumpBlock)} fixed)</option>
                     </select>
                   </div>
+                  {sumpType === 'rcc' && (
+                    <div className="space-y-1.5 col-span-2">
+                      <Label>Custom Rate Override (₹/litre)</Label>
+                      <Input
+                        type="number"
+                        placeholder={`Leave empty to use market rate (${fmt(r.sumpRcc)}/L)`}
+                        value={sumpRateOverride}
+                        onChange={e => setSumpRateOverride(e.target.value)}
+                      />
+                      {sumpRateOverride && sumpCapacity && (
+                        <p className="text-xs text-gray-400">Override: {sumpCapacity}L × {fmt(parseFloat(sumpRateOverride))}/L = {fmt(parseFloat(sumpCapacity) * parseFloat(sumpRateOverride))}</p>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
