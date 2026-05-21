@@ -1570,40 +1570,6 @@ export default function NewProjectPage() {
       {/* ── RIGHT: Live BOQ (60%) ── */}
       <div className={`flex flex-col bg-white ${mobileTab === 'form' ? 'hidden md:flex md:w-[60%]' : 'w-full md:w-[60%]'}`}>
 
-        {/* Sticky BOQ header */}
-        <div className="sticky top-0 z-10 bg-gray-900 text-white shrink-0">
-          <div className="px-5 py-3 flex items-center justify-between">
-            <div>
-              <p className="text-xs text-gray-400 uppercase tracking-widest">Live BOQ</p>
-              {liveTotal > 0
-                ? <p className="text-2xl font-bold tabular-nums mt-0.5">₹{Math.round(liveTotal).toLocaleString('en-IN')}</p>
-                : <p className="text-sm text-gray-500 mt-1">Enter site dimensions to begin</p>
-              }
-            </div>
-            {liveTotal > 0 && (
-              <div className="text-right">
-                <p className="text-3xl font-bold text-blue-400 tabular-nums">₹{(liveTotal / 100000).toFixed(1)}<span className="text-lg text-gray-400">L</span></p>
-              </div>
-            )}
-          </div>
-          {liveMetrics && (
-            <div className="flex divide-x divide-gray-700 border-t border-gray-700 text-center">
-              <div className="flex-1 py-2">
-                <p className="text-xs text-gray-400">Slab Area</p>
-                <p className="text-sm font-semibold">{liveMetrics.totalSlabArea.toLocaleString('en-IN')} sqft</p>
-              </div>
-              <div className="flex-1 py-2">
-                <p className="text-xs text-gray-400">Chadra</p>
-                <p className="text-sm font-semibold">{liveMetrics.chadra}</p>
-              </div>
-              <div className="flex-1 py-2">
-                <p className="text-xs text-gray-400">Steel</p>
-                <p className="text-sm font-semibold">{liveMetrics.steelTonnes} T</p>
-              </div>
-            </div>
-          )}
-        </div>
-
         {/* BOQ table */}
         <div className="flex-1 overflow-y-auto">
           {liveItems.length === 0 ? (
@@ -1655,13 +1621,29 @@ export default function NewProjectPage() {
                   })
                 })()}
               </tbody>
-              <tfoot>
-                <tr className="bg-gray-900 sticky bottom-0">
-                  <td colSpan={4} className="px-4 py-3 text-white font-semibold text-sm">Grand Total</td>
-                  <td className="px-4 py-3 text-right text-white font-bold text-base tabular-nums">₹{Math.round(liveTotal).toLocaleString('en-IN')}</td>
-                </tr>
-              </tfoot>
             </table>
+          )}
+        </div>
+
+        {/* Bottom footer — Grand Total + metrics */}
+        <div className="shrink-0 bg-gray-900 text-white border-t border-gray-700">
+          <div className="px-4 py-2.5 flex items-center justify-between">
+            <p className="text-sm font-semibold text-gray-300">Grand Total</p>
+            {liveTotal > 0 ? (
+              <div className="flex items-baseline gap-3">
+                <p className="text-base font-bold tabular-nums">₹{Math.round(liveTotal).toLocaleString('en-IN')}</p>
+                <p className="text-xl font-bold text-blue-400 tabular-nums">₹{(liveTotal / 100000).toFixed(1)}<span className="text-sm text-gray-400">L</span></p>
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500">—</p>
+            )}
+          </div>
+          {liveMetrics && (
+            <div className="flex divide-x divide-gray-700 border-t border-gray-700 text-center">
+              <div className="flex-1 py-1.5"><p className="text-xs text-gray-400">Slab Area</p><p className="text-xs font-semibold">{liveMetrics.totalSlabArea.toLocaleString('en-IN')} sqft</p></div>
+              <div className="flex-1 py-1.5"><p className="text-xs text-gray-400">Chadra</p><p className="text-xs font-semibold">{liveMetrics.chadra}</p></div>
+              <div className="flex-1 py-1.5"><p className="text-xs text-gray-400">Steel</p><p className="text-xs font-semibold">{liveMetrics.steelTonnes} T</p></div>
+            </div>
           )}
         </div>
 
