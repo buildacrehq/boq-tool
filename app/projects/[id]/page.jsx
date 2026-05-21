@@ -294,7 +294,7 @@ export default function ProjectPage() {
     const totalSlabArea = floors.reduce((sum, f) => sum + (parseFloat(f.sqft) || sqft), 0)
     return {
       liveItems: items,
-      liveMetrics: { sqft, chadra: Math.round(totalSlabArea / 100), steelTonnes: Math.ceil(totalSlabArea * 4.5 / 1000) },
+      liveMetrics: { totalSlabArea, chadra: Math.round(totalSlabArea / 100), steelTonnes: Math.ceil(totalSlabArea * 4.5 / 1000) },
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sqft, floors, masonryType, floorCount, sumpRateOverride, hasSump, sumpCapacity, sumpType,
@@ -1078,7 +1078,7 @@ export default function ProjectPage() {
           <div className="sticky top-0 z-10 bg-gray-900 text-white shrink-0">
             <div className="px-5 py-3 flex items-center justify-between">
               <div>
-                <p className="text-xs text-gray-400 uppercase tracking-widest">Live BOQ · {project.client_name}</p>
+                <p className="text-xs text-gray-400 uppercase tracking-widest">Live BOQ  {project.client_name}</p>
                 <p className="text-2xl font-bold tabular-nums mt-0.5">{formatCurrency(overriddenGrandTotal)}</p>
               </div>
               <div className="flex flex-col items-end gap-1">
@@ -1093,7 +1093,7 @@ export default function ProjectPage() {
             </div>
             {liveMetrics && (
               <div className="flex divide-x divide-gray-700 border-t border-gray-700 text-center">
-                <div className="flex-1 py-2"><p className="text-xs text-gray-400">Site Area</p><p className="text-sm font-semibold">{liveMetrics.sqft.toLocaleString('en-IN')} sqft</p></div>
+                <div className="flex-1 py-2"><p className="text-xs text-gray-400">Slab Area</p><p className="text-sm font-semibold">{liveMetrics.totalSlabArea.toLocaleString('en-IN')} sqft</p></div>
                 <div className="flex-1 py-2"><p className="text-xs text-gray-400">Chadra</p><p className="text-sm font-semibold">{liveMetrics.chadra}</p></div>
                 <div className="flex-1 py-2"><p className="text-xs text-gray-400">Steel</p><p className="text-sm font-semibold">{liveMetrics.steelTonnes} T</p></div>
               </div>

@@ -464,7 +464,7 @@ export default function NewProjectPage() {
     const chadra = Math.round(totalSlabArea / 100)
     const steelTonnes = Math.ceil(totalSlabArea * 4.5 / 1000)
 
-    return { liveTotal, liveItems: items, liveMetrics: { sqft, chadra, steelTonnes } }
+    return { liveTotal, liveItems: items, liveMetrics: { totalSlabArea, chadra, steelTonnes } }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sqft, floors, masonryType, floorCount, sumpRateOverride, hasSump, sumpCapacity, sumpType,
       hasSsm, ssmCourses, hasCompoundWall, hasRainwater, hasGas, hasOht, ohtCapacity, ohtCustom,
@@ -1589,8 +1589,8 @@ export default function NewProjectPage() {
           {liveMetrics && (
             <div className="flex divide-x divide-gray-700 border-t border-gray-700 text-center">
               <div className="flex-1 py-2">
-                <p className="text-xs text-gray-400">Site Area</p>
-                <p className="text-sm font-semibold">{liveMetrics.sqft.toLocaleString('en-IN')} sqft</p>
+                <p className="text-xs text-gray-400">Slab Area</p>
+                <p className="text-sm font-semibold">{liveMetrics.totalSlabArea.toLocaleString('en-IN')} sqft</p>
               </div>
               <div className="flex-1 py-2">
                 <p className="text-xs text-gray-400">Chadra</p>
