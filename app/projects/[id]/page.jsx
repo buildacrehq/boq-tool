@@ -1148,25 +1148,23 @@ export default function ProjectPage() {
           {/* Bottom footer — Grand Total + metrics */}
           <div className="shrink-0 bg-gray-900 text-white border-t border-gray-700">
             {hasAnyOverride && (
-              <div className="px-4 py-1.5 bg-amber-900/40 border-b border-amber-700/50 text-xs text-amber-300 flex items-center justify-between">
+              <div className="px-4 py-1 bg-amber-900/40 border-b border-amber-700/50 text-xs text-amber-300 flex items-center justify-between">
                 <span>Some qty/prices overridden</span>
                 <button onClick={() => { setBoqOverrides({}); saveOverrides({}) }} className="underline hover:text-amber-200">Reset</button>
               </div>
             )}
-            <div className="px-4 py-2.5 flex items-center justify-between">
-              <p className="text-sm font-semibold text-gray-300">Grand Total</p>
-              <div className="flex items-baseline gap-3">
-                <p className="text-base font-bold tabular-nums">{formatCurrency(overriddenGrandTotal)}</p>
-                <p className="text-xl font-bold text-blue-400 tabular-nums">₹{(overriddenGrandTotal / 100000).toFixed(1)}<span className="text-sm text-gray-400">L</span></p>
+            <div className="px-4 py-2 flex items-center gap-3">
+              <span className="text-xs text-gray-400 shrink-0">Grand Total</span>
+              {liveMetrics && (
+                <span className="text-xs text-gray-600 hidden md:block truncate">
+                  {liveMetrics.totalSlabArea.toLocaleString('en-IN')} sqft · {liveMetrics.chadra} chadra · {liveMetrics.steelTonnes}T steel
+                </span>
+              )}
+              <div className="ml-auto flex items-baseline gap-2 shrink-0">
+                <span className="text-sm font-bold tabular-nums">{formatCurrency(overriddenGrandTotal)}</span>
+                <span className="text-lg font-bold text-blue-400 tabular-nums">₹{(overriddenGrandTotal / 100000).toFixed(1)}<span className="text-xs text-gray-400">L</span></span>
               </div>
             </div>
-            {liveMetrics && (
-              <div className="flex divide-x divide-gray-700 border-t border-gray-700 text-center">
-                <div className="flex-1 py-1.5"><p className="text-xs text-gray-400">Slab Area</p><p className="text-xs font-semibold">{liveMetrics.totalSlabArea.toLocaleString('en-IN')} sqft</p></div>
-                <div className="flex-1 py-1.5"><p className="text-xs text-gray-400">Chadra</p><p className="text-xs font-semibold">{liveMetrics.chadra}</p></div>
-                <div className="flex-1 py-1.5"><p className="text-xs text-gray-400">Steel</p><p className="text-xs font-semibold">{liveMetrics.steelTonnes} T</p></div>
-              </div>
-            )}
           </div>
 
         </div>{/* end right panel */}
