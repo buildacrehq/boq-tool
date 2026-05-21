@@ -135,6 +135,7 @@ export default function NewProjectPage() {
   const [marketPrices, setMarketPrices] = useState({})
   const [showRestorePrompt, setShowRestorePrompt] = useState(false)
   const [showDiscardModal, setShowDiscardModal] = useState(false)
+  const [mobileTab, setMobileTab] = useState('form')
   const autoSaveReady = useRef(false)
 
   // All state declarations must come before useEffect hooks that reference them
@@ -422,17 +423,8 @@ export default function NewProjectPage() {
   const isParking = (type) => ['parking_only', 'parking_lift', 'commercial_parking'].includes(type)
   const isPureParking = (type) => ['parking_only', 'parking_lift'].includes(type)
 
-  const LIVE_STAGE_NORMALIZE = (stage) => {
-    const floorNames = ['Ground Floor', 'First Floor', 'Second Floor', 'Third Floor', 'Fourth Floor', 'Fifth Floor', 'Sixth Floor']
-    if (floorNames.includes(stage)) return 'Floor Structure'
-    if (stage.startsWith('Flooring')) return 'Flooring'
-    if (stage.startsWith('Doors')) return 'Doors'
-    if (stage.startsWith('Plumbing')) return 'Plumbing'
-    return stage
-  }
-
-  const { liveTotal, stageTotals, liveMetrics } = useMemo(() => {
-    if (!sqft) return { liveTotal: 0, stageTotals: {}, liveMetrics: null }
+  const { liveTotal, liveItems, liveMetrics } = useMemo(() => {
+    if (!sqft) return { liveTotal: 0, liveItems: [], liveMetrics: null }
 
     const td = floors.reduce((acc, f) => ({
       bedroom: acc.bedroom + (parseInt(f.bedroomDoors) || 0),
@@ -468,17 +460,11 @@ export default function NewProjectPage() {
     const items = calculateFullBOQ(project, marketPrices)
     const liveTotal = items.reduce((s, i) => s + (i.total_price || 0), 0)
 
-    const stageTotals = items.reduce((acc, item) => {
-      const s = LIVE_STAGE_NORMALIZE(item.stage)
-      acc[s] = (acc[s] || 0) + (item.total_price || 0)
-      return acc
-    }, {})
-
     const totalSlabArea = floors.reduce((sum, f) => sum + (parseFloat(f.sqft) || sqft), 0)
     const chadra = Math.round(totalSlabArea / 100)
     const steelTonnes = Math.ceil(totalSlabArea * 4.5 / 1000)
 
-    return { liveTotal, stageTotals, liveMetrics: { sqft, chadra, steelTonnes } }
+    return { liveTotal, liveItems: items, liveMetrics: { sqft, chadra, steelTonnes } }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sqft, floors, masonryType, floorCount, sumpRateOverride, hasSump, sumpCapacity, sumpType,
       hasSsm, ssmCourses, hasCompoundWall, hasRainwater, hasGas, hasOht, ohtCapacity, ohtCustom,
@@ -581,7 +567,7 @@ export default function NewProjectPage() {
 
   return (
     <AppLayout>
-    <div className="min-h-screen bg-gray-50">
+    <div className="flex flex-col h-[calc(100vh-56px)]">
 
       {/* Restore draft prompt */}
       {showRestorePrompt && (
@@ -610,23 +596,43 @@ export default function NewProjectPage() {
         </div>
       )}
 
-      {/* Top bar */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center sticky top-14 z-10">
-        <div>
-          <h1 className="text-xl font-semibold text-gray-800">New BOQ Estimate</h1>
-          <p className="text-sm text-gray-400 mt-0.5">Fill all details to generate estimate</p>
-        </div>
-        <div className="flex gap-3">
-          <Button variant="outline" onClick={handleCancel}>Cancel</Button>
-          <Button onClick={handleSave} disabled={saving}>
-            {saving ? 'Saving...' : 'Save & Generate BOQ'}
-          </Button>
-        </div>
+      {/* Mobile tab bar */}
+      <div className="md:hidden flex border-b border-gray-200 bg-white shrink-0">
+        <button
+          onClick={() => setMobileTab('form')}
+          className={`flex-1 py-2.5 text-sm font-medium border-b-2 transition-colors ${mobileTab === 'form' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500'}`}
+        >
+          Form
+        </button>
+        <button
+          onClick={() => setMobileTab('boq')}
+          className={`flex-1 py-2.5 text-sm font-medium border-b-2 transition-colors ${mobileTab === 'boq' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500'}`}
+        >
+          Live BOQ{liveTotal > 0 ? ` · ₹${(liveTotal / 100000).toFixed(1)}L` : ''}
+        </button>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 py-6">
-      <div className="lg:grid lg:grid-cols-[1fr_320px] lg:gap-6 lg:items-start">
-      <div className="space-y-6">
+      {/* Split content area */}
+      <div className="flex-1 flex overflow-hidden min-h-0">
+
+      {/* ── LEFT: Form (40%) ── */}
+      <div className={`flex flex-col overflow-y-auto border-r border-gray-200 bg-gray-50 ${mobileTab === 'boq' ? 'hidden md:flex md:w-[40%]' : 'w-full md:w-[40%]'}`}>
+
+        {/* Sticky form header */}
+        <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-4 py-3 flex justify-between items-center shrink-0 shadow-sm">
+          <div>
+            <h1 className="text-base font-semibold text-gray-800">New BOQ Estimate</h1>
+            <p className="text-xs text-gray-400">Live estimate updates on the right →</p>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={handleCancel}>Cancel</Button>
+            <Button size="sm" onClick={handleSave} disabled={saving}>
+              {saving ? 'Saving...' : 'Save'}
+            </Button>
+          </div>
+        </div>
+
+        <div className="px-4 py-4 space-y-4">
 
         {/* Section 1 — Client Details */}
         <Card>
@@ -1550,82 +1556,119 @@ export default function NewProjectPage() {
           </CardContent>
         </Card>
 
-        {/* Bottom Save */}
-        <div className="flex justify-end gap-3 pb-8">
+        {/* Bottom save (inside scroll area) */}
+        <div className="flex justify-end gap-3 py-6 px-1">
           <Button variant="outline" onClick={handleCancel}>Cancel</Button>
           <Button size="lg" onClick={handleSave} disabled={saving}>
-            {saving ? 'Saving...' : 'Save & Generate BOQ'}
+            {saving ? 'Saving...' : 'Save BOQ'}
           </Button>
         </div>
 
-      </div>{/* end form column */}
+        </div>{/* end form sections scroll */}
+      </div>{/* end left panel */}
 
-      {/* Live Preview Panel */}
-      <div className="hidden lg:block sticky top-[129px] self-start">
-        <div className="rounded-2xl overflow-hidden border border-gray-200 shadow-sm bg-white">
-          {/* Header — total */}
-          <div className="bg-gray-900 px-5 py-4 text-white">
-            <p className="text-xs text-gray-400 uppercase tracking-widest font-medium">Live Estimate</p>
-            {liveTotal > 0 ? (
-              <>
-                <div className="text-4xl font-bold mt-2 tabular-nums">
-                  ₹{(liveTotal / 100000).toFixed(1)}<span className="text-xl font-semibold text-gray-300 ml-1">L</span>
-                </div>
-                <div className="text-sm text-gray-400 mt-0.5">₹{Math.round(liveTotal).toLocaleString('en-IN')}</div>
-              </>
-            ) : (
-              <div className="text-sm text-gray-500 mt-3">Enter site dimensions<br/>to see live estimate</div>
+      {/* ── RIGHT: Live BOQ (60%) ── */}
+      <div className={`flex flex-col bg-white ${mobileTab === 'form' ? 'hidden md:flex md:w-[60%]' : 'w-full md:w-[60%]'}`}>
+
+        {/* Sticky BOQ header */}
+        <div className="sticky top-0 z-10 bg-gray-900 text-white shrink-0">
+          <div className="px-5 py-3 flex items-center justify-between">
+            <div>
+              <p className="text-xs text-gray-400 uppercase tracking-widest">Live BOQ</p>
+              {liveTotal > 0
+                ? <p className="text-2xl font-bold tabular-nums mt-0.5">₹{Math.round(liveTotal).toLocaleString('en-IN')}</p>
+                : <p className="text-sm text-gray-500 mt-1">Enter site dimensions to begin</p>
+              }
+            </div>
+            {liveTotal > 0 && (
+              <div className="text-right">
+                <p className="text-3xl font-bold text-blue-400 tabular-nums">₹{(liveTotal / 100000).toFixed(1)}<span className="text-lg text-gray-400">L</span></p>
+              </div>
             )}
           </div>
-
-          {/* Key metrics */}
           {liveMetrics && (
-            <div className="grid grid-cols-3 divide-x border-b text-center py-3 bg-gray-50">
-              <div className="px-2">
-                <div className="text-xs text-gray-400">Site</div>
-                <div className="font-semibold text-sm text-gray-800">{liveMetrics.sqft} sqft</div>
+            <div className="flex divide-x divide-gray-700 border-t border-gray-700 text-center">
+              <div className="flex-1 py-2">
+                <p className="text-xs text-gray-400">Site Area</p>
+                <p className="text-sm font-semibold">{liveMetrics.sqft.toLocaleString('en-IN')} sqft</p>
               </div>
-              <div className="px-2">
-                <div className="text-xs text-gray-400">Chadra</div>
-                <div className="font-semibold text-sm text-gray-800">{liveMetrics.chadra}</div>
+              <div className="flex-1 py-2">
+                <p className="text-xs text-gray-400">Chadra</p>
+                <p className="text-sm font-semibold">{liveMetrics.chadra}</p>
               </div>
-              <div className="px-2">
-                <div className="text-xs text-gray-400">Steel</div>
-                <div className="font-semibold text-sm text-gray-800">{liveMetrics.steelTonnes} T</div>
+              <div className="flex-1 py-2">
+                <p className="text-xs text-gray-400">Steel</p>
+                <p className="text-sm font-semibold">{liveMetrics.steelTonnes} T</p>
               </div>
-            </div>
-          )}
-
-          {/* Stage breakdown */}
-          {Object.keys(stageTotals).length > 0 && (
-            <div className="overflow-y-auto max-h-[55vh] divide-y">
-              {Object.entries(stageTotals)
-                .sort(([, a], [, b]) => b - a)
-                .map(([stage, total]) => {
-                  const pct = liveTotal > 0 ? Math.round((total / liveTotal) * 100) : 0
-                  return (
-                    <div key={stage} className="px-4 py-2.5 flex items-center gap-3">
-                      <div className="flex-1 min-w-0">
-                        <div className="text-xs text-gray-700 font-medium truncate">{stage}</div>
-                        <div className="mt-1 h-1 rounded-full bg-gray-100 overflow-hidden">
-                          <div className="h-full rounded-full bg-blue-500" style={{ width: `${pct}%` }} />
-                        </div>
-                      </div>
-                      <div className="text-right shrink-0">
-                        <div className="text-xs font-semibold text-gray-800 tabular-nums">₹{(total / 100000).toFixed(1)}L</div>
-                        <div className="text-xs text-gray-400">{pct}%</div>
-                      </div>
-                    </div>
-                  )
-                })}
             </div>
           )}
         </div>
-      </div>{/* end live panel */}
 
-      </div>{/* end grid */}
-      </div>{/* end max-w-7xl */}
-    </div>
+        {/* BOQ table */}
+        <div className="flex-1 overflow-y-auto">
+          {liveItems.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-full text-center px-8 py-16">
+              <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mb-4">
+                <span className="text-3xl">📋</span>
+              </div>
+              <p className="text-gray-500 font-medium">No estimate yet</p>
+              <p className="text-sm text-gray-400 mt-1">Fill in site dimensions and floor type on the left to see the full BOQ here</p>
+            </div>
+          ) : (
+            <table className="w-full text-sm border-collapse">
+              <thead className="sticky top-0 bg-gray-50 z-10">
+                <tr className="border-b border-gray-200">
+                  <th className="text-left px-4 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wide">Item</th>
+                  <th className="text-right px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wide">Qty</th>
+                  <th className="text-right px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wide">Unit</th>
+                  <th className="text-right px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wide">Rate</th>
+                  <th className="text-right px-4 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wide">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(() => {
+                  const grouped = liveItems.reduce((acc, item) => {
+                    if (!acc[item.stage]) acc[item.stage] = []
+                    acc[item.stage].push(item)
+                    return acc
+                  }, {})
+                  return Object.entries(grouped).map(([stage, items]) => {
+                    const stageTotal = items.reduce((s, i) => s + (i.total_price || 0), 0)
+                    return (
+                      <>
+                        <tr key={stage} className="bg-blue-50 border-t border-blue-100">
+                          <td className="px-4 py-2 text-xs font-bold text-blue-700 uppercase tracking-wide">{stage}</td>
+                          <td colSpan={3} />
+                          <td className="px-4 py-2 text-right text-xs font-bold text-blue-700">₹{Math.round(stageTotal).toLocaleString('en-IN')}</td>
+                        </tr>
+                        {items.map((item, i) => (
+                          <tr key={i} className="border-b border-gray-50 hover:bg-gray-50/60">
+                            <td className="px-4 py-2 text-gray-700 pl-6">{item.item_name}</td>
+                            <td className="px-3 py-2 text-right text-gray-500 tabular-nums">{item.quantity ?? '—'}</td>
+                            <td className="px-3 py-2 text-right text-gray-400 text-xs">{item.unit}</td>
+                            <td className="px-3 py-2 text-right text-gray-500 tabular-nums">₹{Math.round(item.unit_price || 0).toLocaleString('en-IN')}</td>
+                            <td className="px-4 py-2 text-right font-semibold text-gray-800 tabular-nums">₹{Math.round(item.total_price || 0).toLocaleString('en-IN')}</td>
+                          </tr>
+                        ))}
+                      </>
+                    )
+                  })
+                })()}
+              </tbody>
+              <tfoot>
+                <tr className="bg-gray-900 sticky bottom-0">
+                  <td colSpan={4} className="px-4 py-3 text-white font-semibold text-sm">Grand Total</td>
+                  <td className="px-4 py-3 text-right text-white font-bold text-base tabular-nums">₹{Math.round(liveTotal).toLocaleString('en-IN')}</td>
+                </tr>
+              </tfoot>
+            </table>
+          )}
+        </div>
+
+      </div>{/* end right panel */}
+
+      </div>{/* end split */}
+    </div>{/* end outer */}
     </AppLayout>
   )
 }
