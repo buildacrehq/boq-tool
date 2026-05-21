@@ -119,6 +119,7 @@ function createFloor(index, defaultTilePrice = 50) {
     railingType: '',
     railingRft: 25,
     acPoints: 0,
+    evPoints: 0,
     upsUnits: 1,
     windowSqft: '',
   }
@@ -181,14 +182,14 @@ export default function NewProjectPage() {
       clientName, clientPhone, clientLocation, width, length, isIrregular, sideFront, sideBack, sideLeft, sideRight, masonryType,
       floorCount, floors, hasLift, hasSump, sumpCapacity, sumpType, sumpRateOverride, hasSsm, ssmCourses,
       hasCompoundWall, hasRainwater, hasGas, hasOht, ohtCapacity, ohtCustom,
-      hasMainGate, hasAc, hasCctv, hasEv, hasSolar, hasUps, hasWifi,
+      hasMainGate, hasAc, hasCctv, hasSolar, hasUps, hasWifi,
       paintingGrade, windowType, railingType, flooringType, customItems,
     }
     localStorage.setItem(DRAFT_KEY, JSON.stringify(draft))
   }, [clientName, clientPhone, clientLocation, width, length, isIrregular, sideFront, sideBack, sideLeft, sideRight, masonryType,
       floorCount, floors, hasLift, hasSump, sumpCapacity, sumpType, sumpRateOverride, hasSsm, ssmCourses,
       hasCompoundWall, hasRainwater, hasGas, hasOht, ohtCapacity, ohtCustom,
-      hasMainGate, hasAc, hasCctv, hasEv, hasSolar, hasUps, hasWifi,
+      hasMainGate, hasAc, hasCctv, hasSolar, hasUps, hasWifi,
       paintingGrade, windowType, railingType, flooringType, customItems])
 
   // Warn on browser back / tab close
@@ -232,7 +233,6 @@ export default function NewProjectPage() {
       if (d.hasMainGate !== undefined) setHasMainGate(d.hasMainGate)
       if (d.hasAc !== undefined) setHasAc(d.hasAc)
       if (d.hasCctv !== undefined) setHasCctv(d.hasCctv)
-      if (d.hasEv !== undefined) setHasEv(d.hasEv)
       if (d.hasSolar !== undefined) setHasSolar(d.hasSolar)
       if (d.hasUps !== undefined) setHasUps(d.hasUps)
       if (d.hasWifi !== undefined) setHasWifi(d.hasWifi)
@@ -386,7 +386,6 @@ export default function NewProjectPage() {
   const [hasMainGate, setHasMainGate] = useState(true)
   const [hasAc, setHasAc] = useState(false)
   const [hasCctv, setHasCctv] = useState(false)
-  const [hasEv, setHasEv] = useState(false)
   const [hasSolar, setHasSolar] = useState(false)
   const [hasUps, setHasUps] = useState(false)
   const [hasWifi, setHasWifi] = useState(false)
@@ -481,7 +480,7 @@ export default function NewProjectPage() {
       has_main_gate: hasMainGate,
       has_ac: hasAc,
       has_cctv: hasCctv,
-      has_ev: hasEv,
+      has_ev: (parseInt(floors[0]?.evPoints) || 0) > 0,
       has_solar: hasSolar,
       has_ups: hasUps,
       has_wifi: hasWifi,
@@ -1104,6 +1103,28 @@ export default function NewProjectPage() {
                     </>
                   )}
 
+                  {/* EV Charging — ground floor only */}
+                  {index === 0 && !isPureParking(floor.type) && (
+                    <>
+                      <Separator />
+                      <div className="p-3 bg-gray-50 rounded-lg">
+                        <div className="space-y-1.5">
+                          <Label className="text-xs text-gray-500">EV Charging Points (Ground Floor)</Label>
+                          <Input
+                            type="number"
+                            min="0"
+                            placeholder="e.g. 2"
+                            value={floor.evPoints}
+                            onChange={e => updateFloor(index, 'evPoints', e.target.value)}
+                          />
+                          <p className="text-xs text-gray-400">
+                            {parseInt(floor.evPoints) > 0 ? `${floor.evPoints} × ${fmt(r.ev)} = ${fmt(parseInt(floor.evPoints) * r.ev)}` : `${fmt(r.ev)} per EV point — 0 = not included`}
+                          </p>
+                        </div>
+                      </div>
+                    </>
+                  )}
+
                   {/* UPS Units — only if UPS is ON */}
                   {hasUps && !isParking(floor.type) && (
                     <>
@@ -1360,13 +1381,6 @@ export default function NewProjectPage() {
                 sub: `Conduit and wiring for CCTV cameras — ${fmt(r.cctv)} per floor`,
                 state: hasCctv,
                 set: setHasCctv,
-                isDefault: false,
-              },
-              {
-                label: 'EV Charging Point',
-                sub: `Electric vehicle charging wiring — ${fmt(r.ev)} per unit`,
-                state: hasEv,
-                set: setHasEv,
                 isDefault: false,
               },
               {
