@@ -104,10 +104,11 @@ export default function ProjectPage() {
 
   // Shared
   const [project, setProject] = useState(null)
-  const [boqItems, setBoqItems] = useState([])
+  const [marketPrices, setMarketPrices] = useState({})
   const [customItems, setCustomItems] = useState([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [mobileTab, setMobileTab] = useState('boq')
 
   // Edit form — Client
   const [clientName, setClientName] = useState('')
@@ -228,8 +229,7 @@ export default function ProjectPage() {
         setFloors(Array.from({ length: count }, (_, i) => createFloor(i)))
       }
 
-      const calculated = calculateFullBOQ(proj, priceMap)
-      setBoqItems(calculated)
+      setMarketPrices(priceMap)
     }
 
     setCustomItems(customs || [])
@@ -261,8 +261,49 @@ export default function ProjectPage() {
     return item.total_price || 0
   }
 
+  const { liveItems, liveMetrics } = useMemo(() => {
+    if (!sqft || !project) return { liveItems: [], liveMetrics: null }
+    const td = floors.reduce((acc, f) => ({
+      bedroom: acc.bedroom + (parseInt(f.bedroomDoors) || 0),
+      washroom: acc.washroom + (parseInt(f.washroomDoors) || 0),
+      toilets: acc.toilets + (parseInt(f.toilets) || 0),
+      balcony: acc.balcony + (parseInt(f.balconyDoors) || 0),
+      utility: acc.utility + (parseInt(f.utilityDoors) || 0),
+      kitchens: acc.kitchens + (parseInt(f.kitchens) || 0),
+      poojaRoom: acc.poojaRoom + (f.poojaRoom ? 1 : 0),
+    }), { bedroom: 0, washroom: 0, toilets: 0, balcony: 0, utility: 0, kitchens: 0, poojaRoom: 0 })
+    const proj = {
+      dimension_width: isIrregular ? parseFloat(sideFront) : parseFloat(width),
+      dimension_length: isIrregular ? parseFloat(sideLeft) : parseFloat(length),
+      floors: floorCount, masonry_type: masonryType,
+      floors_data: floors.map((f, i) => i === 0 && sumpRateOverride ? { ...f, sumpRateOverride: parseFloat(sumpRateOverride) } : f),
+      has_sump: hasSump, sump_capacity: sumpCapacity || null, sump_type: sumpType,
+      has_ssm: hasSsm, ssm_courses: ssmCourses || null,
+      has_compound_wall: hasCompoundWall, has_rainwater: hasRainwater, has_gas: hasGas,
+      has_oht: hasOht, oht_capacity: ohtCapacity === 'custom' ? parseFloat(ohtCustom) : parseFloat(ohtCapacity),
+      has_main_gate: hasMainGate, has_ac: hasAc, has_cctv: hasCctv,
+      has_ev: (parseInt(floors[0]?.evPoints) || 0) > 0,
+      has_solar: hasSolar, has_ups: hasUps, has_wifi: hasWifi,
+      painting_grade: paintingGrade, flooring_type: flooringType,
+      window_type: windowType, railing_type: railingType,
+      bedroom_doors: td.bedroom, washroom_doors: td.washroom,
+      balcony_doors: td.balcony, utility_doors: td.utility,
+      has_pooja_room_door: td.poojaRoom > 0,
+    }
+    const items = calculateFullBOQ(proj, marketPrices)
+    const totalSlabArea = floors.reduce((sum, f) => sum + (parseFloat(f.sqft) || sqft), 0)
+    return {
+      liveItems: items,
+      liveMetrics: { sqft, chadra: Math.round(totalSlabArea / 100), steelTonnes: Math.ceil(totalSlabArea * 4.5 / 1000) },
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sqft, floors, masonryType, floorCount, sumpRateOverride, hasSump, sumpCapacity, sumpType,
+      hasSsm, ssmCourses, hasCompoundWall, hasRainwater, hasGas, hasOht, ohtCapacity, ohtCustom,
+      hasMainGate, hasAc, hasCctv, hasSolar, hasUps, hasWifi, paintingGrade, flooringType,
+      windowType, railingType, marketPrices, project])
+
   const overriddenGrandTotal = useMemo(() => {
-    const boqTotal = boqItems.reduce((sum, item, i) => {
+    const boqTotal = liveItems.reduce((sum, item, i) => {
       const ov = boqOverrides[i]
       if (!ov) return sum + (item.total_price || 0)
       const qty = parseFloat(ov.quantity ?? item.quantity)
@@ -273,7 +314,7 @@ export default function ProjectPage() {
     }, 0)
     const customTotal = customItems.reduce((sum, item) => sum + (item.total_price || 0), 0)
     return boqTotal + customTotal
-  }, [boqItems, boqOverrides, customItems])
+  }, [liveItems, boqOverrides, customItems])
 
   const hasAnyOverride = Object.keys(boqOverrides).length > 0
 
@@ -460,7 +501,7 @@ export default function ProjectPage() {
     detailsSheet['!cols'] = [{ wch: 25 }, { wch: 35 }]
     XLSX.utils.book_append_sheet(workbook, detailsSheet, 'Project Details')
 
-    const grouped = groupByStageWithIndex(boqItems)
+    const grouped = groupByStageWithIndex(liveItems)
     const boqHeader = ['Stage', 'Item', 'Unit', 'Quantity', 'Unit Price (₹)', 'Total (₹)']
     const boqRows = []
     Object.entries(grouped).forEach(([stage, items]) => {
@@ -489,33 +530,41 @@ export default function ProjectPage() {
   if (loading) return <AppLayout><div className="min-h-screen bg-gray-50 flex items-center justify-center"><p className="text-gray-400">Loading project...</p></div></AppLayout>
   if (!project) return <AppLayout><div className="min-h-screen bg-gray-50 flex items-center justify-center"><p className="text-gray-400">Project not found</p></div></AppLayout>
 
-  const grouped = groupByStageWithIndex(boqItems)
+  const grouped = groupByStageWithIndex(liveItems)
 
   return (
     <AppLayout>
-      <div className="min-h-screen bg-gray-50">
+      <div className="flex flex-col h-[calc(100vh-56px)]">
 
-        {/* Top bar */}
-        <div className="bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center sticky top-14 z-10">
-          <div className="flex items-center gap-3">
-            <button onClick={() => router.push('/projects')} className="text-gray-400 hover:text-gray-600 text-sm">← Back</button>
-            <Separator orientation="vertical" className="h-5" />
-            <div>
-              <h1 className="text-xl font-semibold text-gray-800">{project.client_name}</h1>
-              <p className="text-sm text-gray-400">{project.site_address} · {project.dimension_width}×{project.dimension_length} ft · {project.total_sqft} sqft</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            {hasAnyOverride && (
-              <Button variant="outline" size="sm" onClick={() => { setBoqOverrides({}); saveOverrides({}) }}>Reset Overrides</Button>
-            )}
-            <Button variant="outline" onClick={exportToExcel}>Export Excel</Button>
-            <Button>Export PDF</Button>
-            <Button onClick={handleUpdate} disabled={saving}>{saving ? 'Saving...' : 'Save Changes'}</Button>
-          </div>
+        {/* Mobile tabs */}
+        <div className="md:hidden flex border-b border-gray-200 bg-white shrink-0">
+          <button onClick={() => setMobileTab('form')} className={`flex-1 py-2.5 text-sm font-medium border-b-2 transition-colors ${mobileTab === 'form' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500'}`}>Edit Form</button>
+          <button onClick={() => setMobileTab('boq')} className={`flex-1 py-2.5 text-sm font-medium border-b-2 transition-colors ${mobileTab === 'boq' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500'}`}>
+            Live BOQ · ₹{(overriddenGrandTotal / 100000).toFixed(1)}L
+          </button>
         </div>
 
-        <div className="max-w-5xl mx-auto px-6 py-8 space-y-6">
+        <div className="flex-1 flex overflow-hidden min-h-0">
+
+        {/* ── LEFT: Edit Form (40%) ── */}
+        <div className={`flex flex-col overflow-y-auto border-r border-gray-200 bg-gray-50 ${mobileTab === 'boq' ? 'hidden md:flex md:w-[40%]' : 'w-full md:w-[40%]'}`}>
+
+          {/* Sticky form header */}
+          <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-4 py-3 flex justify-between items-center shrink-0 shadow-sm">
+            <div>
+              <div className="flex items-center gap-2">
+                <button onClick={() => router.push('/projects')} className="text-gray-400 hover:text-gray-600 text-sm">←</button>
+                <h1 className="text-base font-semibold text-gray-800">{project.client_name}</h1>
+              </div>
+              <p className="text-xs text-gray-400 mt-0.5">{project.site_address} · {project.dimension_width}×{project.dimension_length} ft</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={exportToExcel}>Excel</Button>
+              <Button size="sm" onClick={handleUpdate} disabled={saving}>{saving ? 'Saving...' : 'Save'}</Button>
+            </div>
+          </div>
+
+          <div className="px-4 py-4 space-y-4">
 
             {/* Project Details */}
             <div className="bg-white border border-gray-200 rounded-xl p-6">
@@ -1015,108 +1064,128 @@ export default function ProjectPage() {
               </CardContent>
             </Card>
 
-            <div className="flex justify-end gap-3 pb-4">
+            <div className="flex justify-end gap-3 py-6 px-1">
               <Button size="lg" onClick={handleUpdate} disabled={saving}>{saving ? 'Saving...' : 'Save Changes'}</Button>
             </div>
 
-            {/* ── Bill of Quantities ── */}
-            <div className="relative my-2">
-              <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-gray-300" /></div>
-              <div className="relative flex justify-center"><span className="px-4 bg-gray-50 text-xs font-semibold text-gray-400 uppercase tracking-widest">Bill of Quantities</span></div>
-            </div>
+          </div>{/* end form scroll */}
+        </div>{/* end left panel */}
 
-            {hasAnyOverride && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 text-sm text-blue-700">
-                Some quantities/prices have been manually adjusted and saved. All admins see these values.
+        {/* ── RIGHT: Live BOQ (60%) ── */}
+        <div className={`flex flex-col bg-white ${mobileTab === 'form' ? 'hidden md:flex md:w-[60%]' : 'w-full md:w-[60%]'}`}>
+
+          {/* Sticky BOQ header */}
+          <div className="sticky top-0 z-10 bg-gray-900 text-white shrink-0">
+            <div className="px-5 py-3 flex items-center justify-between">
+              <div>
+                <p className="text-xs text-gray-400 uppercase tracking-widest">Live BOQ · {project.client_name}</p>
+                <p className="text-2xl font-bold tabular-nums mt-0.5">{formatCurrency(overriddenGrandTotal)}</p>
+              </div>
+              <div className="flex flex-col items-end gap-1">
+                <p className="text-3xl font-bold text-blue-400 tabular-nums">₹{(overriddenGrandTotal / 100000).toFixed(1)}<span className="text-lg text-gray-400">L</span></p>
+                <div className="flex gap-2">
+                  {hasAnyOverride && (
+                    <button onClick={() => { setBoqOverrides({}); saveOverrides({}) }} className="text-xs text-amber-300 hover:text-amber-200 underline">Reset overrides</button>
+                  )}
+                  <button onClick={exportToExcel} className="text-xs text-gray-400 hover:text-white underline">Excel</button>
+                </div>
+              </div>
+            </div>
+            {liveMetrics && (
+              <div className="flex divide-x divide-gray-700 border-t border-gray-700 text-center">
+                <div className="flex-1 py-2"><p className="text-xs text-gray-400">Site Area</p><p className="text-sm font-semibold">{liveMetrics.sqft.toLocaleString('en-IN')} sqft</p></div>
+                <div className="flex-1 py-2"><p className="text-xs text-gray-400">Chadra</p><p className="text-sm font-semibold">{liveMetrics.chadra}</p></div>
+                <div className="flex-1 py-2"><p className="text-xs text-gray-400">Steel</p><p className="text-sm font-semibold">{liveMetrics.steelTonnes} T</p></div>
               </div>
             )}
-
-            {/* BOQ Table */}
-            <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-              <div className="px-6 py-4 border-b border-gray-100">
-                <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Bill of Quantities</h2>
-                <p className="text-xs text-gray-400 mt-0.5">Edit Qty or Unit Price inline — changes auto-save and are visible to all admins</p>
+            {hasAnyOverride && (
+              <div className="px-4 py-2 bg-amber-900/40 border-t border-amber-700/50 text-xs text-amber-300">
+                Some qty/prices overridden — changes auto-save
               </div>
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="bg-gray-50 border-b border-gray-100">
-                    <th className="text-left px-6 py-3 text-xs font-medium text-gray-500">Item</th>
-                    <th className="text-right px-4 py-3 text-xs font-medium text-gray-500">Unit</th>
-                    <th className="text-right px-4 py-3 text-xs font-medium text-gray-500">Qty</th>
-                    <th className="text-right px-4 py-3 text-xs font-medium text-gray-500">Unit Price</th>
-                    <th className="text-right px-6 py-3 text-xs font-medium text-gray-500">Total</th>
+            )}
+          </div>
+
+          {/* BOQ table */}
+          <div className="flex-1 overflow-y-auto">
+            {liveItems.length === 0 ? (
+              <div className="flex items-center justify-center h-full text-gray-400 text-sm">Loading BOQ...</div>
+            ) : (
+              <table className="w-full text-sm border-collapse">
+                <thead className="sticky top-0 bg-gray-50 z-10">
+                  <tr className="border-b border-gray-200">
+                    <th className="text-left px-4 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wide">Item</th>
+                    <th className="text-right px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wide">Qty</th>
+                    <th className="text-right px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wide">Unit</th>
+                    <th className="text-right px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wide">Rate</th>
+                    <th className="text-right px-4 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wide">Total</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {Object.entries(grouped).map(([stage, items]) => (
-                    <>
-                      <tr key={stage} className="bg-blue-50">
-                        <td colSpan={5} className="px-6 py-2 text-xs font-semibold text-blue-700 uppercase tracking-wide">{stage}</td>
-                      </tr>
-                      {items.map((item) => {
-                        const ov = boqOverrides[item._idx]
-                        const qtyOverridden = ov?.quantity !== undefined
-                        const upOverridden = ov?.unit_price !== undefined
-                        const isFixed = item.unit === 'fixed'
-                        return (
-                          <tr key={item._idx} className={`border-b border-gray-50 hover:bg-gray-50/70 ${ov ? 'bg-amber-50/30' : ''}`}>
-                            <td className="px-6 py-2 text-gray-700">{item.item_name}</td>
-                            <td className="px-4 py-2 text-right text-gray-500 text-xs">{isFixed ? 'Lumpsum' : item.unit || '—'}</td>
-                            <td className="px-4 py-2 text-right">
-                              {isFixed && item.quantity == null ? (
-                                <span className="text-gray-300 text-xs">—</span>
-                              ) : (
-                                <input
-                                  type="number"
-                                  value={qtyOverridden ? ov.quantity : (item.quantity ?? '')}
+                  {Object.entries(grouped).map(([stage, items]) => {
+                    const stageTotal = items.reduce((s, item) => s + getDisplayTotal(item), 0)
+                    return (
+                      <>
+                        <tr key={stage} className="bg-blue-50 border-t border-blue-100">
+                          <td className="px-4 py-2 text-xs font-bold text-blue-700 uppercase tracking-wide">{stage}</td>
+                          <td colSpan={3} />
+                          <td className="px-4 py-2 text-right text-xs font-bold text-blue-700">{formatCurrency(stageTotal)}</td>
+                        </tr>
+                        {items.map((item) => {
+                          const ov = boqOverrides[item._idx]
+                          const qtyOverridden = ov?.quantity !== undefined
+                          const upOverridden = ov?.unit_price !== undefined
+                          return (
+                            <tr key={item._idx} className={`border-b border-gray-50 hover:bg-gray-50/70 ${ov ? 'bg-amber-50/40' : ''}`}>
+                              <td className="px-4 py-2 text-gray-700 pl-6">{item.item_name}</td>
+                              <td className="px-3 py-2 text-right">
+                                <input type="number" value={qtyOverridden ? ov.quantity : (item.quantity ?? '')}
                                   onChange={e => handleOverride(item._idx, 'quantity', e.target.value)}
-                                  className={`w-24 text-right px-2 py-1 border rounded text-xs focus:outline-none focus:ring-1 focus:ring-blue-300 ${qtyOverridden ? 'border-amber-300 bg-amber-50 text-amber-800' : 'border-gray-200 bg-white text-gray-600'}`}
-                                />
-                              )}
-                            </td>
-                            <td className="px-4 py-2 text-right">
-                              <input
-                                type="number"
-                                value={upOverridden ? ov.unit_price : (item.unit_price ?? '')}
-                                onChange={e => handleOverride(item._idx, 'unit_price', e.target.value)}
-                                className={`w-28 text-right px-2 py-1 border rounded text-xs focus:outline-none focus:ring-1 focus:ring-blue-300 ${upOverridden ? 'border-amber-300 bg-amber-50 text-amber-800' : 'border-gray-200 bg-white text-gray-600'}`}
-                              />
-                            </td>
-                            <td className="px-6 py-2 text-right font-medium text-gray-800">{formatCurrency(getDisplayTotal(item))}</td>
-                          </tr>
-                        )
-                      })}
-                    </>
-                  ))}
+                                  className={`w-20 text-right px-2 py-1 border rounded text-xs ${qtyOverridden ? 'border-amber-300 bg-amber-50 text-amber-800' : 'border-gray-200 bg-white text-gray-500'}`} />
+                              </td>
+                              <td className="px-3 py-2 text-right text-gray-400 text-xs">{item.unit}</td>
+                              <td className="px-3 py-2 text-right">
+                                <input type="number" value={upOverridden ? ov.unit_price : (item.unit_price ?? '')}
+                                  onChange={e => handleOverride(item._idx, 'unit_price', e.target.value)}
+                                  className={`w-24 text-right px-2 py-1 border rounded text-xs ${upOverridden ? 'border-amber-300 bg-amber-50 text-amber-800' : 'border-gray-200 bg-white text-gray-500'}`} />
+                              </td>
+                              <td className="px-4 py-2 text-right font-semibold text-gray-800 tabular-nums">{formatCurrency(getDisplayTotal(item))}</td>
+                            </tr>
+                          )
+                        })}
+                      </>
+                    )
+                  })}
                   {customItems.length > 0 && (
                     <>
-                      <tr className="bg-amber-50">
-                        <td colSpan={5} className="px-6 py-2 text-xs font-semibold text-amber-700 uppercase tracking-wide">Custom Add-on Items</td>
+                      <tr className="bg-amber-50 border-t border-amber-100">
+                        <td colSpan={5} className="px-4 py-2 text-xs font-bold text-amber-700 uppercase tracking-wide">Custom Add-on Items</td>
                       </tr>
                       {customItems.map((item, i) => (
                         <tr key={i} className="border-b border-gray-50 hover:bg-gray-50">
-                          <td className="px-6 py-3 text-gray-700">{item.item_name}</td>
-                          <td className="px-4 py-3 text-right text-gray-500">—</td>
-                          <td className="px-4 py-3 text-right text-gray-600">{item.quantity}</td>
-                          <td className="px-4 py-3 text-right text-gray-600">{formatCurrency(item.unit_price)}</td>
-                          <td className="px-6 py-3 text-right font-medium text-gray-800">{formatCurrency(item.total_price)}</td>
+                          <td className="px-4 py-2 text-gray-700 pl-6">{item.item_name}</td>
+                          <td className="px-3 py-2 text-right text-gray-500 text-xs tabular-nums">{item.quantity}</td>
+                          <td className="px-3 py-2 text-right text-gray-400 text-xs">—</td>
+                          <td className="px-3 py-2 text-right text-gray-500 text-xs tabular-nums">{formatCurrency(item.unit_price)}</td>
+                          <td className="px-4 py-2 text-right font-semibold text-gray-800 tabular-nums">{formatCurrency(item.total_price)}</td>
                         </tr>
                       ))}
                     </>
                   )}
                 </tbody>
                 <tfoot>
-                  <tr className="bg-gray-800">
-                    <td colSpan={4} className="px-6 py-4 text-white font-semibold">Grand Total</td>
-                    <td className="px-6 py-4 text-right text-white font-bold text-base">{formatCurrency(overriddenGrandTotal)}</td>
+                  <tr className="bg-gray-900 sticky bottom-0">
+                    <td colSpan={4} className="px-4 py-3 text-white font-semibold text-sm">Grand Total</td>
+                    <td className="px-4 py-3 text-right text-white font-bold text-base tabular-nums">{formatCurrency(overriddenGrandTotal)}</td>
                   </tr>
                 </tfoot>
               </table>
-            </div>
-
+            )}
           </div>
 
-      </div>
+        </div>{/* end right panel */}
+
+        </div>{/* end split */}
+      </div>{/* end outer */}
     </AppLayout>
   )
 }
