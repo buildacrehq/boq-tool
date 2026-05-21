@@ -136,6 +136,45 @@ export default function NewProjectPage() {
   const [showDiscardModal, setShowDiscardModal] = useState(false)
   const autoSaveReady = useRef(false)
 
+  // All state declarations must come before useEffect hooks that reference them
+  const [clientName, setClientName] = useState('')
+  const [clientPhone, setClientPhone] = useState('')
+  const [clientLocation, setClientLocation] = useState('')
+  const [width, setWidth] = useState('')
+  const [length, setLength] = useState('')
+  const [isIrregular, setIsIrregular] = useState(false)
+  const [sideFront, setSideFront] = useState('')
+  const [sideBack, setSideBack] = useState('')
+  const [sideLeft, setSideLeft] = useState('')
+  const [sideRight, setSideRight] = useState('')
+  const [masonryType, setMasonryType] = useState('block')
+  const [floorCount, setFloorCount] = useState(1)
+  const [floors, setFloors] = useState([createFloor(0)])
+  const [hasLift, setHasLift] = useState(false)
+  const [hasSump, setHasSump] = useState(true)
+  const [sumpCapacity, setSumpCapacity] = useState('')
+  const [sumpType, setSumpType] = useState('rcc')
+  const [sumpRateOverride, setSumpRateOverride] = useState('')
+  const [hasSsm, setHasSsm] = useState(false)
+  const [ssmCourses, setSsmCourses] = useState('')
+  const [hasCompoundWall, setHasCompoundWall] = useState(true)
+  const [hasRainwater, setHasRainwater] = useState(true)
+  const [hasGas, setHasGas] = useState(true)
+  const [hasOht, setHasOht] = useState(true)
+  const [ohtCapacity, setOhtCapacity] = useState('1000')
+  const [ohtCustom, setOhtCustom] = useState('')
+  const [hasMainGate, setHasMainGate] = useState(true)
+  const [hasAc, setHasAc] = useState(false)
+  const [hasCctv, setHasCctv] = useState(false)
+  const [hasSolar, setHasSolar] = useState(false)
+  const [hasUps, setHasUps] = useState(false)
+  const [hasWifi, setHasWifi] = useState(false)
+  const [paintingGrade, setPaintingGrade] = useState('')
+  const [windowType, setWindowType] = useState('')
+  const [railingType, setRailingType] = useState('')
+  const [flooringType, setFlooringType] = useState('')
+  const [customItems, setCustomItems] = useState([{ item_name: '', quantity: '', unit_price: '', notes: '' }])
+
   const mp = (key, fallback) => parseFloat(marketPrices[key]) || fallback
   const fmt = (n) => `₹${Math.round(n).toLocaleString('en-IN')}`
 
@@ -270,21 +309,6 @@ export default function NewProjectPage() {
     setMarketPrices(map)
   }
 
-  // Section 1
-  const [clientName, setClientName] = useState('')
-  const [clientPhone, setClientPhone] = useState('')
-  const [clientLocation, setClientLocation] = useState('')
-
-  // Section 2
-  const [width, setWidth] = useState('')
-  const [length, setLength] = useState('')
-  const [isIrregular, setIsIrregular] = useState(false)
-  const [sideFront, setSideFront] = useState('')
-  const [sideBack, setSideBack] = useState('')
-  const [sideLeft, setSideLeft] = useState('')
-  const [sideRight, setSideRight] = useState('')
-  const [masonryType, setMasonryType] = useState('block')
-
   function brahmaguptaArea(a, b, c, d) {
     const s = (a + b + c + d) / 2
     return Math.sqrt((s - a) * (s - b) * (s - c) * (s - d))
@@ -296,10 +320,6 @@ export default function NewProjectPage() {
         : null)
     : (width && length ? parseFloat(width) * parseFloat(length) : null)
 
-
-  // Section 3 — Floors
-  const [floorCount, setFloorCount] = useState(1)
-  const [floors, setFloors] = useState([createFloor(0)])
 
   function handleFloorCountChange(count) {
     const newCount = parseInt(count)
@@ -366,40 +386,6 @@ export default function NewProjectPage() {
       return updated
     })
   }
-
-  // Section 4 — Optional
-  const [hasLift, setHasLift] = useState(false)
-  const [hasSump, setHasSump] = useState(true)
-  const [sumpCapacity, setSumpCapacity] = useState('')
-  const [sumpType, setSumpType] = useState('rcc')
-  const [sumpRateOverride, setSumpRateOverride] = useState('')
-  const [hasSsm, setHasSsm] = useState(false)
-  const [ssmCourses, setSsmCourses] = useState('')
-
-  // Section 5 — Services
-  const [hasCompoundWall, setHasCompoundWall] = useState(true)
-  const [hasRainwater, setHasRainwater] = useState(true)
-  const [hasGas, setHasGas] = useState(true)
-  const [hasOht, setHasOht] = useState(true)
-  const [ohtCapacity, setOhtCapacity] = useState('1000')
-  const [ohtCustom, setOhtCustom] = useState('')
-  const [hasMainGate, setHasMainGate] = useState(true)
-  const [hasAc, setHasAc] = useState(false)
-  const [hasCctv, setHasCctv] = useState(false)
-  const [hasSolar, setHasSolar] = useState(false)
-  const [hasUps, setHasUps] = useState(false)
-  const [hasWifi, setHasWifi] = useState(false)
-
-  // Section 6 — Finishes
-  const [paintingGrade, setPaintingGrade] = useState('')
-  const [windowType, setWindowType] = useState('')
-  const [railingType, setRailingType] = useState('')
-  const [flooringType, setFlooringType] = useState('')
-
-  // Section 7 — Custom items
-  const [customItems, setCustomItems] = useState([
-    { item_name: '', quantity: '', unit_price: '', notes: '' }
-  ])
 
   function addCustomItem() {
     setCustomItems(prev => [...prev, { item_name: '', quantity: '', unit_price: '', notes: '' }])
