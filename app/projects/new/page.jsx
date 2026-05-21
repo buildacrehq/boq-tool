@@ -611,7 +611,7 @@ export default function NewProjectPage() {
       )}
 
       {/* Top bar */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center sticky top-0 z-10">
+      <div className="bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center sticky top-14 z-10">
         <div>
           <h1 className="text-xl font-semibold text-gray-800">New BOQ Estimate</h1>
           <p className="text-sm text-gray-400 mt-0.5">Fill all details to generate estimate</p>
@@ -1561,7 +1561,7 @@ export default function NewProjectPage() {
       </div>{/* end form column */}
 
       {/* Live Preview Panel */}
-      <div className="hidden lg:block sticky top-[73px] self-start">
+      <div className="hidden lg:block sticky top-[129px] self-start">
         <div className="rounded-2xl overflow-hidden border border-gray-200 shadow-sm bg-white">
           {/* Header — total */}
           <div className="bg-gray-900 px-5 py-4 text-white">
