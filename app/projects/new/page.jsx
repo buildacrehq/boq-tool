@@ -1087,11 +1087,11 @@ export default function NewProjectPage() {
                             <Label className="text-xs text-gray-500">Window Area (sqft)</Label>
                             <Input
                               type="number"
-                              placeholder={floor.sqft ? `Auto: ${Math.ceil((parseFloat(floor.sqft) || 0) * 0.1)} sqft (10% of floor)` : 'Enter sqft'}
+                              placeholder={`Auto: ${Math.ceil((parseFloat(floor.sqft) || sqft || 0) * 0.1)} sqft`}
                               value={floor.windowSqft}
                               onChange={e => updateFloor(index, 'windowSqft', e.target.value)}
                             />
-                            <p className="text-xs text-gray-400">Standard = 10% of floor area. Override if needed.</p>
+                            <p className="text-xs text-gray-400">10% of floor area. Override if needed.</p>
                           </div>
                         </div>
                       </div>

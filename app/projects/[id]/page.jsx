@@ -829,7 +829,7 @@ export default function ProjectPage() {
                             </div>
                             <div className="space-y-1.5">
                               <Label className="text-xs">Window Area (sqft)</Label>
-                              <Input type="number" placeholder={floor.sqft ? `Auto: ${Math.ceil((parseFloat(floor.sqft)||0)*0.1)} sqft` : 'Enter sqft'} value={floor.windowSqft} onChange={e => updateFloor(index, 'windowSqft', e.target.value)} />
+                              <Input type="number" placeholder={`Auto: ${Math.ceil((parseFloat(floor.sqft) || sqft || 0) * 0.1)} sqft`} value={floor.windowSqft} onChange={e => updateFloor(index, 'windowSqft', e.target.value)} />
                             </div>
                           </div>
                         </>
