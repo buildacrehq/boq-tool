@@ -13,15 +13,14 @@ const NAV = [
 export default function TopNav() {
   const router   = useRouter()
   const pathname = usePathname()
-  const [user, setUser]   = useState(null)
-  const [open, setOpen]   = useState(false)
+  const [user, setUser] = useState(null)
+  const [open, setOpen] = useState(false)
 
   useEffect(() => {
     const stored = localStorage.getItem('boq_user')
     if (stored) setUser(JSON.parse(stored))
   }, [])
 
-  // Close drawer on route change
   useEffect(() => { setOpen(false) }, [pathname])
 
   function handleLogout() {
@@ -38,11 +37,12 @@ export default function TopNav() {
 
   return (
     <>
-      {/* Fixed top bar */}
-      <header className="fixed top-0 left-0 right-0 h-14 bg-gray-900 flex items-center justify-between px-4 z-30 border-b border-gray-700">
+      {/* ── Fixed top bar ── */}
+      <header className="fixed top-0 left-0 right-0 h-14 bg-gray-900 flex items-center px-4 z-30 border-b border-gray-700">
+
         {/* Logo */}
-        <button onClick={() => router.push('/dashboard')} className="flex items-center gap-2.5">
-          <div className="w-7 h-7 bg-blue-500 rounded-lg flex items-center justify-center shrink-0">
+        <button onClick={() => router.push('/dashboard')} className="flex items-center gap-2.5 shrink-0">
+          <div className="w-7 h-7 bg-blue-500 rounded-lg flex items-center justify-center">
             <span className="text-white text-xs font-bold">B</span>
           </div>
           <div className="text-left">
@@ -51,30 +51,62 @@ export default function TopNav() {
           </div>
         </button>
 
-        {/* Burger button */}
+        {/* Desktop nav — hidden on mobile */}
+        <nav className="hidden md:flex items-center gap-1 ml-8">
+          {NAV.map(item => (
+            <button
+              key={item.path}
+              onClick={() => router.push(item.path)}
+              className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                isActive(item.path)
+                  ? 'bg-blue-600 text-white'
+                  : 'text-gray-400 hover:bg-gray-800 hover:text-white'
+              }`}
+            >
+              {item.label}
+            </button>
+          ))}
+        </nav>
+
+        {/* Desktop user + logout — hidden on mobile */}
+        <div className="hidden md:flex items-center gap-3 ml-auto">
+          {user && (
+            <p className="text-gray-400 text-xs truncate max-w-40">
+              {user.name} · {user.role}
+            </p>
+          )}
+          <button
+            onClick={handleLogout}
+            className="px-3 py-1.5 rounded-lg text-sm text-red-400 hover:bg-gray-800 hover:text-red-300 transition-all"
+          >
+            Logout
+          </button>
+        </div>
+
+        {/* Mobile burger — hidden on desktop */}
         <button
           onClick={() => setOpen(true)}
-          className="w-9 h-9 flex flex-col items-center justify-center gap-1.5 rounded-lg hover:bg-gray-800 transition-colors"
+          className="md:hidden ml-auto w-9 h-9 flex flex-col items-center justify-center gap-1.5 rounded-lg hover:bg-gray-800 transition-colors"
           aria-label="Open menu"
         >
           <span className="w-5 h-0.5 bg-gray-300 rounded-full" />
           <span className="w-5 h-0.5 bg-gray-300 rounded-full" />
           <span className="w-5 h-0.5 bg-gray-300 rounded-full" />
         </button>
+
       </header>
 
-      {/* Backdrop */}
+      {/* ── Mobile drawer backdrop ── */}
       {open && (
         <div
-          className="fixed inset-0 bg-black/50 z-40 backdrop-blur-sm"
+          className="fixed inset-0 bg-black/50 z-40 backdrop-blur-sm md:hidden"
           onClick={() => setOpen(false)}
         />
       )}
 
-      {/* Drawer */}
-      <div className={`fixed top-0 right-0 h-screen w-64 bg-gray-900 z-50 flex flex-col shadow-2xl transition-transform duration-250 ${open ? 'translate-x-0' : 'translate-x-full'}`}>
+      {/* ── Mobile drawer ── */}
+      <div className={`fixed top-0 right-0 h-screen w-64 bg-gray-900 z-50 flex flex-col shadow-2xl transition-transform duration-200 md:hidden ${open ? 'translate-x-0' : 'translate-x-full'}`}>
 
-        {/* Drawer header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-700">
           <p className="text-white font-semibold text-sm">Menu</p>
           <button
@@ -85,7 +117,6 @@ export default function TopNav() {
           </button>
         </div>
 
-        {/* Nav items */}
         <nav className="flex-1 px-3 py-4 space-y-1">
           {NAV.map(item => (
             <button
@@ -102,12 +133,9 @@ export default function TopNav() {
           ))}
         </nav>
 
-        {/* User + Logout */}
         <div className="px-4 py-4 border-t border-gray-700 space-y-3">
           {user && (
-            <p className="text-gray-400 text-xs px-1 truncate">
-              {user.name} · {user.role}
-            </p>
+            <p className="text-gray-400 text-xs px-1 truncate">{user.name} · {user.role}</p>
           )}
           <button
             onClick={handleLogout}
