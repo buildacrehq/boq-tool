@@ -26,10 +26,17 @@ const DEFAULT_FLOOR_GROUPS = [
   { prefix: 'uf_duplexstudy', label: 'UF — Duplex End (+ Study Room)',   note: 'duplex_end_study' },
 ]
 
+const VEHICLE_OPTIONS = ['', 'Tractor', '709', '6W', '10W']
+
 const ROWS = [
-  { key: 'blocks', label: 'Blocks',  unit: 'Nos',  divisible: false },
-  { key: 'bricks', label: 'Bricks',  unit: 'Nos',  divisible: false },
-  { key: 'cement', label: 'Cement',  unit: 'Bags', divisible: true  },
+  { key: 'blocks', label: 'Blocks',         unit: 'Nos',     divisible: false, type: 'number',  table: 'boq_quantities' },
+  { key: 'bricks', label: 'Bricks',         unit: 'Nos',     divisible: false, type: 'number',  table: 'boq_quantities' },
+  { key: 'cement', label: 'Cement',         unit: 'Bags',    divisible: true,  type: 'number',  table: 'boq_quantities' },
+  { key: 'slab',   label: 'Slab Concrete',  unit: 'CUM',     divisible: true,  type: 'number',  table: 'boq_quantities' },
+  { key: 'msand',  label: 'M Sand',         unit: 'Vehicle', divisible: false, type: 'vehicle', table: 'boq_vehicle_types' },
+  { key: '20mm',   label: '20mm Aggregate', unit: 'Vehicle', divisible: false, type: 'vehicle', table: 'boq_vehicle_types' },
+  { key: 'elec',   label: 'Electrical',     unit: '₹',       divisible: false, type: 'number',  table: 'boq_quantities' },
+  { key: 'misc',   label: 'Misc',           unit: '₹',       divisible: false, type: 'number',  table: 'boq_quantities' },
 ]
 
 export default function CalcSettingsPage() {
@@ -58,15 +65,19 @@ export default function CalcSettingsPage() {
   }, [])
 
   async function fetchData() {
-    const { data } = await supabase.from('boq_quantities').select('*')
+    const [{ data: qData }, { data: vData }] = await Promise.all([
+      supabase.from('boq_quantities').select('*'),
+      supabase.from('boq_vehicle_types').select('*'),
+    ])
     const map = {}
-    data?.forEach(r => { map[r.row_key] = r })
+    qData?.forEach(r => { map[r.row_key] = r })
+    vData?.forEach(r => { map[r.row_key] = r })
     setRows(map)
-    // Add any custom prefixes found in DB that aren't in DEFAULT_FLOOR_GROUPS
+
     const knownPrefixes = new Set(DEFAULT_FLOOR_GROUPS.map(g => g.prefix))
     const customPrefixes = new Set()
-    data?.forEach(r => {
-      const prefix = r.row_key.replace(/_blocks$|_bricks$|_cement$/, '')
+    qData?.forEach(r => {
+      const prefix = r.row_key.replace(/_blocks$|_bricks$|_cement$|_slab$|_elec$|_misc$/, '')
       if (!knownPrefixes.has(prefix)) customPrefixes.add(prefix)
     })
     if (customPrefixes.size > 0) {
@@ -82,19 +93,38 @@ export default function CalcSettingsPage() {
     const prefix = newPrefix.trim().toLowerCase().replace(/\s+/g, '_')
     if (!prefix || !newLabel.trim()) return
     setAddingSaving(true)
-    const source = copyFrom ? rows : null
-    const base = (suffix) => {
-      if (source && copyFrom) {
-        const r = source[`${copyFrom}_${suffix}`]
+    const now = new Date().toISOString()
+
+    const baseNum = (suffix) => {
+      if (copyFrom) {
+        const r = rows[`${copyFrom}_${suffix}`]
         if (r) return { s20x30: r.s20x30, s20x40: r.s20x40, s30x40: r.s30x40, s30x50: r.s30x50, s40x40: r.s40x40, s40x60: r.s40x60 }
       }
       return { s20x30: 0, s20x40: 0, s30x40: 0, s30x50: 0, s40x40: 0, s40x60: 0 }
     }
+
+    const baseVehicle = (suffix) => {
+      if (copyFrom) {
+        const r = rows[`${copyFrom}_${suffix}`]
+        if (r) return { s20x30: r.s20x30, s20x40: r.s20x40, s30x40: r.s30x40, s30x50: r.s30x50, s40x40: r.s40x40, s40x60: r.s40x60 }
+      }
+      return { s20x30: null, s20x40: null, s30x40: null, s30x50: null, s40x40: null, s40x60: null }
+    }
+
     await supabase.from('boq_quantities').upsert([
-      { row_key: `${prefix}_blocks`, ...base('blocks'), divisible: false, updated_by: user?.name, updated_at: new Date().toISOString() },
-      { row_key: `${prefix}_bricks`, ...base('bricks'), divisible: false, updated_by: user?.name, updated_at: new Date().toISOString() },
-      { row_key: `${prefix}_cement`, ...base('cement'), divisible: true,  updated_by: user?.name, updated_at: new Date().toISOString() },
+      { row_key: `${prefix}_blocks`, ...baseNum('blocks'), divisible: false, updated_by: user?.name, updated_at: now },
+      { row_key: `${prefix}_bricks`, ...baseNum('bricks'), divisible: false, updated_by: user?.name, updated_at: now },
+      { row_key: `${prefix}_cement`, ...baseNum('cement'), divisible: true,  updated_by: user?.name, updated_at: now },
+      { row_key: `${prefix}_slab`,   ...baseNum('slab'),   divisible: true,  updated_by: user?.name, updated_at: now },
+      { row_key: `${prefix}_elec`,   ...baseNum('elec'),   divisible: false, updated_by: user?.name, updated_at: now },
+      { row_key: `${prefix}_misc`,   ...baseNum('misc'),   divisible: false, updated_by: user?.name, updated_at: now },
     ], { onConflict: 'row_key' })
+
+    await supabase.from('boq_vehicle_types').upsert([
+      { row_key: `${prefix}_msand`, ...baseVehicle('msand'), updated_by: user?.name, updated_at: now },
+      { row_key: `${prefix}_20mm`,  ...baseVehicle('20mm'),  updated_by: user?.name, updated_at: now },
+    ], { onConflict: 'row_key' })
+
     setFloorGroups(prev => [...prev, { prefix, label: newLabel.trim(), note: 'Custom floor type' }])
     setActiveGroup(prefix)
     setNewPrefix(''); setNewLabel(''); setCopyFrom(''); setShowAddForm(false)
@@ -119,23 +149,40 @@ export default function CalcSettingsPage() {
     return !!edited[rowKey] && Object.keys(edited[rowKey]).length > 0
   }
 
-  async function saveRow(rowKey, divisible) {
+  async function saveRow(rowKey, rowDef) {
     const current = rows[rowKey] || {}
     const changes = edited[rowKey] || {}
-    const payload = {
-      row_key: rowKey,
-      s20x30: parseFloat(changes.s20x30 ?? current.s20x30) || 0,
-      s20x40: parseFloat(changes.s20x40 ?? current.s20x40) || 0,
-      s30x40: parseFloat(changes.s30x40 ?? current.s30x40) || 0,
-      s30x50: parseFloat(changes.s30x50 ?? current.s30x50) || 0,
-      s40x40: parseFloat(changes.s40x40 ?? current.s40x40) || 0,
-      s40x60: parseFloat(changes.s40x60 ?? current.s40x60) || 0,
-      divisible,
-      updated_by: user?.name,
-      updated_at: new Date().toISOString(),
-    }
     setSaving(rowKey)
-    await supabase.from('boq_quantities').upsert(payload, { onConflict: 'row_key' })
+
+    if (rowDef.type === 'vehicle') {
+      const payload = {
+        row_key: rowKey,
+        s20x30: changes.s20x30 !== undefined ? (changes.s20x30 || null) : (current.s20x30 || null),
+        s20x40: changes.s20x40 !== undefined ? (changes.s20x40 || null) : (current.s20x40 || null),
+        s30x40: changes.s30x40 !== undefined ? (changes.s30x40 || null) : (current.s30x40 || null),
+        s30x50: changes.s30x50 !== undefined ? (changes.s30x50 || null) : (current.s30x50 || null),
+        s40x40: changes.s40x40 !== undefined ? (changes.s40x40 || null) : (current.s40x40 || null),
+        s40x60: changes.s40x60 !== undefined ? (changes.s40x60 || null) : (current.s40x60 || null),
+        updated_by: user?.name,
+        updated_at: new Date().toISOString(),
+      }
+      await supabase.from('boq_vehicle_types').upsert(payload, { onConflict: 'row_key' })
+    } else {
+      const payload = {
+        row_key: rowKey,
+        s20x30: parseFloat(changes.s20x30 ?? current.s20x30) || 0,
+        s20x40: parseFloat(changes.s20x40 ?? current.s20x40) || 0,
+        s30x40: parseFloat(changes.s30x40 ?? current.s30x40) || 0,
+        s30x50: parseFloat(changes.s30x50 ?? current.s30x50) || 0,
+        s40x40: parseFloat(changes.s40x40 ?? current.s40x40) || 0,
+        s40x60: parseFloat(changes.s40x60 ?? current.s40x60) || 0,
+        divisible: rowDef.divisible,
+        updated_by: user?.name,
+        updated_at: new Date().toISOString(),
+      }
+      await supabase.from('boq_quantities').upsert(payload, { onConflict: 'row_key' })
+    }
+
     setSaving(null)
     setSaved(rowKey)
     setTimeout(() => setSaved(null), 1500)
@@ -154,7 +201,7 @@ export default function CalcSettingsPage() {
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl font-semibold text-gray-800">BOQ Quantities</h1>
-            <p className="text-sm text-gray-400 mt-0.5">Masonry quantities per floor type and site size — changes apply to all new estimates</p>
+            <p className="text-sm text-gray-400 mt-0.5">Masonry, slab, M&amp;A and electrical quantities per floor type and site size</p>
           </div>
           <div className="flex items-center gap-3">
             <button onClick={() => setShowAddForm(v => !v)} className="text-sm px-3 py-1.5 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-50">
@@ -238,8 +285,8 @@ export default function CalcSettingsPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-100 bg-gray-50">
-                  <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 w-32">Material</th>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 w-16">Unit</th>
+                  <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 w-36">Material</th>
+                  <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 w-20">Unit</th>
                   {SIZES.map(s => (
                     <th key={s} className="text-center px-2 py-3 text-xs font-medium text-gray-500">{s}</th>
                   ))}
@@ -255,20 +302,40 @@ export default function CalcSettingsPage() {
                   return (
                     <tr key={rowKey} className={`border-b border-gray-50 ${dirty ? 'bg-amber-50' : 'hover:bg-gray-50'}`}>
                       <td className="px-6 py-3 font-medium text-gray-800">{row.label}</td>
-                      <td className="px-4 py-3 text-gray-400 text-xs">{row.unit}{row.divisible ? ' *' : ''}</td>
+                      <td className="px-4 py-3 text-gray-400 text-xs">
+                        {row.unit}
+                        {row.divisible ? ' *' : ''}
+                        {row.type === 'vehicle' && <span className="ml-1 text-purple-400">†</span>}
+                      </td>
                       {SIZES.map(s => {
                         const col = sizeColMap[s]
+                        const val = cellValue(rowKey, col)
+                        const changed = edited[rowKey]?.[col] !== undefined
                         return (
                           <td key={s} className="px-2 py-2 text-center">
-                            <input
-                              type="number"
-                              min="0"
-                              className={`w-20 text-center border rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                                dirty && edited[rowKey]?.[col] !== undefined ? 'border-amber-400 bg-amber-50' : 'border-gray-200 bg-white'
-                              }`}
-                              value={cellValue(rowKey, col)}
-                              onChange={e => handleChange(rowKey, col, e.target.value)}
-                            />
+                            {row.type === 'vehicle' ? (
+                              <select
+                                className={`w-24 text-center border rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white ${
+                                  changed ? 'border-amber-400 bg-amber-50' : 'border-gray-200'
+                                }`}
+                                value={val || ''}
+                                onChange={e => handleChange(rowKey, col, e.target.value)}
+                              >
+                                {VEHICLE_OPTIONS.map(opt => (
+                                  <option key={opt} value={opt}>{opt || '— None'}</option>
+                                ))}
+                              </select>
+                            ) : (
+                              <input
+                                type="number"
+                                min="0"
+                                className={`w-20 text-center border rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                                  changed ? 'border-amber-400 bg-amber-50' : 'border-gray-200 bg-white'
+                                }`}
+                                value={val}
+                                onChange={e => handleChange(rowKey, col, e.target.value)}
+                              />
+                            )}
                           </td>
                         )
                       })}
@@ -277,7 +344,7 @@ export default function CalcSettingsPage() {
                           <span className="text-xs text-green-600 font-medium">Saved</span>
                         ) : (
                           <button
-                            onClick={() => saveRow(rowKey, row.divisible)}
+                            onClick={() => saveRow(rowKey, row)}
                             disabled={!dirty || isSaving}
                             className="text-xs px-3 py-1.5 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                           >
@@ -291,8 +358,9 @@ export default function CalcSettingsPage() {
               </tbody>
             </table>
 
-            <div className="px-6 py-3 bg-gray-50 border-t border-gray-100">
-              <p className="text-xs text-gray-400">* Cement is divisible — quantity scales proportionally with the actual floor area vs the standard size area.</p>
+            <div className="px-6 py-3 bg-gray-50 border-t border-gray-100 space-y-1">
+              <p className="text-xs text-gray-400">* Cement and Slab are divisible — quantity scales with actual floor area vs standard size area.</p>
+              <p className="text-xs text-gray-400">† M Sand and 20mm Aggregate use vehicle type (Tractor / 709 / 6W / 10W). Price is pulled from Market Prices.</p>
             </div>
           </div>
         )}

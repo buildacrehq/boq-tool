@@ -148,6 +148,7 @@ export default function NewProjectPage() {
   const [user, setUser] = useState(null)
   const [marketPrices, setMarketPrices] = useState({})
   const [boqData, setBoqData] = useState({})
+  const [vehicleData, setVehicleData] = useState({})
   const [showRestorePrompt, setShowRestorePrompt] = useState(false)
   const [showDiscardModal, setShowDiscardModal] = useState(false)
   const [mobileTab, setMobileTab] = useState('form')
@@ -315,9 +316,10 @@ export default function NewProjectPage() {
   }
 
   async function fetchMarketPrices() {
-    const [{ data: pricesData }, { data: boqRows }] = await Promise.all([
+    const [{ data: pricesData }, { data: boqRows }, { data: vRows }] = await Promise.all([
       supabase.from('market_prices').select('*'),
       supabase.from('boq_quantities').select('*'),
+      supabase.from('boq_vehicle_types').select('*'),
     ])
     const map = {}
     pricesData?.forEach(p => {
@@ -334,6 +336,11 @@ export default function NewProjectPage() {
       boqMap[r.row_key] = { '20x30': r.s20x30, '20x40': r.s20x40, '30x40': r.s30x40, '30x50': r.s30x50, '40x40': r.s40x40, '40x60': r.s40x60, divisible: r.divisible }
     })
     setBoqData(boqMap)
+    const vMap = {}
+    vRows?.forEach(r => {
+      vMap[r.row_key] = { '20x30': r.s20x30, '20x40': r.s20x40, '30x40': r.s30x40, '30x50': r.s30x50, '40x40': r.s40x40, '40x60': r.s40x60 }
+    })
+    setVehicleData(vMap)
   }
 
   function brahmaguptaArea(a, b, c, d) {
@@ -491,7 +498,7 @@ export default function NewProjectPage() {
       ...(customBlockPrice ? { 'Blocks': parseFloat(customBlockPrice) } : {}),
       ...(customBrickPrice ? { 'Bricks': parseFloat(customBrickPrice) } : {}),
     }
-    const items = calculateFullBOQ(project, effectivePrices, boqData)
+    const items = calculateFullBOQ(project, effectivePrices, boqData, vehicleData)
     const liveTotal = items.reduce((s, i) => s + (i.total_price || 0), 0)
 
     const totalSlabArea = floors.reduce((sum, f) => sum + (parseFloat(f.sqft) || sqft), 0)
