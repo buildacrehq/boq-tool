@@ -71,7 +71,10 @@ export default function SettingsPage() {
             <p className="text-sm text-gray-400 mt-0.5">Manage staff access</p>
           </div>
           {!adding && (
+            <div className="flex items-center gap-3">
+            <button onClick={() => router.push('/settings/calc')} className="text-sm text-blue-600 hover:underline">BOQ Quantities →</button>
             <Button onClick={() => setAdding(true)}>+ Add Staff</Button>
+          </div>
           )}
         </div>
 

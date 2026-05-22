@@ -117,6 +117,7 @@ export default function ProjectPage() {
   // Shared
   const [project, setProject] = useState(null)
   const [marketPrices, setMarketPrices] = useState({})
+  const [boqData, setBoqData] = useState({})
   const [customItems, setCustomItems] = useState([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -180,10 +181,11 @@ export default function ProjectPage() {
   }, [id])
 
   async function fetchAll() {
-    const [{ data: proj }, { data: customs }, { data: prices }] = await Promise.all([
+    const [{ data: proj }, { data: customs }, { data: prices }, { data: boqRows }] = await Promise.all([
       supabase.from('projects').select('*').eq('id', id).single(),
       supabase.from('custom_items').select('*').eq('project_id', id),
       supabase.from('market_prices').select('*'),
+      supabase.from('boq_quantities').select('*'),
     ])
 
     const priceMap = {}
@@ -197,6 +199,11 @@ export default function ProjectPage() {
         }
       })
     }
+    const boqMap = {}
+    boqRows?.forEach(r => {
+      boqMap[r.row_key] = { '20x30': r.s20x30, '20x40': r.s20x40, '30x40': r.s30x40, '30x50': r.s30x50, '40x40': r.s40x40, '40x60': r.s40x60, divisible: r.divisible }
+    })
+    setBoqData(boqMap)
 
     if (proj) {
       setProject(proj)
@@ -311,7 +318,7 @@ export default function ProjectPage() {
       ...(customBlockPrice ? { 'Blocks': parseFloat(customBlockPrice) } : {}),
       ...(customBrickPrice ? { 'Bricks': parseFloat(customBrickPrice) } : {}),
     }
-    const items = calculateFullBOQ(proj, effectivePrices)
+    const items = calculateFullBOQ(proj, effectivePrices, boqData)
     const totalSlabArea = floors.reduce((sum, f) => sum + (parseFloat(f.sqft) || sqft), 0)
     return {
       liveItems: items,
@@ -321,7 +328,7 @@ export default function ProjectPage() {
   }, [sqft, floors, masonryType, floorCount, sumpRateOverride, hasSump, sumpCapacity, sumpType,
       hasSsm, ssmCourses, hasCompoundWall, hasRainwater, hasGas, hasOht, ohtCapacity, ohtCustom,
       hasMainGate, hasAc, hasCctv, hasSolar, hasUps, hasWifi, paintingGrade, flooringType,
-      windowType, railingType, marketPrices, project, customBlockPrice, customBrickPrice])
+      windowType, railingType, marketPrices, project, customBlockPrice, customBrickPrice, boqData])
 
   const overriddenGrandTotal = useMemo(() => {
     const boqTotal = liveItems.reduce((sum, item, i) => {

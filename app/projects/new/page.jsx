@@ -147,6 +147,7 @@ export default function NewProjectPage() {
   const [saving, setSaving] = useState(false)
   const [user, setUser] = useState(null)
   const [marketPrices, setMarketPrices] = useState({})
+  const [boqData, setBoqData] = useState({})
   const [showRestorePrompt, setShowRestorePrompt] = useState(false)
   const [showDiscardModal, setShowDiscardModal] = useState(false)
   const [mobileTab, setMobileTab] = useState('form')
@@ -314,9 +315,12 @@ export default function NewProjectPage() {
   }
 
   async function fetchMarketPrices() {
-    const { data } = await supabase.from('market_prices').select('*')
+    const [{ data: pricesData }, { data: boqRows }] = await Promise.all([
+      supabase.from('market_prices').select('*'),
+      supabase.from('boq_quantities').select('*'),
+    ])
     const map = {}
-    data?.forEach(p => {
+    pricesData?.forEach(p => {
       const price = parseFloat(p.price)
       map[p.item_name] = price
       if (['tractor', '709', '6 wheeler', '10 wheeler'].includes(p.unit)) {
@@ -325,6 +329,11 @@ export default function NewProjectPage() {
       }
     })
     setMarketPrices(map)
+    const boqMap = {}
+    boqRows?.forEach(r => {
+      boqMap[r.row_key] = { '20x30': r.s20x30, '20x40': r.s20x40, '30x40': r.s30x40, '30x50': r.s30x50, '40x40': r.s40x40, '40x60': r.s40x60, divisible: r.divisible }
+    })
+    setBoqData(boqMap)
   }
 
   function brahmaguptaArea(a, b, c, d) {
@@ -482,7 +491,7 @@ export default function NewProjectPage() {
       ...(customBlockPrice ? { 'Blocks': parseFloat(customBlockPrice) } : {}),
       ...(customBrickPrice ? { 'Bricks': parseFloat(customBrickPrice) } : {}),
     }
-    const items = calculateFullBOQ(project, effectivePrices)
+    const items = calculateFullBOQ(project, effectivePrices, boqData)
     const liveTotal = items.reduce((s, i) => s + (i.total_price || 0), 0)
 
     const totalSlabArea = floors.reduce((sum, f) => sum + (parseFloat(f.sqft) || sqft), 0)
@@ -494,7 +503,7 @@ export default function NewProjectPage() {
   }, [sqft, floors, masonryType, floorCount, sumpRateOverride, hasSump, sumpCapacity, sumpType,
       hasSsm, ssmCourses, hasCompoundWall, hasRainwater, hasGas, hasOht, ohtCapacity, ohtCustom,
       hasMainGate, hasAc, hasCctv, hasSolar, hasUps, hasWifi, paintingGrade, flooringType,
-      windowType, railingType, marketPrices, customBlockPrice, customBrickPrice])
+      windowType, railingType, marketPrices, customBlockPrice, customBrickPrice, boqData])
 
   async function handleSave() {
     const hasDimensions = isIrregular
