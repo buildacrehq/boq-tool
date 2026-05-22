@@ -123,7 +123,7 @@ function createFloor(index, defaultTilePrice = 50) {
     staircaseSteps: 19,
     tilesSquft: '',
     tilesPricePerSqft: defaultTilePrice,
-    railingType: '',
+    railingType: 'ss',
     railingRft: 25,
     acPoints: 0,
     evPoints: 0,
@@ -339,12 +339,13 @@ export default function NewProjectPage() {
 
   function handleFloorTypeChange(index, type) {
     const defaults = getDefaultDoors(type)
+    const isDuplex = ['duplex_gf', 'duplex_ff', 'duplex_sf', 'duplex_end'].includes(type)
     setFloors(prev => {
       const updated = [...prev]
-      updated[index] = { ...updated[index], type, ...defaults }
+      updated[index] = { ...updated[index], type, ...defaults, railingType: isDuplex ? 'ss_glass' : 'ss' }
       if (['duplex_ff', 'duplex_sf'].includes(type) && index + 1 < updated.length) {
         const endDefaults = getDefaultDoors('duplex_end')
-        updated[index + 1] = { ...updated[index + 1], type: 'duplex_end', ...endDefaults }
+        updated[index + 1] = { ...updated[index + 1], type: 'duplex_end', ...endDefaults, railingType: 'ss_glass' }
       }
       return updated
     })
@@ -743,19 +744,18 @@ export default function NewProjectPage() {
     </CardTitle>
   </CardHeader>
   <CardContent>
-    <div className="space-y-3">
-      <Label>Wall Construction Material *</Label>
-      <div className="grid grid-cols-2 gap-4">
-        <button onClick={() => setMasonryType('block')} className={`p-4 rounded-xl border-2 text-left transition-all ${masonryType === 'block' ? 'border-gray-900 bg-gray-50' : 'border-gray-200 bg-white hover:border-gray-300'}`}>
-          <p className="font-semibold text-gray-800">Blocks</p>
-          <p className="text-xs text-gray-400 mt-1">Cement blocks · ₹{customBlockPrice || 49} per block</p>
+    <div className="space-y-2">
+      <div className="grid grid-cols-2 gap-3">
+        <button onClick={() => setMasonryType('block')} className={`px-3 py-2 rounded-lg border-2 text-left transition-all ${masonryType === 'block' ? 'border-gray-900 bg-gray-50' : 'border-gray-200 bg-white hover:border-gray-300'}`}>
+          <p className="font-semibold text-gray-800 text-sm">Blocks</p>
+          <p className="text-xs text-gray-400">Cement · ₹{customBlockPrice || 49}/block</p>
         </button>
-        <button onClick={() => setMasonryType('brick')} className={`p-4 rounded-xl border-2 text-left transition-all ${masonryType === 'brick' ? 'border-gray-900 bg-gray-50' : 'border-gray-200 bg-white hover:border-gray-300'}`}>
-          <p className="font-semibold text-gray-800">Bricks</p>
-          <p className="text-xs text-gray-400 mt-1">Red clay bricks · ₹{customBrickPrice || 8} per brick</p>
+        <button onClick={() => setMasonryType('brick')} className={`px-3 py-2 rounded-lg border-2 text-left transition-all ${masonryType === 'brick' ? 'border-gray-900 bg-gray-50' : 'border-gray-200 bg-white hover:border-gray-300'}`}>
+          <p className="font-semibold text-gray-800 text-sm">Bricks</p>
+          <p className="text-xs text-gray-400">Red clay · ₹{customBrickPrice || 8}/brick</p>
         </button>
       </div>
-      <div className="grid grid-cols-2 gap-4 pt-1">
+      <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1">
           <Label className="text-xs text-gray-500">Block Price (₹/block)</Label>
           <Input type="number" placeholder="49" value={customBlockPrice} onChange={e => setCustomBlockPrice(e.target.value)} />
@@ -1635,10 +1635,12 @@ export default function NewProjectPage() {
           <div className="px-4 py-2 flex items-center gap-3">
             <span className="text-xs text-gray-400 shrink-0">Grand Total</span>
             {liveMetrics && (
-              <span className="text-xs text-gray-300 hidden md:block truncate">
-                {liveMetrics.totalSlabArea.toLocaleString('en-IN')} sqft · {liveMetrics.chadra} chadra · {liveMetrics.steelTonnes}T steel
-                {liveTotal > 0 && liveMetrics.totalSlabArea > 0 && ` · ₹${Math.round(liveTotal / liveMetrics.totalSlabArea).toLocaleString('en-IN')}/sqft`}
-              </span>
+              <div className="hidden md:flex items-center divide-x divide-gray-600 shrink-0">
+                <span className="px-2 text-xs text-gray-300">{liveMetrics.totalSlabArea.toLocaleString('en-IN')} sqft</span>
+                <span className="px-2 text-xs text-gray-300">{liveMetrics.chadra} chadra</span>
+                <span className="px-2 text-xs text-gray-300">{liveMetrics.steelTonnes}T steel</span>
+                {liveTotal > 0 && liveMetrics.totalSlabArea > 0 && <span className="px-2 text-xs text-gray-300">₹{Math.round(liveTotal / liveMetrics.totalSlabArea).toLocaleString('en-IN')}/sqft</span>}
+              </div>
             )}
             <div className="ml-auto flex items-baseline gap-2 shrink-0">
               {liveTotal > 0 ? (
