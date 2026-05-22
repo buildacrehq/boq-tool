@@ -6,10 +6,14 @@ import AppLayout from '@/components/layout/AppLayout'
 
 const SIZES = ['20x30', '20x40', '30x40', '30x50', '40x40', '40x60']
 
-const FLOOR_GROUPS = [
+const DEFAULT_FLOOR_GROUPS = [
   { prefix: 'gf_parking',     label: 'GF — Parking / Commercial',       note: 'parking_only · parking_lift · commercial_parking' },
-  { prefix: 'gf_1bhk',        label: 'GF — 1 BHK',                      note: '1bhk · 1bhk_parking · 1bhk_2units' },
-  { prefix: 'gf_2bhk',        label: 'GF — 2 BHK / 3 BHK',              note: '2bhk · 2bhk_parking · 1bhk_2bhk · 3bhk · 2bhk_3bhk' },
+  { prefix: 'gf_1bhk',        label: 'GF — 1 BHK',                      note: '1bhk · 1bhk_parking' },
+  { prefix: 'gf_1bhk2',       label: 'GF — 1 BHK (2 Units)',             note: '1bhk_2units' },
+  { prefix: 'gf_2bhk',        label: 'GF — 2 BHK',                      note: '2bhk · 2bhk_parking' },
+  { prefix: 'gf_1bhk2bhk',    label: 'GF — 1 BHK + 2 BHK Mix',          note: '1bhk_2bhk' },
+  { prefix: 'gf_3bhk',        label: 'GF — 3 BHK',                      note: '3bhk' },
+  { prefix: 'gf_2bhk3bhk',    label: 'GF — 2 BHK + 3 BHK Mix',          note: '2bhk_3bhk' },
   { prefix: 'gf_duplex',      label: 'GF — Duplex',                      note: 'duplex_gf' },
   { prefix: 'uf_1bhk',        label: 'UF — 1 BHK (Single)',              note: '1bhk (upper floors)' },
   { prefix: 'uf_1bhk2',       label: 'UF — 1 BHK (2 Units)',             note: '1bhk_2units (upper floors)' },
@@ -31,12 +35,18 @@ const ROWS = [
 export default function CalcSettingsPage() {
   const router = useRouter()
   const [user, setUser] = useState(null)
-  const [rows, setRows] = useState({})       // { row_key: { s20x30, s20x40, ... } }
-  const [edited, setEdited] = useState({})   // { row_key: { s20x30, ... } }
+  const [rows, setRows] = useState({})
+  const [edited, setEdited] = useState({})
   const [saving, setSaving] = useState(null)
   const [saved, setSaved] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [activeGroup, setActiveGroup] = useState(FLOOR_GROUPS[0].prefix)
+  const [floorGroups, setFloorGroups] = useState(DEFAULT_FLOOR_GROUPS)
+  const [activeGroup, setActiveGroup] = useState(DEFAULT_FLOOR_GROUPS[0].prefix)
+  const [showAddForm, setShowAddForm] = useState(false)
+  const [newPrefix, setNewPrefix] = useState('')
+  const [newLabel, setNewLabel] = useState('')
+  const [copyFrom, setCopyFrom] = useState('')
+  const [addingSaving, setAddingSaving] = useState(false)
 
   useEffect(() => {
     const stored = localStorage.getItem('boq_user')
@@ -52,7 +62,44 @@ export default function CalcSettingsPage() {
     const map = {}
     data?.forEach(r => { map[r.row_key] = r })
     setRows(map)
+    // Add any custom prefixes found in DB that aren't in DEFAULT_FLOOR_GROUPS
+    const knownPrefixes = new Set(DEFAULT_FLOOR_GROUPS.map(g => g.prefix))
+    const customPrefixes = new Set()
+    data?.forEach(r => {
+      const prefix = r.row_key.replace(/_blocks$|_bricks$|_cement$/, '')
+      if (!knownPrefixes.has(prefix)) customPrefixes.add(prefix)
+    })
+    if (customPrefixes.size > 0) {
+      setFloorGroups([
+        ...DEFAULT_FLOOR_GROUPS,
+        ...[...customPrefixes].map(p => ({ prefix: p, label: p, note: 'Custom floor type' }))
+      ])
+    }
     setLoading(false)
+  }
+
+  async function addFloorType() {
+    const prefix = newPrefix.trim().toLowerCase().replace(/\s+/g, '_')
+    if (!prefix || !newLabel.trim()) return
+    setAddingSaving(true)
+    const source = copyFrom ? rows : null
+    const base = (suffix) => {
+      if (source && copyFrom) {
+        const r = source[`${copyFrom}_${suffix}`]
+        if (r) return { s20x30: r.s20x30, s20x40: r.s20x40, s30x40: r.s30x40, s30x50: r.s30x50, s40x40: r.s40x40, s40x60: r.s40x60 }
+      }
+      return { s20x30: 0, s20x40: 0, s30x40: 0, s30x50: 0, s40x40: 0, s40x60: 0 }
+    }
+    await supabase.from('boq_quantities').upsert([
+      { row_key: `${prefix}_blocks`, ...base('blocks'), divisible: false, updated_by: user?.name, updated_at: new Date().toISOString() },
+      { row_key: `${prefix}_bricks`, ...base('bricks'), divisible: false, updated_by: user?.name, updated_at: new Date().toISOString() },
+      { row_key: `${prefix}_cement`, ...base('cement'), divisible: true,  updated_by: user?.name, updated_at: new Date().toISOString() },
+    ], { onConflict: 'row_key' })
+    setFloorGroups(prev => [...prev, { prefix, label: newLabel.trim(), note: 'Custom floor type' }])
+    setActiveGroup(prefix)
+    setNewPrefix(''); setNewLabel(''); setCopyFrom(''); setShowAddForm(false)
+    setAddingSaving(false)
+    fetchData()
   }
 
   function cellValue(rowKey, sizeCol) {
@@ -98,7 +145,7 @@ export default function CalcSettingsPage() {
 
   const sizeColMap = { '20x30': 's20x30', '20x40': 's20x40', '30x40': 's30x40', '30x50': 's30x50', '40x40': 's40x40', '40x60': 's40x60' }
 
-  const activeGroupData = FLOOR_GROUPS.find(g => g.prefix === activeGroup)
+  const activeGroupData = floorGroups.find(g => g.prefix === activeGroup)
 
   return (
     <AppLayout>
@@ -109,12 +156,62 @@ export default function CalcSettingsPage() {
             <h1 className="text-2xl font-semibold text-gray-800">BOQ Quantities</h1>
             <p className="text-sm text-gray-400 mt-0.5">Masonry quantities per floor type and site size — changes apply to all new estimates</p>
           </div>
-          <button onClick={() => router.push('/settings')} className="text-sm text-blue-600 hover:underline">← Staff Settings</button>
+          <div className="flex items-center gap-3">
+            <button onClick={() => setShowAddForm(v => !v)} className="text-sm px-3 py-1.5 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-50">
+              {showAddForm ? 'Cancel' : '+ Add Floor Type'}
+            </button>
+            <button onClick={() => router.push('/settings')} className="text-sm text-blue-600 hover:underline">← Staff Settings</button>
+          </div>
         </div>
+
+        {/* Add Floor Type form */}
+        {showAddForm && (
+          <div className="bg-white border border-gray-200 rounded-xl p-5 mb-6 space-y-4">
+            <p className="text-sm font-semibold text-gray-800">Add New Floor Type</p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-1">
+                <label className="text-xs text-gray-500">Prefix key (no spaces)</label>
+                <input
+                  className="w-full h-9 px-3 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="e.g. gf_4bhk"
+                  value={newPrefix}
+                  onChange={e => setNewPrefix(e.target.value)}
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs text-gray-500">Display label</label>
+                <input
+                  className="w-full h-9 px-3 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="e.g. GF — 4 BHK"
+                  value={newLabel}
+                  onChange={e => setNewLabel(e.target.value)}
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs text-gray-500">Copy values from (optional)</label>
+                <select
+                  className="w-full h-9 px-3 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  value={copyFrom}
+                  onChange={e => setCopyFrom(e.target.value)}
+                >
+                  <option value="">— Start with zeros —</option>
+                  {floorGroups.map(g => <option key={g.prefix} value={g.prefix}>{g.label}</option>)}
+                </select>
+              </div>
+            </div>
+            <button
+              onClick={addFloorType}
+              disabled={!newPrefix.trim() || !newLabel.trim() || addingSaving}
+              className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              {addingSaving ? 'Creating...' : 'Create Floor Type'}
+            </button>
+          </div>
+        )}
 
         {/* Floor type tabs */}
         <div className="flex flex-wrap gap-2 mb-6">
-          {FLOOR_GROUPS.map(g => (
+          {floorGroups.map(g => (
             <button
               key={g.prefix}
               onClick={() => setActiveGroup(g.prefix)}
