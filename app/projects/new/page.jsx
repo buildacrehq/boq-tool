@@ -1599,20 +1599,22 @@ export default function NewProjectPage() {
                     const stageTotal = items.reduce((s, i) => s + (i.total_price || 0), 0)
                     return (
                       <>
-                        <tr key={stage} className="bg-blue-50 border-t border-blue-100">
-                          <td className="px-4 py-2 text-xs font-bold text-blue-700 uppercase tracking-wide">{stage}</td>
-                          <td colSpan={3} />
-                          <td className="px-4 py-2 text-right text-xs font-bold text-blue-700">₹{Math.round(stageTotal).toLocaleString('en-IN')}</td>
+                        <tr key={stage} className="bg-blue-50 border-t-2 border-blue-100">
+                          <td className="px-4 py-2 text-xs font-bold text-blue-700 uppercase tracking-wide" colSpan={5}>{stage}</td>
                         </tr>
                         {items.map((item, i) => (
                           <tr key={i} className="border-b border-gray-50 hover:bg-gray-50/60">
                             <td className="px-4 py-2 text-gray-700 pl-6">{item.item_name}</td>
                             <td className="px-3 py-2 text-right text-gray-500 tabular-nums">{item.quantity ?? '—'}</td>
                             <td className="px-3 py-2 text-right text-gray-400 text-xs">{item.unit}</td>
-                            <td className="px-3 py-2 text-right text-gray-500 tabular-nums">₹{Math.round(item.unit_price || 0).toLocaleString('en-IN')}</td>
-                            <td className="px-4 py-2 text-right font-semibold text-gray-800 tabular-nums">₹{Math.round(item.total_price || 0).toLocaleString('en-IN')}</td>
+                            <td className="px-3 py-2 text-right text-gray-500 tabular-nums">₹{(item.unit_price || 0).toLocaleString('en-IN')}</td>
+                            <td className="px-4 py-2 text-right font-semibold text-gray-800 tabular-nums">₹{(item.total_price || 0).toLocaleString('en-IN')}</td>
                           </tr>
                         ))}
+                        <tr className="bg-blue-50 border-b-2 border-blue-100">
+                          <td colSpan={4} className="px-4 py-1.5 text-xs text-blue-500 text-right italic">Stage Total</td>
+                          <td className="px-4 py-1.5 text-right text-xs font-bold text-blue-700 tabular-nums">₹{stageTotal.toLocaleString('en-IN')}</td>
+                        </tr>
                       </>
                     )
                   })
@@ -1629,12 +1631,13 @@ export default function NewProjectPage() {
             {liveMetrics && (
               <span className="text-xs text-gray-300 hidden md:block truncate">
                 {liveMetrics.totalSlabArea.toLocaleString('en-IN')} sqft · {liveMetrics.chadra} chadra · {liveMetrics.steelTonnes}T steel
+                {liveTotal > 0 && liveMetrics.totalSlabArea > 0 && ` · ₹${Math.round(liveTotal / liveMetrics.totalSlabArea).toLocaleString('en-IN')}/sqft`}
               </span>
             )}
             <div className="ml-auto flex items-baseline gap-2 shrink-0">
               {liveTotal > 0 ? (
                 <>
-                  <span className="text-sm font-bold tabular-nums">₹{Math.round(liveTotal).toLocaleString('en-IN')}</span>
+                  <span className="text-sm font-bold tabular-nums">₹{liveTotal.toLocaleString('en-IN')}</span>
                   <span className="text-lg font-bold text-blue-400 tabular-nums">₹{(liveTotal / 100000).toFixed(1)}<span className="text-xs text-gray-400">L</span></span>
                 </>
               ) : (

@@ -1118,10 +1118,8 @@ export default function ProjectPage() {
                     const stageTotal = items.reduce((s, item) => s + getDisplayTotal(item), 0)
                     return (
                       <>
-                        <tr key={stage} className="bg-blue-50 border-t border-blue-100">
-                          <td className="px-4 py-2 text-xs font-bold text-blue-700 uppercase tracking-wide">{stage}</td>
-                          <td colSpan={3} />
-                          <td className="px-4 py-2 text-right text-xs font-bold text-blue-700">{formatCurrency(stageTotal)}</td>
+                        <tr key={stage} className="bg-blue-50 border-t-2 border-blue-100">
+                          <td className="px-4 py-2 text-xs font-bold text-blue-700 uppercase tracking-wide" colSpan={5}>{stage}</td>
                         </tr>
                         {items.map((item) => {
                           const ov = boqOverrides[item._idx]
@@ -1145,6 +1143,10 @@ export default function ProjectPage() {
                             </tr>
                           )
                         })}
+                        <tr className="bg-blue-50 border-b-2 border-blue-100">
+                          <td colSpan={4} className="px-4 py-1.5 text-xs text-blue-500 text-right italic">Stage Total</td>
+                          <td className="px-4 py-1.5 text-right text-xs font-bold text-blue-700 tabular-nums">{formatCurrency(stageTotal)}</td>
+                        </tr>
                       </>
                     )
                   })}
@@ -1182,6 +1184,7 @@ export default function ProjectPage() {
               {liveMetrics && (
                 <span className="text-xs text-gray-300 hidden md:block truncate">
                   {liveMetrics.totalSlabArea.toLocaleString('en-IN')} sqft · {liveMetrics.chadra} chadra · {liveMetrics.steelTonnes}T steel
+                  {liveMetrics.totalSlabArea > 0 && ` · ₹${Math.round(overriddenGrandTotal / liveMetrics.totalSlabArea).toLocaleString('en-IN')}/sqft`}
                 </span>
               )}
               <div className="ml-auto flex items-baseline gap-2 shrink-0">
