@@ -38,7 +38,11 @@ const UPPER_TYPES = [
   { value: '3bhk', label: '3 BHK' },
   { value: 'duplex_ff', label: 'Duplex Starts in FF' },
   { value: 'duplex_sf', label: 'Duplex Starts in SF' },
-  { value: 'duplex_end', label: 'Duplex End (Upper Floor)' },
+]
+
+const DUPLEX_END_TYPES = [
+  { value: 'duplex_end_2mb', label: 'Duplex End — 2 Master Bedrooms' },
+  { value: 'duplex_end_study', label: 'Duplex End — 2 Master Beds + Study Room' },
 ]
 
 const MAIN_DOOR_TYPES = [
@@ -93,8 +97,12 @@ function getDefaultDoors(floorType) {
     case 'duplex_ff':
     case 'duplex_sf':
       return { mainDoor: 'teak_4x8', bedroomDoors: 3, washroomDoors: 3, toilets: 3, balconyDoors: 2, utilityDoors: 1, poojaRoom: true, kitchens: 1 }
+    case 'duplex_end_2mb':
+      return { mainDoor: '', bedroomDoors: 2, washroomDoors: 2, toilets: 2, balconyDoors: 1, utilityDoors: 0, poojaRoom: false, kitchens: 0 }
+    case 'duplex_end_study':
+      return { mainDoor: '', bedroomDoors: 3, washroomDoors: 3, toilets: 3, balconyDoors: 1, utilityDoors: 0, poojaRoom: false, kitchens: 0 }
     case 'duplex_end':
-      return { mainDoor: '', bedroomDoors: 3, washroomDoors: 3, toilets: 3, balconyDoors: 2, utilityDoors: 0, poojaRoom: false, kitchens: 0 }
+      return { mainDoor: '', bedroomDoors: 2, washroomDoors: 2, toilets: 2, balconyDoors: 1, utilityDoors: 0, poojaRoom: false, kitchens: 0 }
     case 'parking_only':
     case 'parking_lift':
     case 'commercial_parking':
@@ -339,13 +347,14 @@ export default function NewProjectPage() {
 
   function handleFloorTypeChange(index, type) {
     const defaults = getDefaultDoors(type)
-    const isDuplex = ['duplex_gf', 'duplex_ff', 'duplex_sf', 'duplex_end'].includes(type)
+    const isDuplexEnd = ['duplex_end_2mb', 'duplex_end_study', 'duplex_end'].includes(type)
+    const isDuplex = ['duplex_gf', 'duplex_ff', 'duplex_sf'].includes(type) || isDuplexEnd
     setFloors(prev => {
       const updated = [...prev]
       updated[index] = { ...updated[index], type, ...defaults, railingType: isDuplex ? 'ss_glass' : 'ss' }
-      if (['duplex_ff', 'duplex_sf'].includes(type) && index + 1 < updated.length) {
-        const endDefaults = getDefaultDoors('duplex_end')
-        updated[index + 1] = { ...updated[index + 1], type: 'duplex_end', ...endDefaults, railingType: 'ss_glass' }
+      // When a duplex start is selected, clear the next floor so user must pick an end option
+      if (['duplex_gf', 'duplex_ff', 'duplex_sf'].includes(type) && index + 1 < updated.length) {
+        updated[index + 1] = { ...updated[index + 1], type: '' }
       }
       return updated
     })
@@ -810,14 +819,14 @@ export default function NewProjectPage() {
                   <div className="w-2 h-2 rounded-full bg-blue-400"></div>
                   <span className="text-sm font-semibold">{floor.name}</span>
                   {floor.type && (
-                    <Badge className={`ml-2 text-xs border-0 ${floor.type === 'duplex_end' ? 'bg-purple-600' : 'bg-blue-600'} text-white`}>
-                      {[...GROUND_TYPES, ...UPPER_TYPES].find(t => t.value === floor.type)?.label || floor.type}
+                    <Badge className={`ml-2 text-xs border-0 ${['duplex_end_2mb', 'duplex_end_study'].includes(floor.type) ? 'bg-purple-600' : 'bg-blue-600'} text-white`}>
+                      {[...GROUND_TYPES, ...UPPER_TYPES, ...DUPLEX_END_TYPES].find(t => t.value === floor.type)?.label || floor.type}
                     </Badge>
                   )}
-                  {floor.type === 'duplex_end' && (
-                    <span className="text-xs text-purple-300 ml-1">auto-paired</span>
+                  {['duplex_end_2mb', 'duplex_end_study'].includes(floor.type) && (
+                    <span className="text-xs text-purple-300 ml-1">duplex upper floor</span>
                   )}
-                  {index > 0 && floor.type !== 'duplex_end' && floors[index - 1]?.type && (
+                  {index > 0 && !['duplex_end_2mb', 'duplex_end_study'].includes(floor.type) && floors[index - 1]?.type && (
                     <button
                       onClick={() => copyFloor(index - 1, index)}
                       className="ml-auto text-xs px-2 py-0.5 rounded bg-blue-700 text-blue-100 hover:bg-blue-600"
@@ -839,9 +848,12 @@ export default function NewProjectPage() {
                         onChange={e => handleFloorTypeChange(index, e.target.value)}
                       >
                         <option value="">— Select floor type —</option>
-                        {(index === 0 ? GROUND_TYPES : UPPER_TYPES).map(t => (
-                          <option key={t.value} value={t.value}>{t.label}</option>
-                        ))}
+                        {(() => {
+                          const prevType = index > 0 ? floors[index - 1]?.type : null
+                          const isDuplexNext = ['duplex_gf', 'duplex_ff', 'duplex_sf'].includes(prevType)
+                          if (isDuplexNext) return DUPLEX_END_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)
+                          return (index === 0 ? GROUND_TYPES : UPPER_TYPES).map(t => <option key={t.value} value={t.value}>{t.label}</option>)
+                        })()}
                       </select>
                       <p className="text-xs text-gray-400">
                         {index === 0 ? 'Select what is being constructed on ground floor' : `Select the unit type for ${floor.name}`}
@@ -927,10 +939,10 @@ export default function NewProjectPage() {
                       <div>
                         <p className="text-sm font-medium text-gray-700 mb-3">
                           Doors &amp; Rooms
-                          {floor.type === 'duplex_end' && <span className="text-xs font-normal text-purple-500 ml-2">Upper duplex — no main door / kitchen</span>}
+                          {['duplex_end_2mb', 'duplex_end_study'].includes(floor.type) && <span className="text-xs font-normal text-purple-500 ml-2">Upper duplex — no main door / kitchen</span>}
                         </p>
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                          {floor.type !== 'duplex_end' && (
+                          {!['duplex_end_2mb', 'duplex_end_study'].includes(floor.type) && (
                             <div className="space-y-1.5">
                               <Label className="text-xs">Main Door Type</Label>
                               <select
@@ -978,7 +990,7 @@ export default function NewProjectPage() {
                               {parseInt(floor.utilityDoors) > 0 ? `${floor.utilityDoors} × ${fmt(r.utilityDoor)} = ${fmt(parseInt(floor.utilityDoors) * r.utilityDoor)}` : `Typical: ${fmt(r.utilityDoor)}/door`}
                             </p>
                           </div>
-                          {floor.type !== 'duplex_end' && (
+                          {!['duplex_end_2mb', 'duplex_end_study'].includes(floor.type) && (
                             <div className="space-y-1.5">
                               <Label className="text-xs">Kitchens</Label>
                               <Input type="number" min="0" value={floor.kitchens} onChange={e => updateFloor(index, 'kitchens', e.target.value)} />
