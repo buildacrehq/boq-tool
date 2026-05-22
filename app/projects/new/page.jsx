@@ -15,12 +15,18 @@ import { Badge } from '@/components/ui/badge'
 const FLOOR_NAMES = ['Ground Floor', 'First Floor', 'Second Floor', 'Third Floor', 'Fourth Floor', 'Fifth Floor', 'Sixth Floor']
 
 const GROUND_TYPES = [
-  { value: 'parking_only', label: 'Only Parking' },
-  { value: 'parking_lift', label: 'Only Parking + Lift' },
+  { value: '1bhk', label: '1 BHK (Single Unit)' },
+  { value: '1bhk_2units', label: '1 BHK (2 Units)' },
+  { value: '2bhk', label: '2 BHK (Single Unit)' },
+  { value: '1bhk_2bhk', label: '1 BHK + 2 BHK Mix' },
+  { value: '2bhk_3bhk', label: '2 BHK + 3 BHK Mix' },
+  { value: '3bhk', label: '3 BHK' },
   { value: '1bhk_parking', label: '1 BHK + Parking' },
   { value: '2bhk_parking', label: '2 BHK + Parking' },
+  { value: 'parking_only', label: 'Only Parking' },
+  { value: 'parking_lift', label: 'Only Parking + Lift' },
   { value: 'duplex_gf', label: 'Duplex Starts in GF' },
-  { value: 'commercial_parking', label: 'Commercial + Parking (same BOQ as Only Parking)' },
+  { value: 'commercial_parking', label: 'Commercial + Parking' },
 ]
 
 const UPPER_TYPES = [
@@ -174,7 +180,7 @@ export default function NewProjectPage() {
   const [hasUps, setHasUps] = useState(false)
   const [hasWifi, setHasWifi] = useState(false)
   const [paintingGrade, setPaintingGrade] = useState('')
-  const [windowType, setWindowType] = useState('')
+  const [windowType, setWindowType] = useState('upvc_white')
   const [railingType, setRailingType] = useState('')
   const [flooringType, setFlooringType] = useState('')
   const [customItems, setCustomItems] = useState([{ item_name: '', quantity: '', unit_price: '', notes: '' }])
