@@ -150,6 +150,8 @@ export default function NewProjectPage() {
   const [sideLeft, setSideLeft] = useState('')
   const [sideRight, setSideRight] = useState('')
   const [masonryType, setMasonryType] = useState('block')
+  const [customBlockPrice, setCustomBlockPrice] = useState('')
+  const [customBrickPrice, setCustomBrickPrice] = useState('')
   const [floorCount, setFloorCount] = useState(1)
   const [floors, setFloors] = useState([createFloor(0)])
   const [hasLift, setHasLift] = useState(false)
@@ -441,6 +443,8 @@ export default function NewProjectPage() {
       dimension_length: isIrregular ? parseFloat(sideLeft) : parseFloat(length),
       floors: floorCount,
       masonry_type: masonryType,
+      custom_block_price: customBlockPrice ? parseFloat(customBlockPrice) : null,
+      custom_brick_price: customBrickPrice ? parseFloat(customBrickPrice) : null,
       floors_data: floors.map((f, i) => i === 0 && sumpRateOverride ? { ...f, sumpRateOverride: parseFloat(sumpRateOverride) } : f),
       has_sump: hasSump, sump_capacity: sumpCapacity || null, sump_type: sumpType,
       has_ssm: hasSsm, ssm_courses: ssmCourses || null,
@@ -457,7 +461,12 @@ export default function NewProjectPage() {
       has_pooja_room_door: td.poojaRoom > 0,
     }
 
-    const items = calculateFullBOQ(project, marketPrices)
+    const effectivePrices = {
+      ...marketPrices,
+      ...(customBlockPrice ? { 'Blocks': parseFloat(customBlockPrice) } : {}),
+      ...(customBrickPrice ? { 'Bricks': parseFloat(customBrickPrice) } : {}),
+    }
+    const items = calculateFullBOQ(project, effectivePrices)
     const liveTotal = items.reduce((s, i) => s + (i.total_price || 0), 0)
 
     const totalSlabArea = floors.reduce((sum, f) => sum + (parseFloat(f.sqft) || sqft), 0)
@@ -469,7 +478,7 @@ export default function NewProjectPage() {
   }, [sqft, floors, masonryType, floorCount, sumpRateOverride, hasSump, sumpCapacity, sumpType,
       hasSsm, ssmCourses, hasCompoundWall, hasRainwater, hasGas, hasOht, ohtCapacity, ohtCustom,
       hasMainGate, hasAc, hasCctv, hasSolar, hasUps, hasWifi, paintingGrade, flooringType,
-      windowType, railingType, marketPrices])
+      windowType, railingType, marketPrices, customBlockPrice, customBrickPrice])
 
   async function handleSave() {
     const hasDimensions = isIrregular
@@ -731,37 +740,25 @@ export default function NewProjectPage() {
     <div className="space-y-3">
       <Label>Wall Construction Material *</Label>
       <div className="grid grid-cols-2 gap-4">
-        <button
-          onClick={() => setMasonryType('block')}
-          className={`p-4 rounded-xl border-2 text-left transition-all ${
-            masonryType === 'block'
-              ? 'border-gray-900 bg-gray-50'
-              : 'border-gray-200 bg-white hover:border-gray-300'
-          }`}
-        >
+        <button onClick={() => setMasonryType('block')} className={`p-4 rounded-xl border-2 text-left transition-all ${masonryType === 'block' ? 'border-gray-900 bg-gray-50' : 'border-gray-200 bg-white hover:border-gray-300'}`}>
           <p className="font-semibold text-gray-800">Blocks</p>
-          <p className="text-xs text-gray-400 mt-1">Cement blocks · ₹49 per block</p>
-          <p className="text-xs text-gray-400">Faster construction · better insulation</p>
+          <p className="text-xs text-gray-400 mt-1">Cement blocks · ₹{customBlockPrice || 49} per block</p>
         </button>
-        <button
-          onClick={() => setMasonryType('brick')}
-          className={`p-4 rounded-xl border-2 text-left transition-all ${
-            masonryType === 'brick'
-              ? 'border-gray-900 bg-gray-50'
-              : 'border-gray-200 bg-white hover:border-gray-300'
-          }`}
-        >
+        <button onClick={() => setMasonryType('brick')} className={`p-4 rounded-xl border-2 text-left transition-all ${masonryType === 'brick' ? 'border-gray-900 bg-gray-50' : 'border-gray-200 bg-white hover:border-gray-300'}`}>
           <p className="font-semibold text-gray-800">Bricks</p>
-          <p className="text-xs text-gray-400 mt-1">Red clay bricks · ₹8 per brick</p>
-          <p className="text-xs text-gray-400">Traditional · higher labour (₹40K/chadra)</p>
+          <p className="text-xs text-gray-400 mt-1">Red clay bricks · ₹{customBrickPrice || 8} per brick</p>
         </button>
       </div>
-      <p className="text-xs text-gray-400">
-        {masonryType === 'block'
-          ? 'Selected: Blocks — 1 block = 5 bricks equivalent. Cost calculated per block.'
-          : 'Selected: Bricks — Cost calculated per brick. More bricks needed per sqft.'
-        }
-      </p>
+      <div className="grid grid-cols-2 gap-4 pt-1">
+        <div className="space-y-1">
+          <Label className="text-xs text-gray-500">Block Price (₹/block)</Label>
+          <Input type="number" placeholder="49" value={customBlockPrice} onChange={e => setCustomBlockPrice(e.target.value)} />
+        </div>
+        <div className="space-y-1">
+          <Label className="text-xs text-gray-500">Brick Price (₹/brick)</Label>
+          <Input type="number" placeholder="8" value={customBrickPrice} onChange={e => setCustomBrickPrice(e.target.value)} />
+        </div>
+      </div>
     </div>
   </CardContent>
 </Card>

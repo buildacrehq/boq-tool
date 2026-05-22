@@ -127,6 +127,8 @@ export default function ProjectPage() {
     : (width && length ? parseFloat(width) * parseFloat(length) : null)
   // Edit form — Masonry
   const [masonryType, setMasonryType] = useState('block')
+  const [customBlockPrice, setCustomBlockPrice] = useState('')
+  const [customBrickPrice, setCustomBrickPrice] = useState('')
   // Edit form — Floors
   const [floorCount, setFloorCount] = useState(1)
   const [floors, setFloors] = useState([createFloor(0)])
@@ -198,6 +200,8 @@ export default function ProjectPage() {
       setSideLeft(proj.side_left || '')
       setSideRight(proj.side_right || '')
       setMasonryType(proj.masonry_type || 'block')
+      setCustomBlockPrice(proj.custom_block_price ? String(proj.custom_block_price) : '')
+      setCustomBrickPrice(proj.custom_brick_price ? String(proj.custom_brick_price) : '')
       setFloorCount(proj.floor_count || proj.floors || 1)
       setHasLift(proj.has_lift || false)
       setHasSump(proj.has_sump || false)
@@ -290,7 +294,12 @@ export default function ProjectPage() {
       balcony_doors: td.balcony, utility_doors: td.utility,
       has_pooja_room_door: td.poojaRoom > 0,
     }
-    const items = calculateFullBOQ(proj, marketPrices)
+    const effectivePrices = {
+      ...marketPrices,
+      ...(customBlockPrice ? { 'Blocks': parseFloat(customBlockPrice) } : {}),
+      ...(customBrickPrice ? { 'Bricks': parseFloat(customBrickPrice) } : {}),
+    }
+    const items = calculateFullBOQ(proj, effectivePrices)
     const totalSlabArea = floors.reduce((sum, f) => sum + (parseFloat(f.sqft) || sqft), 0)
     return {
       liveItems: items,
@@ -300,7 +309,7 @@ export default function ProjectPage() {
   }, [sqft, floors, masonryType, floorCount, sumpRateOverride, hasSump, sumpCapacity, sumpType,
       hasSsm, ssmCourses, hasCompoundWall, hasRainwater, hasGas, hasOht, ohtCapacity, ohtCustom,
       hasMainGate, hasAc, hasCctv, hasSolar, hasUps, hasWifi, paintingGrade, flooringType,
-      windowType, railingType, marketPrices, project])
+      windowType, railingType, marketPrices, project, customBlockPrice, customBrickPrice])
 
   const overriddenGrandTotal = useMemo(() => {
     const boqTotal = liveItems.reduce((sum, item, i) => {
@@ -413,7 +422,10 @@ export default function ProjectPage() {
       total_sqft: sqft,
       floors: floorCount, floor_count: floorCount, floors_data: floorsData,
       ground_floor_type: floors[0]?.type || '', upper_floor_type: floors[1]?.type || '',
-      masonry_type: masonryType, has_lift: hasLift, has_sump: hasSump,
+      masonry_type: masonryType,
+      custom_block_price: customBlockPrice ? parseFloat(customBlockPrice) : null,
+      custom_brick_price: customBrickPrice ? parseFloat(customBrickPrice) : null,
+      has_lift: hasLift, has_sump: hasSump,
       sump_capacity: sumpCapacity ? parseFloat(sumpCapacity) : null, sump_type: sumpType,
       has_ssm: hasSsm, ssm_courses: ssmCourses ? parseInt(ssmCourses) : null,
       has_compound_wall: hasCompoundWall, has_rainwater: hasRainwater, has_gas: hasGas,
@@ -648,14 +660,26 @@ export default function ProjectPage() {
             {/* Section 2b — Masonry */}
             <Card>
               <CardHeader><CardTitle className="text-base flex items-center gap-2"><Badge variant="outline">2b</Badge>Masonry Type</CardTitle></CardHeader>
-              <CardContent>
+              <CardContent className="space-y-3">
                 <div className="grid grid-cols-2 gap-4">
-                  {[{ value: 'block', label: 'Blocks', sub: 'Cement blocks · ₹49 per block' }, { value: 'brick', label: 'Bricks', sub: 'Red clay bricks · ₹8 per brick' }].map(m => (
-                    <button key={m.value} onClick={() => setMasonryType(m.value)} className={`p-4 rounded-xl border-2 text-left transition-all ${masonryType === m.value ? 'border-gray-900 bg-gray-50' : 'border-gray-200 bg-white hover:border-gray-300'}`}>
-                      <p className="font-semibold text-gray-800">{m.label}</p>
-                      <p className="text-xs text-gray-400 mt-1">{m.sub}</p>
-                    </button>
-                  ))}
+                  <button onClick={() => setMasonryType('block')} className={`p-4 rounded-xl border-2 text-left transition-all ${masonryType === 'block' ? 'border-gray-900 bg-gray-50' : 'border-gray-200 bg-white hover:border-gray-300'}`}>
+                    <p className="font-semibold text-gray-800">Blocks</p>
+                    <p className="text-xs text-gray-400 mt-1">Cement blocks · ₹{customBlockPrice || 49} per block</p>
+                  </button>
+                  <button onClick={() => setMasonryType('brick')} className={`p-4 rounded-xl border-2 text-left transition-all ${masonryType === 'brick' ? 'border-gray-900 bg-gray-50' : 'border-gray-200 bg-white hover:border-gray-300'}`}>
+                    <p className="font-semibold text-gray-800">Bricks</p>
+                    <p className="text-xs text-gray-400 mt-1">Red clay bricks · ₹{customBrickPrice || 8} per brick</p>
+                  </button>
+                </div>
+                <div className="grid grid-cols-2 gap-4 pt-1">
+                  <div className="space-y-1">
+                    <Label className="text-xs text-gray-500">Block Price (₹/block)</Label>
+                    <Input type="number" placeholder="49" value={customBlockPrice} onChange={e => setCustomBlockPrice(e.target.value)} />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs text-gray-500">Brick Price (₹/brick)</Label>
+                    <Input type="number" placeholder="8" value={customBrickPrice} onChange={e => setCustomBrickPrice(e.target.value)} />
+                  </div>
                 </div>
               </CardContent>
             </Card>
