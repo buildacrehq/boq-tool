@@ -6,25 +6,27 @@ const adminClient = createClient(
   { auth: { persistSession: false } }
 )
 
-async function verifyAdmin(authHeader) {
-  if (!authHeader) return null
+export async function POST(request) {
+  const authHeader = request.headers.get('Authorization')
+  if (!authHeader) return Response.json({ error: 'No auth header' }, { status: 401 })
+
   const token = authHeader.replace('Bearer ', '')
+
   const res = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/user`, {
     headers: {
       Authorization: `Bearer ${token}`,
       apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     },
   })
-  if (!res.ok) return null
-  const user = await res.json()
-  if (!user?.id) return null
-  const { data: profile } = await adminClient.from('profiles').select('role').eq('id', user.id).single()
-  return profile?.role === 'admin' ? profile : null
-}
+  if (!res.ok) return Response.json({ error: `Auth fetch failed: ${res.status}` }, { status: 401 })
 
-export async function POST(request) {
-  const caller = await verifyAdmin(request.headers.get('Authorization'))
-  if (!caller) return Response.json({ error: 'Unauthorized' }, { status: 401 })
+  const user = await res.json()
+  if (!user?.id) return Response.json({ error: 'No user in token' }, { status: 401 })
+
+  const { data: profile, error: profErr } = await adminClient.from('profiles').select('role').eq('id', user.id).single()
+  if (profErr) return Response.json({ error: `Profile error: ${profErr.message}` }, { status: 401 })
+  if (!profile) return Response.json({ error: `No profile for ${user.id}` }, { status: 401 })
+  if (profile.role !== 'admin') return Response.json({ error: `Role is ${profile.role}, not admin` }, { status: 401 })
 
   const { id, password } = await request.json()
   const { error } = await adminClient.auth.admin.updateUserById(id, { password })
