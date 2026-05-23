@@ -73,7 +73,6 @@ export default function SettingsPage() {
     if (!newPassword.trim()) return
     setPasswordSaving(true)
     const { data: { session } } = await supabase.auth.getSession()
-    console.log('session token:', session?.access_token?.substring(0, 40) ?? 'NULL SESSION')
     const res = await fetch('/api/change-password', {
       method: 'POST',
       headers: {

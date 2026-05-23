@@ -556,7 +556,7 @@ export default function EditProjectPage() {
                     )}
 
                     {/* Railing */}
-                    {!isPureParking(floor.type) && (
+                    {floor.type && (
                       <>
                         <Separator />
                         <p className="text-sm font-medium text-gray-700">Railing</p>

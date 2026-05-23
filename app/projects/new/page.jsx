@@ -1130,7 +1130,7 @@ export default function NewProjectPage() {
                   )}
 
                   {/* Railing */}
-                  {!isPureParking(floor.type) && (
+                  {floor.type && (
                     <>
                       <Separator />
                       <div>
