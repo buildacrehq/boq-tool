@@ -28,26 +28,28 @@ export default function SettingsPage() {
   }, [])
 
   async function fetchStaff() {
-    const { data } = await supabase.from('users').select('id, name, email, role, created_at').order('created_at')
+    const { data } = await supabase.from('profiles').select('id, name, email, role, created_at').order('created_at')
     setStaff(data || [])
     setLoading(false)
   }
 
   async function addStaff() {
-    if (!form.name || !form.email || !form.password) {
-      setError('All fields required')
-      return
-    }
+    if (!form.name || !form.email || !form.password) { setError('All fields required'); return }
     setSaving(true)
     setError('')
-    const { error } = await supabase.from('users').insert({
-      name: form.name,
-      email: form.email,
-      password: form.password,
-      role: form.role,
+
+    const { data: { session } } = await supabase.auth.getSession()
+    const res = await fetch('/api/create-user', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({ email: form.email, password: form.password, name: form.name, role: form.role }),
     })
-    if (error) {
-      setError(error.message)
+    const result = await res.json()
+    if (result.error) {
+      setError(result.error)
     } else {
       setForm({ name: '', email: '', password: '', role: 'staff' })
       setAdding(false)
@@ -59,18 +61,26 @@ export default function SettingsPage() {
   async function changeRole(id, newRole) {
     setChangingRole(id)
     setStaff(prev => prev.map(s => s.id === id ? { ...s, role: newRole } : s))
-    const { error } = await supabase.from('users').update({ role: newRole }).eq('id', id)
-    if (error) {
-      console.error('changeRole error:', error)
-      fetchStaff()
-    }
+    const { error } = await supabase.from('profiles').update({ role: newRole }).eq('id', id)
+    if (error) fetchStaff()
     setChangingRole(null)
   }
 
   async function removeStaff(id) {
     if (id === user?.id) { alert("Can't remove yourself!"); return }
     if (!confirm('Remove this staff member?')) return
-    await supabase.from('users').delete().eq('id', id)
+
+    const { data: { session } } = await supabase.auth.getSession()
+    const res = await fetch('/api/delete-user', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({ id }),
+    })
+    const result = await res.json()
+    if (result.error) { alert('Failed to remove user'); return }
     fetchStaff()
   }
 
@@ -84,9 +94,9 @@ export default function SettingsPage() {
           </div>
           {!adding && (
             <div className="flex items-center gap-3">
-            <button onClick={() => router.push('/settings/calc')} className="text-sm text-blue-600 hover:underline">BOQ Quantities →</button>
-            <Button onClick={() => setAdding(true)}>+ Add Staff</Button>
-          </div>
+              <button onClick={() => router.push('/settings/calc')} className="text-sm text-blue-600 hover:underline">BOQ Quantities →</button>
+              <Button onClick={() => setAdding(true)}>+ Add Staff</Button>
+            </div>
           )}
         </div>
 
@@ -160,7 +170,7 @@ export default function SettingsPage() {
                         </select>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-gray-400">{new Date(s.created_at).toLocaleDateString('en-IN')}</td>
+                    <td className="px-4 py-3 text-gray-400">{s.created_at ? new Date(s.created_at).toLocaleDateString('en-IN') : '—'}</td>
                     <td className="px-6 py-3 text-right">
                       {s.id !== user?.id && (
                         <button onClick={() => removeStaff(s.id)} className="text-xs text-red-500 hover:text-red-700">Remove</button>

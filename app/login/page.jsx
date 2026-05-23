@@ -16,20 +16,33 @@ export default function LoginPage() {
     setLoading(true)
     setError('')
 
-    const { data, error } = await supabase
-      .from('users')
-      .select('*')
-      .eq('email', email)
-      .eq('password', password)
-      .single()
+    const { data, error: authError } = await supabase.auth.signInWithPassword({ email, password })
 
-    if (error || !data) {
+    if (authError || !data.user) {
       setError('Invalid email or password')
       setLoading(false)
       return
     }
 
-    localStorage.setItem('boq_user', JSON.stringify(data))
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', data.user.id)
+      .single()
+
+    if (!profile) {
+      setError('Account not set up. Contact admin.')
+      await supabase.auth.signOut()
+      setLoading(false)
+      return
+    }
+
+    localStorage.setItem('boq_user', JSON.stringify({
+      id: profile.id,
+      name: profile.name,
+      email: profile.email || email,
+      role: profile.role,
+    }))
     router.push('/dashboard')
     setLoading(false)
   }
@@ -37,7 +50,7 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center">
       <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-200 w-full max-w-md">
-        
+
         <div className="mb-8 text-center">
           <h1 className="text-2xl font-semibold text-gray-800">BOQ Tool</h1>
           <p className="text-gray-500 text-sm mt-1">Staff login only</p>

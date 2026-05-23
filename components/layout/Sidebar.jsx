@@ -2,6 +2,7 @@
 
 import { useRouter, usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
+import { supabase } from '@/lib/supabase'
 
 const NAV = [
   { label: 'Dashboard', path: '/dashboard' },
@@ -17,13 +18,21 @@ export default function TopNav() {
   const [open, setOpen] = useState(false)
 
   useEffect(() => {
-    const stored = localStorage.getItem('boq_user')
-    if (stored) setUser(JSON.parse(stored))
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) {
+        localStorage.removeItem('boq_user')
+        router.push('/login')
+        return
+      }
+      const stored = localStorage.getItem('boq_user')
+      if (stored) setUser(JSON.parse(stored))
+    })
   }, [])
 
   useEffect(() => { setOpen(false) }, [pathname])
 
-  function handleLogout() {
+  async function handleLogout() {
+    await supabase.auth.signOut()
     localStorage.removeItem('boq_user')
     router.push('/login')
   }
