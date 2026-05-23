@@ -2,19 +2,28 @@ import { createClient } from '@supabase/supabase-js'
 
 const adminClient = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
+  process.env.SUPABASE_SERVICE_ROLE_KEY,
+  { auth: { persistSession: false } }
 )
 
-export async function POST(request) {
-  const authHeader = request.headers.get('Authorization')
-  if (!authHeader) return Response.json({ error: 'Unauthorized' }, { status: 401 })
-
+async function getCallerProfile(authHeader) {
+  if (!authHeader) return null
   const token = authHeader.replace('Bearer ', '')
-  const { data: { user } } = await adminClient.auth.getUser(token)
-  if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 })
-
+  const verifyClient = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    { auth: { persistSession: false } }
+  )
+  const { data: { user } } = await verifyClient.auth.getUser(token)
+  if (!user) return null
   const { data: profile } = await adminClient.from('profiles').select('role').eq('id', user.id).single()
-  if (profile?.role !== 'admin') return Response.json({ error: 'Forbidden' }, { status: 403 })
+  return profile
+}
+
+export async function POST(request) {
+  const profile = await getCallerProfile(request.headers.get('Authorization'))
+  if (!profile) return Response.json({ error: 'Unauthorized' }, { status: 401 })
+  if (profile.role !== 'admin') return Response.json({ error: 'Forbidden' }, { status: 403 })
 
   const { id } = await request.json()
   const { error } = await adminClient.auth.admin.deleteUser(id)
