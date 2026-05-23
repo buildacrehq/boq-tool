@@ -77,7 +77,8 @@ export default function CalcSettingsPage() {
     const knownPrefixes = new Set(DEFAULT_FLOOR_GROUPS.map(g => g.prefix))
     const customPrefixes = new Set()
     qData?.forEach(r => {
-      const prefix = r.row_key.replace(/_blocks$|_bricks$|_cement$|_slab$|_elec$|_misc$/, '')
+      if (!r.row_key.endsWith('_blocks')) return
+      const prefix = r.row_key.replace(/_blocks$/, '')
       if (!knownPrefixes.has(prefix)) customPrefixes.add(prefix)
     })
     if (customPrefixes.size > 0) {
