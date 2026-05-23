@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import AppLayout from '@/components/layout/AppLayout'
@@ -55,6 +55,13 @@ export default function CalcSettingsPage() {
   const [copyFrom, setCopyFrom] = useState('')
   const [addingSaving, setAddingSaving] = useState(false)
 
+  const [customRowsMap, setCustomRowsMap] = useState({})
+  const [showAddCustomRow, setShowAddCustomRow] = useState(false)
+  const [newCustomLabel, setNewCustomLabel] = useState('')
+  const [newCustomUnit, setNewCustomUnit] = useState('')
+  const [newCustomDivisible, setNewCustomDivisible] = useState(false)
+  const [addingCustomRow, setAddingCustomRow] = useState(false)
+
   useEffect(() => {
     const stored = localStorage.getItem('boq_user')
     if (!stored) { router.push('/login'); return }
@@ -73,6 +80,12 @@ export default function CalcSettingsPage() {
     qData?.forEach(r => { map[r.row_key] = r })
     vData?.forEach(r => { map[r.row_key] = r })
     setRows(map)
+
+    const customMap = {}
+    qData?.forEach(r => {
+      if (r.meta) customMap[r.row_key] = { label: r.meta.label, unit: r.meta.unit || '—', divisible: !!r.divisible }
+    })
+    setCustomRowsMap(customMap)
 
     const knownPrefixes = new Set(DEFAULT_FLOOR_GROUPS.map(g => g.prefix))
     const customPrefixes = new Set()
@@ -126,12 +139,67 @@ export default function CalcSettingsPage() {
       { row_key: `${prefix}_20mm`,  ...baseVehicle('20mm'),  updated_by: user?.name, updated_at: now },
     ], { onConflict: 'row_key' })
 
+    if (copyFrom) {
+      const customToCopy = Object.entries(customRowsMap)
+        .filter(([key]) => key.startsWith(copyFrom + '_'))
+        .map(([rowKey, meta]) => {
+          const suffix = rowKey.slice(copyFrom.length + 1)
+          const r = rows[rowKey] || {}
+          return {
+            row_key: `${prefix}_${suffix}`,
+            s20x30: r.s20x30 || 0, s20x40: r.s20x40 || 0, s30x40: r.s30x40 || 0,
+            s30x50: r.s30x50 || 0, s40x40: r.s40x40 || 0, s40x60: r.s40x60 || 0,
+            divisible: meta.divisible,
+            meta: { label: meta.label, unit: meta.unit },
+            updated_by: user?.name,
+            updated_at: now,
+          }
+        })
+      if (customToCopy.length > 0) {
+        await supabase.from('boq_quantities').upsert(customToCopy, { onConflict: 'row_key' })
+      }
+    }
+
     setFloorGroups(prev => [...prev, { prefix, label: newLabel.trim(), note: 'Custom floor type' }])
     setActiveGroup(prefix)
     setNewPrefix(''); setNewLabel(''); setCopyFrom(''); setShowAddForm(false)
     setAddingSaving(false)
     fetchData()
   }
+
+  async function addCustomRow() {
+    if (!newCustomLabel.trim()) return
+    setAddingCustomRow(true)
+    const customKey = newCustomLabel.trim().toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '')
+    const rowKey = `${activeGroup}_${customKey}`
+    await supabase.from('boq_quantities').upsert({
+      row_key: rowKey,
+      s20x30: 0, s20x40: 0, s30x40: 0, s30x50: 0, s40x40: 0, s40x60: 0,
+      divisible: newCustomDivisible,
+      meta: { label: newCustomLabel.trim(), unit: newCustomUnit.trim() || '—' },
+      updated_by: user?.name,
+      updated_at: new Date().toISOString(),
+    }, { onConflict: 'row_key' })
+    setShowAddCustomRow(false)
+    setNewCustomLabel(''); setNewCustomUnit(''); setNewCustomDivisible(false)
+    setAddingCustomRow(false)
+    fetchData()
+  }
+
+  const customRowsForActive = useMemo(() => {
+    return Object.entries(customRowsMap)
+      .filter(([key]) => key.startsWith(activeGroup + '_'))
+      .map(([rowKey, meta]) => ({
+        key: rowKey.slice(activeGroup.length + 1),
+        label: meta.label,
+        unit: meta.unit,
+        divisible: meta.divisible,
+        type: 'number',
+        table: 'boq_quantities',
+        rowKey,
+        isCustom: true,
+      }))
+  }, [customRowsMap, activeGroup])
 
   function cellValue(rowKey, sizeCol) {
     const e = edited[rowKey]?.[sizeCol]
@@ -181,6 +249,7 @@ export default function CalcSettingsPage() {
         updated_by: user?.name,
         updated_at: new Date().toISOString(),
       }
+      if (rowDef.isCustom) payload.meta = current.meta
       await supabase.from('boq_quantities').upsert(payload, { onConflict: 'row_key' })
     }
 
@@ -194,6 +263,70 @@ export default function CalcSettingsPage() {
   const sizeColMap = { '20x30': 's20x30', '20x40': 's20x40', '30x40': 's30x40', '30x50': 's30x50', '40x40': 's40x40', '40x60': 's40x60' }
 
   const activeGroupData = floorGroups.find(g => g.prefix === activeGroup)
+
+  function renderRow(row, rowKey) {
+    const dirty = isDirty(rowKey)
+    const isSaving = saving === rowKey
+    const wasSaved = saved === rowKey
+    return (
+      <tr key={rowKey} className={`border-b border-gray-50 ${dirty ? 'bg-amber-50' : 'hover:bg-gray-50'}`}>
+        <td className="px-6 py-3 font-medium text-gray-800">
+          {row.label}
+          {row.isCustom && <span className="ml-2 text-xs text-purple-500 font-normal">custom</span>}
+        </td>
+        <td className="px-4 py-3 text-gray-400 text-xs">
+          {row.unit}
+          {row.divisible ? ' *' : ''}
+          {row.type === 'vehicle' && <span className="ml-1 text-purple-400">†</span>}
+        </td>
+        {SIZES.map(s => {
+          const col = sizeColMap[s]
+          const val = cellValue(rowKey, col)
+          const changed = edited[rowKey]?.[col] !== undefined
+          return (
+            <td key={s} className="px-2 py-2 text-center">
+              {row.type === 'vehicle' ? (
+                <select
+                  className={`w-24 text-center border rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white ${
+                    changed ? 'border-amber-400 bg-amber-50' : 'border-gray-200'
+                  }`}
+                  value={val || ''}
+                  onChange={e => handleChange(rowKey, col, e.target.value)}
+                >
+                  {VEHICLE_OPTIONS.map(opt => (
+                    <option key={opt} value={opt}>{opt || '— None'}</option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  type="number"
+                  min="0"
+                  className={`w-20 text-center border rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    changed ? 'border-amber-400 bg-amber-50' : 'border-gray-200 bg-white'
+                  }`}
+                  value={val}
+                  onChange={e => handleChange(rowKey, col, e.target.value)}
+                />
+              )}
+            </td>
+          )
+        })}
+        <td className="px-4 py-2 text-right">
+          {wasSaved ? (
+            <span className="text-xs text-green-600 font-medium">Saved</span>
+          ) : (
+            <button
+              onClick={() => saveRow(rowKey, row)}
+              disabled={!dirty || isSaving}
+              className="text-xs px-3 py-1.5 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+            >
+              {isSaving ? 'Saving...' : 'Save'}
+            </button>
+          )}
+        </td>
+      </tr>
+    )
+  }
 
   return (
     <AppLayout>
@@ -262,7 +395,7 @@ export default function CalcSettingsPage() {
           {floorGroups.map(g => (
             <button
               key={g.prefix}
-              onClick={() => setActiveGroup(g.prefix)}
+              onClick={() => { setActiveGroup(g.prefix); setShowAddCustomRow(false) }}
               className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
                 activeGroup === g.prefix
                   ? 'bg-gray-900 text-white border-gray-900'
@@ -295,74 +428,80 @@ export default function CalcSettingsPage() {
                 </tr>
               </thead>
               <tbody>
-                {ROWS.map(row => {
-                  const rowKey = `${activeGroup}_${row.key}`
-                  const dirty = isDirty(rowKey)
-                  const isSaving = saving === rowKey
-                  const wasSaved = saved === rowKey
-                  return (
-                    <tr key={rowKey} className={`border-b border-gray-50 ${dirty ? 'bg-amber-50' : 'hover:bg-gray-50'}`}>
-                      <td className="px-6 py-3 font-medium text-gray-800">{row.label}</td>
-                      <td className="px-4 py-3 text-gray-400 text-xs">
-                        {row.unit}
-                        {row.divisible ? ' *' : ''}
-                        {row.type === 'vehicle' && <span className="ml-1 text-purple-400">†</span>}
-                      </td>
-                      {SIZES.map(s => {
-                        const col = sizeColMap[s]
-                        const val = cellValue(rowKey, col)
-                        const changed = edited[rowKey]?.[col] !== undefined
-                        return (
-                          <td key={s} className="px-2 py-2 text-center">
-                            {row.type === 'vehicle' ? (
-                              <select
-                                className={`w-24 text-center border rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white ${
-                                  changed ? 'border-amber-400 bg-amber-50' : 'border-gray-200'
-                                }`}
-                                value={val || ''}
-                                onChange={e => handleChange(rowKey, col, e.target.value)}
-                              >
-                                {VEHICLE_OPTIONS.map(opt => (
-                                  <option key={opt} value={opt}>{opt || '— None'}</option>
-                                ))}
-                              </select>
-                            ) : (
-                              <input
-                                type="number"
-                                min="0"
-                                className={`w-20 text-center border rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                                  changed ? 'border-amber-400 bg-amber-50' : 'border-gray-200 bg-white'
-                                }`}
-                                value={val}
-                                onChange={e => handleChange(rowKey, col, e.target.value)}
-                              />
-                            )}
-                          </td>
-                        )
-                      })}
-                      <td className="px-4 py-2 text-right">
-                        {wasSaved ? (
-                          <span className="text-xs text-green-600 font-medium">Saved</span>
-                        ) : (
-                          <button
-                            onClick={() => saveRow(rowKey, row)}
-                            disabled={!dirty || isSaving}
-                            className="text-xs px-3 py-1.5 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-                          >
-                            {isSaving ? 'Saving...' : 'Save'}
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  )
-                })}
+                {ROWS.map(row => renderRow(row, `${activeGroup}_${row.key}`))}
+                {customRowsForActive.length > 0 && (
+                  <tr>
+                    <td colSpan={9} className="px-6 py-2 bg-gray-50 border-t border-gray-100">
+                      <span className="text-xs text-gray-400 font-medium">Custom rows</span>
+                    </td>
+                  </tr>
+                )}
+                {customRowsForActive.map(row => renderRow(row, row.rowKey))}
               </tbody>
             </table>
 
-            <div className="px-6 py-3 bg-gray-50 border-t border-gray-100 space-y-1">
-              <p className="text-xs text-gray-400">* Cement and Slab are divisible — quantity scales with actual floor area vs standard size area.</p>
-              <p className="text-xs text-gray-400">† M Sand and 20mm Aggregate use vehicle type (Tractor / 709 / 6W / 10W). Price is pulled from Market Prices.</p>
-            </div>
+            {/* Add custom row form */}
+            {showAddCustomRow ? (
+              <div className="px-6 py-4 border-t border-gray-100 bg-gray-50 space-y-3">
+                <p className="text-xs font-semibold text-gray-700">Add Custom Row</p>
+                <div className="flex flex-wrap gap-3 items-end">
+                  <div className="space-y-1">
+                    <label className="text-xs text-gray-500">Material name</label>
+                    <input
+                      className="h-9 px-3 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white w-44"
+                      placeholder="e.g. Iron Rods"
+                      value={newCustomLabel}
+                      onChange={e => setNewCustomLabel(e.target.value)}
+                      onKeyDown={e => e.key === 'Enter' && addCustomRow()}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs text-gray-500">Unit</label>
+                    <input
+                      className="h-9 px-3 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white w-28"
+                      placeholder="e.g. Kg / ₹ / Nos"
+                      value={newCustomUnit}
+                      onChange={e => setNewCustomUnit(e.target.value)}
+                    />
+                  </div>
+                  <label className="flex items-center gap-2 text-sm text-gray-600 pb-1 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={newCustomDivisible}
+                      onChange={e => setNewCustomDivisible(e.target.checked)}
+                      className="rounded"
+                    />
+                    Divisible by area
+                  </label>
+                  <button
+                    onClick={addCustomRow}
+                    disabled={!newCustomLabel.trim() || addingCustomRow}
+                    className="h-9 px-4 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    {addingCustomRow ? 'Adding...' : 'Add Row'}
+                  </button>
+                  <button
+                    onClick={() => { setShowAddCustomRow(false); setNewCustomLabel(''); setNewCustomUnit(''); setNewCustomDivisible(false) }}
+                    className="h-9 px-3 text-sm text-gray-500 hover:text-gray-700"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="px-6 py-3 border-t border-gray-100 bg-gray-50 flex items-center justify-between">
+                <div className="space-y-1">
+                  <p className="text-xs text-gray-400">* Cement and Slab are divisible — quantity scales with actual floor area vs standard size area.</p>
+                  <p className="text-xs text-gray-400">† M Sand and 20mm Aggregate use vehicle type (Tractor / 709 / 6W / 10W). Price is pulled from Market Prices.</p>
+                </div>
+                <button
+                  onClick={() => setShowAddCustomRow(true)}
+                  className="ml-6 shrink-0 text-xs px-3 py-1.5 rounded-lg border border-dashed border-gray-300 text-gray-500 hover:border-blue-400 hover:text-blue-600 transition-all"
+                >
+                  + Add Custom Row
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>
