@@ -6,24 +6,25 @@ const adminClient = createClient(
   { auth: { persistSession: false } }
 )
 
-async function getCallerProfile(authHeader) {
+async function verifyAdmin(authHeader) {
   if (!authHeader) return null
   const token = authHeader.replace('Bearer ', '')
-  const verifyClient = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-    { auth: { persistSession: false } }
-  )
-  const { data: { user } } = await verifyClient.auth.getUser(token)
-  if (!user) return null
+  const res = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/user`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    },
+  })
+  if (!res.ok) return null
+  const user = await res.json()
+  if (!user?.id) return null
   const { data: profile } = await adminClient.from('profiles').select('role').eq('id', user.id).single()
-  return profile
+  return profile?.role === 'admin' ? profile : null
 }
 
 export async function POST(request) {
-  const profile = await getCallerProfile(request.headers.get('Authorization'))
-  if (!profile) return Response.json({ error: 'Unauthorized' }, { status: 401 })
-  if (profile.role !== 'admin') return Response.json({ error: 'Forbidden' }, { status: 403 })
+  const caller = await verifyAdmin(request.headers.get('Authorization'))
+  if (!caller) return Response.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { id } = await request.json()
   const { error } = await adminClient.auth.admin.deleteUser(id)
