@@ -120,6 +120,9 @@ export default function ProjectPage() {
   const [boqData, setBoqData] = useState({})
   const [vehicleData, setVehicleData] = useState({})
   const [customItems, setCustomItems] = useState([])
+  const [frozenBoq, setFrozenBoq] = useState(null)
+  const [frozenAt, setFrozenAt] = useState(null)
+  const [freezing, setFreezing] = useState(false)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [mobileTab, setMobileTab] = useState('boq')
@@ -214,6 +217,8 @@ export default function ProjectPage() {
 
     if (proj) {
       setProject(proj)
+      setFrozenBoq(proj.frozen_boq || null)
+      setFrozenAt(proj.frozen_at || null)
       setBoqOverrides(proj.boq_overrides || {})
       setClientName(proj.client_name || '')
       setClientPhone(proj.client_phone || '')
@@ -337,8 +342,10 @@ export default function ProjectPage() {
       hasMainGate, hasAc, hasCctv, hasSolar, hasUps, hasWifi, paintingGrade, flooringType,
       windowType, railingType, marketPrices, project, customBlockPrice, customBrickPrice, boqData, vehicleData])
 
+  const displayItems = useMemo(() => frozenBoq ?? liveItems, [frozenBoq, liveItems])
+
   const overriddenGrandTotal = useMemo(() => {
-    const boqTotal = liveItems.reduce((sum, item, i) => {
+    const boqTotal = displayItems.reduce((sum, item, i) => {
       const ov = boqOverrides[i]
       if (!ov) return sum + (item.total_price || 0)
       const qty = parseFloat(ov.quantity ?? item.quantity)
@@ -349,9 +356,24 @@ export default function ProjectPage() {
     }, 0)
     const customTotal = customItems.reduce((sum, item) => sum + (item.total_price || 0), 0)
     return boqTotal + customTotal
-  }, [liveItems, boqOverrides, customItems])
+  }, [displayItems, boqOverrides, customItems])
 
   const hasAnyOverride = Object.keys(boqOverrides).length > 0
+
+  async function freezeBOQ() {
+    setFreezing(true)
+    const now = new Date().toISOString()
+    await supabase.from('projects').update({ frozen_boq: liveItems, frozen_at: now }).eq('id', id)
+    setFrozenBoq(liveItems)
+    setFrozenAt(now)
+    setFreezing(false)
+  }
+
+  async function unfreezeBOQ() {
+    await supabase.from('projects').update({ frozen_boq: null, frozen_at: null }).eq('id', id)
+    setFrozenBoq(null)
+    setFrozenAt(null)
+  }
 
   async function saveOverrides(overrides) {
     await supabase.from('projects').update({ boq_overrides: overrides }).eq('id', id)
@@ -541,7 +563,7 @@ export default function ProjectPage() {
     detailsSheet['!cols'] = [{ wch: 25 }, { wch: 35 }]
     XLSX.utils.book_append_sheet(workbook, detailsSheet, 'Project Details')
 
-    const grouped = groupByStageWithIndex(liveItems)
+    const grouped = groupByStageWithIndex(displayItems)
     const boqHeader = ['Stage', 'Item', 'Unit', 'Quantity', 'Unit Price (₹)', 'Total (₹)']
     const boqRows = []
     Object.entries(grouped).forEach(([stage, items]) => {
@@ -599,6 +621,18 @@ export default function ProjectPage() {
               <p className="text-xs text-gray-400 mt-0.5">{project.site_address} · {project.dimension_width}×{project.dimension_length} ft</p>
             </div>
             <div className="flex items-center gap-2">
+              {frozenAt ? (
+                <>
+                  <span className="text-xs text-amber-700 bg-amber-50 border border-amber-200 px-2 py-1 rounded-lg">
+                    Frozen {new Date(frozenAt).toLocaleDateString('en-IN')}
+                  </span>
+                  <Button variant="outline" size="sm" onClick={unfreezeBOQ}>Unfreeze</Button>
+                </>
+              ) : (
+                <Button variant="outline" size="sm" onClick={freezeBOQ} disabled={freezing}>
+                  {freezing ? 'Freezing...' : 'Freeze BOQ'}
+                </Button>
+              )}
               <Button variant="outline" size="sm" onClick={exportToExcel}>Excel</Button>
               <Button size="sm" onClick={handleUpdate} disabled={saving}>{saving ? 'Saving...' : 'Save'}</Button>
             </div>
@@ -1133,7 +1167,7 @@ export default function ProjectPage() {
 
           {/* BOQ table */}
           <div className="flex-1 overflow-y-auto">
-            {liveItems.length === 0 ? (
+            {displayItems.length === 0 ? (
               <div className="flex items-center justify-center h-full text-gray-400 text-sm">Loading BOQ...</div>
             ) : (
               <table className="w-full text-sm border-collapse">
