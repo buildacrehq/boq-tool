@@ -20,8 +20,8 @@ export async function POST(request) {
   const { data: profile } = await adminClient.from('profiles').select('role').eq('id', user.id).single()
   if (profile?.role !== 'admin') return Response.json({ error: 'Forbidden' }, { status: 403 })
 
-  const { id } = await request.json()
-  const { error } = await adminClient.auth.admin.deleteUser(id)
+  const { id, password } = await request.json()
+  const { error } = await adminClient.auth.admin.updateUserById(id, { password })
 
   if (error) return Response.json({ error: error.message }, { status: 400 })
   return Response.json({ success: true })

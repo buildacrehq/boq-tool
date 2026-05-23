@@ -17,6 +17,9 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [changingRole, setChangingRole] = useState(null)
+  const [changingPassword, setChangingPassword] = useState(null)
+  const [newPassword, setNewPassword] = useState('')
+  const [passwordSaving, setPasswordSaving] = useState(false)
 
   useEffect(() => {
     const stored = localStorage.getItem('boq_user')
@@ -64,6 +67,28 @@ export default function SettingsPage() {
     const { error } = await supabase.from('profiles').update({ role: newRole }).eq('id', id)
     if (error) fetchStaff()
     setChangingRole(null)
+  }
+
+  async function changePassword(id) {
+    if (!newPassword.trim()) return
+    setPasswordSaving(true)
+    const { data: { session } } = await supabase.auth.getSession()
+    const res = await fetch('/api/change-password', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({ id, password: newPassword }),
+    })
+    const result = await res.json()
+    if (result.error) {
+      alert('Failed: ' + result.error)
+    } else {
+      setChangingPassword(null)
+      setNewPassword('')
+    }
+    setPasswordSaving(false)
   }
 
   async function removeStaff(id) {
@@ -173,7 +198,34 @@ export default function SettingsPage() {
                     <td className="px-4 py-3 text-gray-400">{s.created_at ? new Date(s.created_at).toLocaleDateString('en-IN') : '—'}</td>
                     <td className="px-6 py-3 text-right">
                       {s.id !== user?.id && (
-                        <button onClick={() => removeStaff(s.id)} className="text-xs text-red-500 hover:text-red-700">Remove</button>
+                        <div className="flex items-center justify-end gap-3">
+                          {changingPassword === s.id ? (
+                            <>
+                              <input
+                                type="password"
+                                placeholder="New password"
+                                value={newPassword}
+                                onChange={e => setNewPassword(e.target.value)}
+                                className="w-32 h-7 px-2 border border-gray-200 rounded text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                onKeyDown={e => e.key === 'Enter' && changePassword(s.id)}
+                                autoFocus
+                              />
+                              <button
+                                onClick={() => changePassword(s.id)}
+                                disabled={passwordSaving || !newPassword.trim()}
+                                className="text-xs text-blue-600 hover:text-blue-800 disabled:opacity-40"
+                              >
+                                {passwordSaving ? 'Saving...' : 'Set'}
+                              </button>
+                              <button onClick={() => { setChangingPassword(null); setNewPassword('') }} className="text-xs text-gray-400 hover:text-gray-600">Cancel</button>
+                            </>
+                          ) : (
+                            <>
+                              <button onClick={() => { setChangingPassword(s.id); setNewPassword('') }} className="text-xs text-gray-500 hover:text-gray-700">Set Password</button>
+                              <button onClick={() => removeStaff(s.id)} className="text-xs text-red-500 hover:text-red-700">Remove</button>
+                            </>
+                          )}
+                        </div>
                       )}
                     </td>
                   </tr>
