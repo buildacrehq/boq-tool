@@ -16,6 +16,7 @@ export default function SettingsPage() {
   const [form, setForm] = useState({ name: '', email: '', password: '', role: 'staff' })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [changingRole, setChangingRole] = useState(null)
 
   useEffect(() => {
     const stored = localStorage.getItem('boq_user')
@@ -53,6 +54,13 @@ export default function SettingsPage() {
       fetchStaff()
     }
     setSaving(false)
+  }
+
+  async function changeRole(id, newRole) {
+    setChangingRole(id)
+    await supabase.from('users').update({ role: newRole }).eq('id', id)
+    setChangingRole(null)
+    fetchStaff()
   }
 
   async function removeStaff(id) {
@@ -132,9 +140,21 @@ export default function SettingsPage() {
                     </td>
                     <td className="px-4 py-3 text-gray-500">{s.email}</td>
                     <td className="px-4 py-3">
-                      <span className={`text-xs px-2 py-0.5 rounded-full ${s.role === 'admin' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'}`}>
-                        {s.role}
-                      </span>
+                      {s.id === user?.id ? (
+                        <span className={`text-xs px-2 py-0.5 rounded-full ${s.role === 'admin' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'}`}>
+                          {s.role}
+                        </span>
+                      ) : (
+                        <select
+                          className={`text-xs px-2 py-0.5 rounded-full border-0 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 ${s.role === 'admin' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'}`}
+                          value={s.role}
+                          disabled={changingRole === s.id}
+                          onChange={e => changeRole(s.id, e.target.value)}
+                        >
+                          <option value="staff">staff</option>
+                          <option value="admin">admin</option>
+                        </select>
+                      )}
                     </td>
                     <td className="px-4 py-3 text-gray-400">{new Date(s.created_at).toLocaleDateString('en-IN')}</td>
                     <td className="px-6 py-3 text-right">
