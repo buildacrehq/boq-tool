@@ -59,7 +59,8 @@ export default function SettingsPage() {
   async function changeRole(id, newRole) {
     setChangingRole(id)
     setStaff(prev => prev.map(s => s.id === id ? { ...s, role: newRole } : s))
-    await supabase.from('users').update({ role: newRole }).eq('id', id)
+    const { error } = await supabase.from('users').update({ role: newRole }).eq('id', id)
+    if (error) console.error('changeRole error:', error)
     setChangingRole(null)
     fetchStaff()
   }
