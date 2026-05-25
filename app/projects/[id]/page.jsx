@@ -916,12 +916,20 @@ export default function ProjectPage() {
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-3 bg-gray-50 rounded-lg">
                             <div className="space-y-1.5">
                               <Label className="text-xs text-gray-500">Tiles Area (sqft)</Label>
-                              <Input type="number" placeholder={floor.sqft || 'Enter sqft'} value={floor.tilesSquft} onChange={e => updateFloor(index, 'tilesSquft', e.target.value)} />
+                              <Input type="number" placeholder={floor.sqft ? `Auto: ${Math.ceil(parseFloat(floor.sqft) * 1.15 + 200 * (parseInt(floor.toilets) || 0) + 80 * (parseInt(floor.kitchens) || 0))} sqft` : 'Enter sqft'} value={floor.tilesSquft} onChange={e => updateFloor(index, 'tilesSquft', e.target.value)} />
+                              <p className="text-xs text-gray-400">Leave empty to auto-calc (floor × 1.15 + washroom + kitchen area)</p>
                             </div>
                             <div className="space-y-1.5">
                               <Label className="text-xs text-gray-500">Price per sqft (₹)</Label>
-                              <Input type="number" value={floor.tilesPricePerSqft} onChange={e => updateFloor(index, 'tilesPricePerSqft', e.target.value)} />
-                              <p className="text-xs text-gray-400">Total: ₹{((parseFloat(floor.tilesSquft) || 0) * (parseFloat(floor.tilesPricePerSqft) || 0)).toLocaleString('en-IN')}</p>
+                              <Input type="number" placeholder="e.g. 80" value={floor.tilesPricePerSqft} onChange={e => updateFloor(index, 'tilesPricePerSqft', e.target.value)} />
+                              <p className="text-xs text-gray-400">{(() => {
+                                const autoArea = floor.sqft ? Math.ceil(parseFloat(floor.sqft) * 1.15 + 200 * (parseInt(floor.toilets) || 0) + 80 * (parseInt(floor.kitchens) || 0)) : 0
+                                const usedArea = parseFloat(floor.tilesSquft) || autoArea
+                                const price = parseFloat(floor.tilesPricePerSqft) || 0
+                                return usedArea > 0 && price > 0
+                                  ? `Total: ₹${(usedArea * price).toLocaleString('en-IN')} (${usedArea} sqft)`
+                                  : 'Enter price per sqft'
+                              })()}</p>
                             </div>
                           </div>
                         </>
