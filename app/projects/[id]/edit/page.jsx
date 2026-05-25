@@ -136,13 +136,15 @@ export default function EditProjectPage() {
     : (width && length ? parseFloat(width) * parseFloat(length) : null)
 
   const [masonryType, setMasonryType] = useState('block')
+  const [customBlockPrice, setCustomBlockPrice] = useState('')
+  const [customBrickPrice, setCustomBrickPrice] = useState('')
   const [floorCount, setFloorCount] = useState(1)
   const [floors, setFloors] = useState([createFloor(0)])
 
   const [hasLift, setHasLift] = useState(false)
   const [hasSump, setHasSump] = useState(false)
   const [sumpCapacity, setSumpCapacity] = useState('10000')
-  const [sumpType, setSumpType] = useState('block')
+  const [sumpType, setSumpType] = useState('rcc')
   const [sumpRateOverride, setSumpRateOverride] = useState('')
   const [hasSsm, setHasSsm] = useState(false)
   const [ssmCourses, setSsmCourses] = useState('')
@@ -193,11 +195,13 @@ export default function EditProjectPage() {
       setSideLeft(proj.side_left || '')
       setSideRight(proj.side_right || '')
       setMasonryType(proj.masonry_type || 'block')
+      setCustomBlockPrice(proj.custom_block_price ? String(proj.custom_block_price) : '')
+      setCustomBrickPrice(proj.custom_brick_price ? String(proj.custom_brick_price) : '')
       setFloorCount(proj.floor_count || proj.floors || 1)
       setHasLift(proj.has_lift || false)
       setHasSump(proj.has_sump || false)
       setSumpCapacity(proj.sump_capacity || '10000')
-      setSumpType(proj.sump_type || 'block')
+      setSumpType(proj.sump_type || 'rcc')
       setHasSsm(proj.has_ssm || false)
       setSsmCourses(proj.ssm_courses || '')
       setHasCompoundWall(proj.has_compound_wall ?? true)
@@ -254,9 +258,8 @@ export default function EditProjectPage() {
         acPoints: isParkingType ? 0 : (updated[index].acPoints || 2),
         evPoints: (index === 0 && !isParkingType) ? (updated[index].evPoints || 2) : 0,
       }
-      if (['duplex_ff', 'duplex_sf'].includes(type) && index + 1 < updated.length) {
-        const endDefaults = getDefaultDoors('duplex_end')
-        updated[index + 1] = { ...updated[index + 1], type: 'duplex_end', ...endDefaults }
+      if (['duplex_gf', 'duplex_ff', 'duplex_sf'].includes(type) && index + 1 < updated.length) {
+        updated[index + 1] = { ...updated[index + 1], type: '' }
       }
       return updated
     })
@@ -330,7 +333,10 @@ export default function EditProjectPage() {
       total_sqft: sqft,
       floors: floorCount, floor_count: floorCount, floors_data: floorsData,
       ground_floor_type: floors[0]?.type || '', upper_floor_type: floors[1]?.type || '',
-      masonry_type: masonryType, has_lift: hasLift, has_sump: hasSump,
+      masonry_type: masonryType,
+      custom_block_price: customBlockPrice ? parseFloat(customBlockPrice) : null,
+      custom_brick_price: customBrickPrice ? parseFloat(customBrickPrice) : null,
+      has_lift: hasLift, has_sump: hasSump,
       sump_capacity: sumpCapacity ? parseFloat(sumpCapacity) : null, sump_type: sumpType,
       has_ssm: hasSsm, ssm_courses: ssmCourses ? parseInt(ssmCourses) : null,
       has_compound_wall: hasCompoundWall, has_rainwater: hasRainwater, has_gas: hasGas,
@@ -449,14 +455,24 @@ export default function EditProjectPage() {
           {/* Masonry */}
           <Card>
             <CardHeader><CardTitle className="text-base flex items-center gap-2"><Badge variant="outline">2b</Badge>Masonry Type</CardTitle></CardHeader>
-            <CardContent>
+            <CardContent className="space-y-3">
               <div className="grid grid-cols-2 gap-4">
-                {[{ value: 'block', label: 'Blocks', sub: 'Cement blocks · ₹49 per block' }, { value: 'brick', label: 'Bricks', sub: 'Red clay bricks · ₹8 per brick' }].map(m => (
+                {[{ value: 'block', label: 'Blocks', sub: `Cement blocks · ₹${customBlockPrice || 49}/block` }, { value: 'brick', label: 'Bricks', sub: `Red clay bricks · ₹${customBrickPrice || 8}/brick` }].map(m => (
                   <button key={m.value} onClick={() => setMasonryType(m.value)} className={`p-4 rounded-xl border-2 text-left transition-all ${masonryType === m.value ? 'border-gray-900 bg-gray-50' : 'border-gray-200 bg-white hover:border-gray-300'}`}>
                     <p className="font-semibold text-gray-800">{m.label}</p>
                     <p className="text-xs text-gray-400 mt-1">{m.sub}</p>
                   </button>
                 ))}
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label className="text-xs text-gray-500">Block Price (₹/block)</Label>
+                  <Input type="number" placeholder="49" value={customBlockPrice} onChange={e => setCustomBlockPrice(e.target.value)} />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs text-gray-500">Brick Price (₹/brick)</Label>
+                  <Input type="number" placeholder="8" value={customBrickPrice} onChange={e => setCustomBrickPrice(e.target.value)} />
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -481,8 +497,8 @@ export default function EditProjectPage() {
                   <div className="bg-gray-800 text-white px-4 py-2.5 flex items-center gap-2">
                     <div className="w-2 h-2 rounded-full bg-blue-400"></div>
                     <span className="text-sm font-semibold">{floor.name}</span>
-                    {floor.type === 'duplex_end'
-                      ? <Badge className="ml-2 bg-purple-600 text-white text-xs border-0">Duplex End</Badge>
+                    {['duplex_end_2mb', 'duplex_end_study', 'duplex_end'].includes(floor.type)
+                      ? <Badge className="ml-2 bg-purple-600 text-white text-xs border-0">{DUPLEX_END_TYPES.find(t => t.value === floor.type)?.label || 'Duplex End'}</Badge>
                       : floor.type && <Badge className="ml-2 bg-blue-600 text-white text-xs border-0">{[...GROUND_TYPES, ...UPPER_TYPES].find(t => t.value === floor.type)?.label || floor.type}</Badge>
                     }
                     {index > 0 && (
@@ -564,7 +580,7 @@ export default function EditProjectPage() {
                         <Separator />
                         <p className="text-sm font-medium text-gray-700">Doors &amp; Rooms</p>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                          {floor.type !== 'duplex_end' && (
+                          {!['duplex_end_2mb', 'duplex_end_study', 'duplex_end'].includes(floor.type) && (
                             <div className="space-y-1.5">
                               <Label className="text-xs">Main Door</Label>
                               <select className="w-full h-10 px-3 border border-gray-200 rounded-lg text-sm bg-white" value={floor.mainDoor} onChange={e => updateFloor(index, 'mainDoor', e.target.value)}>
@@ -577,7 +593,7 @@ export default function EditProjectPage() {
                             { field: 'bedroomDoors', label: 'Bedroom Doors', note: '₹12,000 each' },
                             { field: 'balconyDoors', label: 'Balcony Doors', note: '₹12,000 each' },
                             { field: 'utilityDoors', label: 'Utility Doors', note: '₹10,000 each' },
-                            ...(floor.type !== 'duplex_end' ? [{ field: 'kitchens', label: 'Kitchens', note: 'For plumbing' }] : []),
+                            ...(!['duplex_end_2mb', 'duplex_end_study', 'duplex_end'].includes(floor.type) ? [{ field: 'kitchens', label: 'Kitchens', note: 'For plumbing' }] : []),
                           ].map(d => (
                             <div key={d.field} className="space-y-1.5">
                               <Label className="text-xs">{d.label}</Label>

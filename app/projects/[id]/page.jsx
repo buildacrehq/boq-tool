@@ -165,13 +165,15 @@ export default function ProjectPage() {
   const [ohtCustom, setOhtCustom] = useState('')
   const [hasMainGate, setHasMainGate] = useState(true)
   const [sumpRateOverride, setSumpRateOverride] = useState('')
+  const [ohtCustomPrice, setOhtCustomPrice] = useState('')
+  const [mainGateCustomPrice, setMainGateCustomPrice] = useState('')
   const [hasAc, setHasAc] = useState(false)
   const [hasCctv, setHasCctv] = useState(false)
   const [hasSolar, setHasSolar] = useState(false)
   const [hasUps, setHasUps] = useState(false)
   const [hasWifi, setHasWifi] = useState(false)
   // Edit form — Finishes
-  const [paintingGrade, setPaintingGrade] = useState('')
+  const [paintingGrade, setPaintingGrade] = useState('royal_emulsion')
   const [windowType, setWindowType] = useState('upvc_white')
   const [railingType, setRailingType] = useState('')
   const [flooringType, setFlooringType] = useState('')
@@ -237,7 +239,7 @@ export default function ProjectPage() {
       setHasLift(proj.has_lift || false)
       setHasSump(proj.has_sump || false)
       setSumpCapacity(proj.sump_capacity || '10000')
-      setSumpType(proj.sump_type || 'block')
+      setSumpType(proj.sump_type || 'rcc')
       setHasSsm(proj.has_ssm || false)
       setSsmCourses(proj.ssm_courses || '')
       setHasCompoundWall(proj.has_compound_wall ?? true)
@@ -251,7 +253,7 @@ export default function ProjectPage() {
       setHasSolar(proj.has_solar || false)
       setHasUps(proj.has_ups || false)
       setHasWifi(proj.has_wifi || false)
-      setPaintingGrade(proj.painting_grade || '')
+      setPaintingGrade(proj.painting_grade || 'royal_emulsion')
       setWindowType(proj.window_type || '')
       setRailingType(proj.railing_type || '')
       setFlooringType(proj.flooring_type || '')
@@ -259,6 +261,8 @@ export default function ProjectPage() {
       if (proj.floors_data && proj.floors_data.length > 0) {
         setFloors(proj.floors_data)
         setSumpRateOverride(proj.floors_data[0]?.sumpRateOverride || '')
+        setOhtCustomPrice(proj.floors_data[0]?.ohtCustomPrice ? String(proj.floors_data[0].ohtCustomPrice) : '')
+        setMainGateCustomPrice(proj.floors_data[0]?.mainGateCustomPrice ? String(proj.floors_data[0].mainGateCustomPrice) : '')
       } else {
         const count = proj.floor_count || proj.floors || 1
         setFloors(Array.from({ length: count }, (_, i) => createFloor(i)))
@@ -311,7 +315,15 @@ export default function ProjectPage() {
       dimension_width: isIrregular ? parseFloat(sideFront) : parseFloat(width),
       dimension_length: isIrregular ? parseFloat(sideLeft) : parseFloat(length),
       floors: floorCount, masonry_type: masonryType,
-      floors_data: floors.map((f, i) => i === 0 && sumpRateOverride ? { ...f, sumpRateOverride: parseFloat(sumpRateOverride) } : f),
+      floors_data: floors.map((f, i) => {
+        if (i !== 0) return f
+        return {
+          ...f,
+          ...(sumpRateOverride ? { sumpRateOverride: parseFloat(sumpRateOverride) } : {}),
+          ...(ohtCustomPrice ? { ohtCustomPrice: parseFloat(ohtCustomPrice) } : {}),
+          ...(mainGateCustomPrice ? { mainGateCustomPrice: parseFloat(mainGateCustomPrice) } : {}),
+        }
+      }),
       has_sump: hasSump, sump_capacity: sumpCapacity || null, sump_type: sumpType,
       has_ssm: hasSsm, ssm_courses: ssmCourses || null,
       has_compound_wall: hasCompoundWall, has_rainwater: hasRainwater, has_gas: hasGas,
@@ -339,6 +351,7 @@ export default function ProjectPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sqft, floors, masonryType, floorCount, sumpRateOverride, hasSump, sumpCapacity, sumpType,
       hasSsm, ssmCourses, hasCompoundWall, hasRainwater, hasGas, hasOht, ohtCapacity, ohtCustom,
+      ohtCustomPrice, mainGateCustomPrice,
       hasMainGate, hasAc, hasCctv, hasSolar, hasUps, hasWifi, paintingGrade, flooringType,
       windowType, railingType, marketPrices, project, customBlockPrice, customBrickPrice, boqData, vehicleData])
 
@@ -406,9 +419,16 @@ export default function ProjectPage() {
     const defaults = getDefaultDoors(type)
     const isDuplexEnd = ['duplex_end_2mb', 'duplex_end_study', 'duplex_end'].includes(type)
     const isDuplex = ['duplex_gf', 'duplex_ff', 'duplex_sf'].includes(type) || isDuplexEnd
+    const isParkingType = ['parking_only', 'parking_lift', 'commercial_parking'].includes(type)
     setFloors(prev => {
       const updated = [...prev]
-      updated[index] = { ...updated[index], type, ...defaults, railingType: isDuplex ? 'ss_glass' : 'ss' }
+      updated[index] = {
+        ...updated[index], type, ...defaults,
+        railingType: isDuplex ? 'ss_glass' : (updated[index].railingType || 'ss'),
+        staircaseType: isDuplex ? 'chain' : 'normal',
+        acPoints: isParkingType ? 0 : (updated[index].acPoints || 2),
+        evPoints: (index === 0 && !isParkingType) ? (updated[index].evPoints || 2) : 0,
+      }
       if (['duplex_gf', 'duplex_ff', 'duplex_sf'].includes(type) && index + 1 < updated.length) {
         updated[index + 1] = { ...updated[index + 1], type: '' }
       }
@@ -458,7 +478,15 @@ export default function ProjectPage() {
 
     const finalOhtCapacity = ohtCapacity === 'custom' ? parseFloat(ohtCustom) : parseFloat(ohtCapacity)
     const totalEvPoints = floors.reduce((sum, f) => sum + (parseInt(f.evPoints) || 0), 0)
-    const floorsData = floors.map((f, i) => i === 0 && sumpRateOverride ? { ...f, sumpRateOverride: parseFloat(sumpRateOverride) } : f)
+    const floorsData = floors.map((f, i) => {
+      if (i !== 0) return f
+      return {
+        ...f,
+        ...(sumpRateOverride ? { sumpRateOverride: parseFloat(sumpRateOverride) } : {}),
+        ...(ohtCustomPrice ? { ohtCustomPrice: parseFloat(ohtCustomPrice) } : {}),
+        ...(mainGateCustomPrice ? { mainGateCustomPrice: parseFloat(mainGateCustomPrice) } : {}),
+      }
+    })
 
     const projectData = {
       client_name: clientName, client_phone: clientPhone, site_address: clientLocation,
@@ -1098,9 +1126,17 @@ export default function ProjectPage() {
               <CardContent>
                 {[
                   { label: 'Compound Wall', sub: 'Boundary wall on all 4 sides', state: hasCompoundWall, set: setHasCompoundWall, isDefault: true },
-                  { label: 'Main Gate', sub: 'Entry gate — ₹30,000 to ₹50,000', state: hasMainGate, set: setHasMainGate, isDefault: true },
+                  { label: 'Main Gate', sub: mainGateCustomPrice ? `Custom price: ₹${parseFloat(mainGateCustomPrice).toLocaleString('en-IN')}` : 'Entry gate — ₹30,000 to ₹50,000', state: hasMainGate, set: setHasMainGate, isDefault: true,
+                    extra: hasMainGate && (
+                      <div className="pl-4 border-l-2 border-blue-100 mt-1 pb-2">
+                        <div className="w-56 space-y-1"><Label className="text-xs">Custom Price (₹) — leave blank for auto</Label>
+                          <Input type="number" placeholder="Auto: ₹30,000–₹50,000" value={mainGateCustomPrice} onChange={e => setMainGateCustomPrice(e.target.value)} />
+                        </div>
+                      </div>
+                    )
+                  },
                   {
-                    label: 'Overhead Tank (OHT)', sub: 'Water storage on terrace — ₹7/litre', state: hasOht, set: setHasOht, isDefault: true,
+                    label: 'Overhead Tank (OHT)', sub: ohtCustomPrice ? `Custom price: ₹${parseFloat(ohtCustomPrice).toLocaleString('en-IN')}` : 'Water storage on terrace — ₹7/litre', state: hasOht, set: setHasOht, isDefault: true,
                     extra: hasOht && (
                       <div className="pl-4 border-l-2 border-blue-100 mt-2 pb-2">
                         <div className="grid grid-cols-2 gap-3">
@@ -1119,6 +1155,10 @@ export default function ProjectPage() {
                               <Input type="number" value={ohtCustom} onChange={e => setOhtCustom(e.target.value)} />
                             </div>
                           )}
+                          <div className="space-y-1.5"><Label className="text-xs">Custom Price (₹) — leave blank for auto</Label>
+                            <Input type="number" placeholder="e.g. 9500" value={ohtCustomPrice} onChange={e => setOhtCustomPrice(e.target.value)} />
+                            {ohtCustomPrice && <p className="text-xs text-gray-400">Fixed: ₹{parseFloat(ohtCustomPrice).toLocaleString('en-IN')}</p>}
+                          </div>
                         </div>
                       </div>
                     )
