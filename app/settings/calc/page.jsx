@@ -22,6 +22,36 @@ const SSM_DEFAULTS = {
   ssm_labour_2c: { s20x30: 15000, s20x40: 15000, s30x40: 30000, s30x50: 30000, s40x40: 30000, s40x60: 40000 },
 }
 
+const TERRACE_ROWS = [
+  { key: 'terrace_cement', label: 'Cement',        unit: 'Bags',    divisible: true,  type: 'number',  table: 'boq_quantities' },
+  { key: 'terrace_msand',  label: 'M Sand',         unit: 'Vehicle', divisible: false, type: 'vehicle', table: 'boq_vehicle_types' },
+  { key: 'terrace_slab',   label: 'Slab Concrete',  unit: 'CUM',     divisible: true,  type: 'number',  table: 'boq_quantities' },
+  { key: 'terrace_elec',   label: 'Electrical',     unit: '₹',       divisible: false, type: 'number',  table: 'boq_quantities' },
+  { key: 'terrace_misc',   label: 'Misc',           unit: '₹',       divisible: false, type: 'number',  table: 'boq_quantities' },
+]
+
+const TERRACE_DEFAULTS = {
+  terrace_cement: { s20x30: 30,   s20x40: 30,   s30x40: 40,   s30x50: 50,   s40x40: 50,   s40x60: 70 },
+  terrace_msand:  { s20x30: '709', s20x40: '709', s30x40: '709', s30x50: '709', s40x40: '709', s40x60: '709' },
+  terrace_slab:   { s20x30: 4,    s20x40: 4,    s30x40: 4,    s30x50: 4,    s40x40: 4,    s40x60: 4 },
+  terrace_elec:   { s20x30: 5000, s20x40: 5000, s30x40: 5000, s30x50: 5000, s40x40: 5000, s40x60: 5000 },
+  terrace_misc:   { s20x30: 5000, s20x40: 5000, s30x40: 5000, s30x50: 5000, s40x40: 5000, s40x60: 5000 },
+}
+
+const SCREED_ROWS = [
+  { key: 'screed_cement', label: 'Cement',          unit: 'Bags',    divisible: true,  type: 'number',  table: 'boq_quantities' },
+  { key: 'screed_psand',  label: 'P Sand',           unit: 'Vehicle', divisible: false, type: 'vehicle', table: 'boq_vehicle_types' },
+  { key: 'screed_12mm',   label: '12mm Aggregates',  unit: 'Vehicle', divisible: false, type: 'vehicle', table: 'boq_vehicle_types' },
+  { key: 'screed_misc',   label: 'Misc',             unit: '₹',       divisible: false, type: 'number',  table: 'boq_quantities' },
+]
+
+const SCREED_DEFAULTS = {
+  screed_cement: { s20x30: 20,    s20x40: 30,    s30x40: 40,    s30x50: 40,    s40x40: 40,    s40x60: 60 },
+  screed_psand:  { s20x30: '709', s20x40: '709', s30x40: '6W',  s30x50: '6W',  s40x40: '6W',  s40x60: '6W' },
+  screed_12mm:   { s20x30: '709', s20x40: '709', s30x40: '709', s30x50: '709', s40x40: '709', s40x60: '709' },
+  screed_misc:   { s20x30: 10000, s20x40: 10000, s30x40: 10000, s30x50: 10000, s40x40: 10000, s40x60: 10000 },
+}
+
 const DEFAULT_FLOOR_GROUPS = [
   { prefix: 'gf_parking',     label: 'GF — Parking / Commercial',       note: 'parking_only · parking_lift · commercial_parking' },
   { prefix: 'gf_1bhk',        label: 'GF — 1 BHK',                      note: '1bhk · 1bhk_parking' },
@@ -210,9 +240,13 @@ export default function CalcSettingsPage() {
   const sizeColMap = { '20x30': 's20x30', '20x40': 's20x40', '30x40': 's30x40', '30x50': 's30x50', '40x40': 's40x40', '40x60': 's40x60' }
 
   function ssmCellValue(rowKey, sizeCol) {
+    return cellValueWithDefaults(rowKey, sizeCol, SSM_DEFAULTS)
+  }
+
+  function cellValueWithDefaults(rowKey, sizeCol, defaults) {
     const e = edited[rowKey]?.[sizeCol]
     if (e !== undefined) return e
-    return rows[rowKey]?.[sizeCol] ?? SSM_DEFAULTS[rowKey]?.[sizeCol] ?? ''
+    return rows[rowKey]?.[sizeCol] ?? defaults[rowKey]?.[sizeCol] ?? ''
   }
 
   const activeGroupData = floorGroups.find(g => g.prefix === activeGroup)
@@ -474,6 +508,94 @@ export default function CalcSettingsPage() {
             <p className="text-xs text-gray-400">† 40mm Aggregate and M Sand use vehicle type (709 / 6W / 10W). Price is pulled from Market Prices.</p>
           </div>
         </div>
+
+        {/* Terrace quantities */}
+        {[
+          { title: 'Terrace Floor', note: 'Quantities for the topmost slab and headroom', rows: TERRACE_ROWS, defaults: TERRACE_DEFAULTS },
+          { title: 'Screed Concrete', note: 'Terrace floor screed — cement, P Sand, 12mm aggregates and misc', rows: SCREED_ROWS, defaults: SCREED_DEFAULTS },
+        ].map(({ title, note, rows: sectionRows, defaults }) => (
+          <div key={title} className="mt-8 bg-white border border-gray-200 rounded-xl overflow-hidden">
+            <div className="px-6 py-4 border-b border-gray-100 bg-gray-50">
+              <p className="text-sm font-semibold text-gray-800">{title}</p>
+              <p className="text-xs text-gray-400 mt-0.5">{note}</p>
+            </div>
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-gray-100 bg-gray-50">
+                  <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 w-36">Material</th>
+                  <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 w-20">Unit</th>
+                  {SIZES.map(s => (
+                    <th key={s} className="text-center px-2 py-3 text-xs font-medium text-gray-500">{s}</th>
+                  ))}
+                  <th className="px-4 py-3 w-20"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {sectionRows.map(row => {
+                  const rowKey = row.key
+                  const dirty = isDirty(rowKey)
+                  const isSaving = saving === rowKey
+                  const wasSaved = saved === rowKey
+                  return (
+                    <tr key={rowKey} className={`border-b border-gray-50 ${dirty ? 'bg-amber-50' : 'hover:bg-gray-50'}`}>
+                      <td className="px-6 py-3 font-medium text-gray-800">{row.label}</td>
+                      <td className="px-4 py-3 text-gray-400 text-xs">
+                        {row.unit}
+                        {row.divisible && <span> *</span>}
+                        {row.type === 'vehicle' && <span className="ml-1 text-purple-400">†</span>}
+                      </td>
+                      {SIZES.map(s => {
+                        const col = sizeColMap[s]
+                        const val = cellValueWithDefaults(rowKey, col, defaults)
+                        const changed = edited[rowKey]?.[col] !== undefined
+                        return (
+                          <td key={s} className="px-2 py-2 text-center">
+                            {row.type === 'vehicle' ? (
+                              <select
+                                className={`w-24 text-center border rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white ${changed ? 'border-amber-400 bg-amber-50' : 'border-gray-200'}`}
+                                value={val || ''}
+                                onChange={e => handleChange(rowKey, col, e.target.value)}
+                              >
+                                {VEHICLE_OPTIONS.map(opt => (
+                                  <option key={opt} value={opt}>{opt || '— None'}</option>
+                                ))}
+                              </select>
+                            ) : (
+                              <input
+                                type="number"
+                                min="0"
+                                className={`w-20 text-center border rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${changed ? 'border-amber-400 bg-amber-50' : 'border-gray-200 bg-white'}`}
+                                value={val}
+                                onChange={e => handleChange(rowKey, col, e.target.value)}
+                              />
+                            )}
+                          </td>
+                        )
+                      })}
+                      <td className="px-4 py-2 text-right">
+                        {wasSaved ? (
+                          <span className="text-xs text-green-600 font-medium">Saved</span>
+                        ) : (
+                          <button
+                            onClick={() => saveRow(rowKey, row)}
+                            disabled={!dirty || isSaving}
+                            className="text-xs px-3 py-1.5 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                          >
+                            {isSaving ? 'Saving...' : 'Save'}
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+            <div className="px-6 py-3 bg-gray-50 border-t border-gray-100 space-y-1">
+              <p className="text-xs text-gray-400">* Cement and Slab Concrete are divisible — quantity scales with actual site area.</p>
+              <p className="text-xs text-gray-400">† Vehicle rows (M Sand, P Sand, 12mm) use Tractor / 709 / 6W / 10W. Price from Market Prices.</p>
+            </div>
+          </div>
+        ))}
 
       </div>
     </AppLayout>
