@@ -613,6 +613,16 @@ export default function EditProjectPage() {
                             <p className="text-xs text-gray-400">Leave empty to auto-calc (floor × 1.15 + washroom + kitchen area)</p>
                           </div>
                           <div className="space-y-1.5">
+                            <Label className="text-xs text-gray-500">Tile Type</Label>
+                            <select className="w-full h-10 px-3 border border-gray-200 rounded-lg text-sm bg-white" value={flooringType} onChange={e => setFlooringType(e.target.value)}>
+                              <option value="">Select type</option>
+                              <option value="tiles">Basic Tiles</option>
+                              <option value="vitrified">Vitrified</option>
+                              <option value="marble">Marble</option>
+                              <option value="granite">Granite</option>
+                            </select>
+                          </div>
+                          <div className="space-y-1.5">
                             <Label className="text-xs text-gray-500">Price per sqft (₹)</Label>
                             <Input type="number" placeholder="e.g. 80" value={floor.tilesPricePerSqft} onChange={e => updateFloor(index, 'tilesPricePerSqft', e.target.value)} />
                             <p className="text-xs text-gray-400">{(() => {
