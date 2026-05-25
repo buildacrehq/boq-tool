@@ -808,6 +808,30 @@ export default function NewProjectPage() {
           </CardContent>
         </Card>
 
+        {/* SSM — right after site dimensions */}
+        <Card>
+          <CardContent className="pt-5">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between py-2">
+                <div>
+                  <p className="text-sm font-medium">SSM Work (Size Stone Masonry)</p>
+                  <p className="text-xs text-gray-400">Stone masonry below plinth level. Minimum 2 courses.</p>
+                </div>
+                <Switch checked={hasSsm} onCheckedChange={setHasSsm} />
+              </div>
+              {hasSsm && (
+                <div className="pl-4 border-l-2 border-blue-100">
+                  <div className="space-y-1.5 w-48">
+                    <Label>Number of Courses</Label>
+                    <Input type="number" min="2" placeholder="minimum 2" value={ssmCourses} onChange={e => setSsmCourses(e.target.value)} />
+                    <p className="text-xs text-gray-400">Each course = one layer of stone masonry</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Section 2b — Masonry Type */}
 <Card>
   <CardHeader>
@@ -1405,28 +1429,6 @@ export default function NewProjectPage() {
                       )}
                     </div>
                   )}
-                </div>
-              )}
-            </div>
-
-            <Separator />
-
-            {/* SSM */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between py-2">
-                <div>
-                  <p className="text-sm font-medium">SSM Work (Size Stone Masonry)</p>
-                  <p className="text-xs text-gray-400">Stone masonry below plinth level. Minimum 2 courses.</p>
-                </div>
-                <Switch checked={hasSsm} onCheckedChange={setHasSsm} />
-              </div>
-              {hasSsm && (
-                <div className="pl-4 border-l-2 border-blue-100">
-                  <div className="space-y-1.5 w-48">
-                    <Label>Number of Courses</Label>
-                    <Input type="number" min="2" placeholder="minimum 2" value={ssmCourses} onChange={e => setSsmCourses(e.target.value)} />
-                    <p className="text-xs text-gray-400">Each course = one layer of stone masonry</p>
-                  </div>
                 </div>
               )}
             </div>

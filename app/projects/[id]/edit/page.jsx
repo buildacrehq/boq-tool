@@ -419,6 +419,27 @@ export default function EditProjectPage() {
             </CardContent>
           </Card>
 
+          {/* SSM — right after site dimensions */}
+          <Card>
+            <CardContent className="pt-5">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between py-2">
+                  <div><p className="text-sm font-medium">SSM Work (Size Stone Masonry)</p><p className="text-xs text-gray-400">Stone masonry below plinth level. Minimum 2 courses.</p></div>
+                  <Switch checked={hasSsm} onCheckedChange={setHasSsm} />
+                </div>
+                {hasSsm && (
+                  <div className="pl-4 border-l-2 border-blue-100">
+                    <div className="space-y-1.5 w-48">
+                      <Label>Number of Courses</Label>
+                      <Input type="number" min="2" placeholder="minimum 2" value={ssmCourses} onChange={e => setSsmCourses(e.target.value)} />
+                      <p className="text-xs text-gray-400">Each course = one layer of stone masonry</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Masonry */}
           <Card>
             <CardHeader><CardTitle className="text-base flex items-center gap-2"><Badge variant="outline">2b</Badge>Masonry Type</CardTitle></CardHeader>
@@ -729,19 +750,6 @@ export default function EditProjectPage() {
                         <Input type="number" placeholder="e.g. 15" value={sumpRateOverride} onChange={e => setSumpRateOverride(e.target.value)} />
                       </div>
                     )}
-                  </div>
-                )}
-              </div>
-              <Separator />
-              <div className="space-y-3">
-                <div className="flex items-center justify-between py-2">
-                  <div><p className="text-sm font-medium">SSM Work</p><p className="text-xs text-gray-400">Size stone masonry — minimum 2 courses</p></div>
-                  <Switch checked={hasSsm} onCheckedChange={setHasSsm} />
-                </div>
-                {hasSsm && (
-                  <div className="pl-4 border-l-2 border-blue-100 w-48">
-                    <Label>Number of Courses</Label>
-                    <Input type="number" min="2" className="mt-1.5" value={ssmCourses} onChange={e => setSsmCourses(e.target.value)} />
                   </div>
                 )}
               </div>
