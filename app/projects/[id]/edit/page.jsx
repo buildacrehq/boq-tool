@@ -112,7 +112,6 @@ export default function EditProjectPage() {
   const { id } = useParams()
   const [saving, setSaving] = useState(false)
   const [loading, setLoading] = useState(true)
-  const [user, setUser] = useState(null)
 
   const [clientName, setClientName] = useState('')
   const [clientPhone, setClientPhone] = useState('')
@@ -167,7 +166,6 @@ export default function EditProjectPage() {
   useEffect(() => {
     const stored = localStorage.getItem('boq_user')
     if (!stored) { router.push('/login'); return }
-    setUser(JSON.parse(stored))
     fetchAll()
   }, [id])
 
@@ -762,7 +760,7 @@ export default function EditProjectPage() {
                     </div>
                   )
                 },
-                { label: 'Overhead Tank (OHT)', sub: 'Water storage on terrace — ₹7/litre', state: hasOht, set: setHasOht, isDefault: true,
+                { label: 'Overhead Tank (OHT)', sub: ohtCustomPrice ? `Custom price: ₹${parseFloat(ohtCustomPrice).toLocaleString('en-IN')}` : 'Water storage on terrace — ₹7/litre', state: hasOht, set: setHasOht, isDefault: true,
                   extra: hasOht && (
                     <div className="pl-4 border-l-2 border-blue-100 mt-2 pb-2">
                       <div className="grid grid-cols-2 gap-3">
@@ -777,15 +775,14 @@ export default function EditProjectPage() {
                           </select>
                         </div>
                         {ohtCapacity === 'custom' && (
-                          <>
-                            <div className="space-y-1.5"><Label className="text-xs">Custom Litres</Label>
-                              <Input type="number" value={ohtCustom} onChange={e => setOhtCustom(e.target.value)} />
-                            </div>
-                            <div className="space-y-1.5"><Label className="text-xs">Custom Price (₹) — overrides per-litre calc</Label>
-                              <Input type="number" placeholder="e.g. 25000" value={ohtCustomPrice} onChange={e => setOhtCustomPrice(e.target.value)} />
-                            </div>
-                          </>
+                          <div className="space-y-1.5"><Label className="text-xs">Custom Litres</Label>
+                            <Input type="number" value={ohtCustom} onChange={e => setOhtCustom(e.target.value)} />
+                          </div>
                         )}
+                        <div className="space-y-1.5"><Label className="text-xs">Custom Price (₹) — leave blank for auto</Label>
+                          <Input type="number" placeholder="e.g. 9500" value={ohtCustomPrice} onChange={e => setOhtCustomPrice(e.target.value)} />
+                          {ohtCustomPrice && <p className="text-xs text-gray-400">Fixed: ₹{parseFloat(ohtCustomPrice).toLocaleString('en-IN')}</p>}
+                        </div>
                       </div>
                     </div>
                   )

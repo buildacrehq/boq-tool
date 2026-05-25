@@ -1465,6 +1465,7 @@ export default function NewProjectPage() {
               {
                 label: 'Overhead Tank (OHT)',
                 sub: (() => {
+                  if (ohtCustomPrice) return `Custom price: ${fmt(parseFloat(ohtCustomPrice))}`
                   const cap = ohtCapacity === 'custom' ? parseFloat(ohtCustom) : parseFloat(ohtCapacity)
                   return cap ? `${ohtCapacity === 'custom' ? ohtCustom : ohtCapacity}L × ${fmt(r.oht)}/L = ${fmt(cap * r.oht)}` : `Select capacity below — ${fmt(r.oht)}/litre`
                 })(),
@@ -1488,29 +1489,30 @@ export default function NewProjectPage() {
                         </select>
                       </div>
                       {ohtCapacity === 'custom' && (
-                        <>
-                          <div className="space-y-1.5">
-                            <Label className="text-xs">Custom Litres</Label>
-                            <Input
-                              type="number"
-                              placeholder="e.g. 3000"
-                              value={ohtCustom}
-                              onChange={e => setOhtCustom(e.target.value)}
-                            />
-                            {ohtCustom && !ohtCustomPrice && <p className="text-xs text-gray-400">{ohtCustom}L × {fmt(r.oht)}/L = {fmt(parseFloat(ohtCustom) * r.oht)}</p>}
-                          </div>
-                          <div className="space-y-1.5">
-                            <Label className="text-xs">Custom Price (₹) — overrides per-litre calc</Label>
-                            <Input
-                              type="number"
-                              placeholder={ohtCustom ? `Auto: ${fmt(parseFloat(ohtCustom) * r.oht)}` : 'e.g. 25000'}
-                              value={ohtCustomPrice}
-                              onChange={e => setOhtCustomPrice(e.target.value)}
-                            />
-                            {ohtCustomPrice && <p className="text-xs text-gray-400">Fixed price: {fmt(parseFloat(ohtCustomPrice))}</p>}
-                          </div>
-                        </>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">Custom Litres</Label>
+                          <Input
+                            type="number"
+                            placeholder="e.g. 3000"
+                            value={ohtCustom}
+                            onChange={e => setOhtCustom(e.target.value)}
+                          />
+                          {ohtCustom && !ohtCustomPrice && <p className="text-xs text-gray-400">{ohtCustom}L × {fmt(r.oht)}/L = {fmt(parseFloat(ohtCustom) * r.oht)}</p>}
+                        </div>
                       )}
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Custom Price (₹) — leave blank for auto</Label>
+                        <Input
+                          type="number"
+                          placeholder={(() => {
+                            const cap = ohtCapacity === 'custom' ? parseFloat(ohtCustom) : parseFloat(ohtCapacity)
+                            return cap ? `Auto: ${fmt(cap * r.oht)}` : 'e.g. 9500'
+                          })()}
+                          value={ohtCustomPrice}
+                          onChange={e => setOhtCustomPrice(e.target.value)}
+                        />
+                        {ohtCustomPrice && <p className="text-xs text-gray-400">Fixed: {fmt(parseFloat(ohtCustomPrice))}</p>}
+                      </div>
                     </div>
                   </div>
                 ),
