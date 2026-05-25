@@ -389,6 +389,7 @@ export default function NewProjectPage() {
         railingType: isDuplex ? 'ss_glass' : 'ss',
         staircaseType: isDuplex ? 'chain' : 'normal',
         acPoints: isParkingType ? 0 : 2,
+        evPoints: (index === 0 && !isParkingType) ? 2 : 0,
       }
       // When a duplex start is selected, clear the next floor so user must pick an end option
       if (['duplex_gf', 'duplex_ff', 'duplex_sf'].includes(type) && index + 1 < updated.length) {
@@ -1427,14 +1428,17 @@ export default function NewProjectPage() {
               },
               {
                 label: 'Main Gate',
-                sub: `Entry gate — ${fmt(r.mainGateS)} (small site) to ${fmt(r.mainGateL)} (large site)`,
+                sub: `Entry gate — ${fmt(r.mainGateS)} (small) to ${fmt(r.mainGateL)} (large)`,
                 state: hasMainGate,
                 set: setHasMainGate,
                 isDefault: true,
               },
               {
                 label: 'Overhead Tank (OHT)',
-                sub: `Water storage on terrace. Formula: capacity × ${fmt(r.oht)}/litre`,
+                sub: (() => {
+                  const cap = ohtCapacity === 'custom' ? parseFloat(ohtCustom) : parseFloat(ohtCapacity)
+                  return cap ? `${ohtCapacity === 'custom' ? ohtCustom : ohtCapacity}L × ${fmt(r.oht)}/L = ${fmt(cap * r.oht)}` : `Select capacity below — ${fmt(r.oht)}/litre`
+                })(),
                 state: hasOht,
                 set: setHasOht,
                 isDefault: true,
@@ -1479,35 +1483,44 @@ export default function NewProjectPage() {
               },
               {
                 label: 'Gas Pipeline',
-                sub: `Pipeline from ground floor. Each floor adds 15 rft @ ${fmt(r.gas)}/rft`,
+                sub: `${floorCount} floor${floorCount > 1 ? 's' : ''} × 15 rft × ${fmt(r.gas)}/rft = ${fmt(floorCount * 15 * r.gas)}`,
                 state: hasGas,
                 set: setHasGas,
                 isDefault: true,
               },
               {
                 label: 'AC Provision',
-                sub: 'Wiring and conduit for AC units. Enter points per floor above.',
+                sub: (() => {
+                  const pts = floors.reduce((s, f) => s + (parseInt(f.acPoints) || 0), 0)
+                  return pts > 0 ? `${pts} points × ${fmt(r.ac)} = ${fmt(pts * r.ac)}` : `${fmt(r.ac)} per point — set points per floor above`
+                })(),
                 state: hasAc,
                 set: setHasAc,
                 isDefault: false,
               },
               {
                 label: 'CCTV Provision',
-                sub: `Conduit and wiring for CCTV cameras — ${fmt(r.cctv)} per floor`,
+                sub: `2 cameras × ${floorCount} floor${floorCount > 1 ? 's' : ''} × ${fmt(r.cctv)} = ${fmt(2 * floorCount * r.cctv)}`,
                 state: hasCctv,
                 set: setHasCctv,
                 isDefault: false,
               },
               {
                 label: 'Solar Provision',
-                sub: `Wiring and mounting structure for solar panels — ${fmt(r.solar)}`,
+                sub: `Wiring and mounting structure — ${fmt(r.solar)}`,
                 state: hasSolar,
                 set: setHasSolar,
                 isDefault: false,
               },
               {
                 label: 'UPS Provision',
-                sub: `Wiring for UPS/inverter connection — ${fmt(r.ups)}`,
+                sub: (() => {
+                  const kFloors = floors.filter(f => !['parking_only','parking_lift','commercial_parking'].includes(f.type) && (parseInt(f.kitchens)||0) > 0).length
+                  const total = hasUps
+                    ? floors.filter(f => !['parking_only','parking_lift','commercial_parking'].includes(f.type)).length
+                    : kFloors
+                  return `Auto for ${kFloors} kitchen floor${kFloors !== 1 ? 's' : ''}${hasUps ? ` + all floors` : ''} — ${fmt(total * r.ups)} total`
+                })(),
                 state: hasUps,
                 set: setHasUps,
                 isDefault: false,

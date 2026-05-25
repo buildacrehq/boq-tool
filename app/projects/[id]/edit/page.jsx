@@ -244,6 +244,7 @@ export default function EditProjectPage() {
         railingType: isDuplex ? 'ss_glass' : (updated[index].railingType || 'ss'),
         staircaseType: isDuplex ? 'chain' : 'normal',
         acPoints: isParkingType ? 0 : (updated[index].acPoints || 2),
+        evPoints: (index === 0 && !isParkingType) ? (updated[index].evPoints || 2) : 0,
       }
       if (['duplex_ff', 'duplex_sf'].includes(type) && index + 1 < updated.length) {
         const endDefaults = getDefaultDoors('duplex_end')
