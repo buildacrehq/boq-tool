@@ -36,7 +36,6 @@ const UPPER_TYPES = [
   { value: '3bhk',        label: '3 BHK' },
   { value: 'duplex_ff',   label: 'Duplex Starts in FF' },
   { value: 'duplex_sf',   label: 'Duplex Starts in SF' },
-  { value: 'duplex_end',  label: 'Duplex End (Upper Floor)' },
 ]
 const GROUND_GROUPS = [
   { label: '1 BHK',      values: ['1bhk', '1bhk_2units', '1bhk_parking'] },
@@ -50,7 +49,11 @@ const UPPER_GROUPS = [
   { label: '1 BHK',  values: ['1bhk', '1bhk_2units'] },
   { label: '2 BHK',  values: ['2bhk', '1bhk_2bhk', '2bhk_3bhk'] },
   { label: '3 BHK',  values: ['3bhk'] },
-  { label: 'Duplex', values: ['duplex_ff', 'duplex_sf', 'duplex_end'] },
+  { label: 'Duplex', values: ['duplex_ff', 'duplex_sf'] },
+]
+const DUPLEX_END_TYPES = [
+  { value: 'duplex_end_2mb',   label: 'Duplex End — 2 Master Bedrooms' },
+  { value: 'duplex_end_study', label: 'Duplex End — 2 Master Beds + Study Room' },
 ]
 const MAIN_DOOR_TYPES = [
   { value: 'teak_3x7', label: 'Teak 3×7 — ₹50,000' },
@@ -88,7 +91,9 @@ function getDefaultDoors(floorType) {
     case '2bhk_3bhk': return { mainDoor: 'teak_3x7', bedroomDoors: 5, washroomDoors: 4, toilets: 4, balconyDoors: 2, utilityDoors: 1, poojaRoom: true, kitchens: 2 }
     case '3bhk': return { mainDoor: 'teak_3x7', bedroomDoors: 3, washroomDoors: 2, toilets: 2, balconyDoors: 2, utilityDoors: 1, poojaRoom: true, kitchens: 1 }
     case 'duplex_gf': case 'duplex_ff': case 'duplex_sf': return { mainDoor: 'teak_4x8', bedroomDoors: 1, washroomDoors: 1, toilets: 1, balconyDoors: 1, utilityDoors: 0, poojaRoom: false, kitchens: 1 }
-    case 'duplex_end': return { mainDoor: '', bedroomDoors: 3, washroomDoors: 3, toilets: 3, balconyDoors: 2, utilityDoors: 0, poojaRoom: false, kitchens: 0 }
+    case 'duplex_end_2mb': return { mainDoor: '', bedroomDoors: 2, washroomDoors: 2, toilets: 2, balconyDoors: 1, utilityDoors: 0, poojaRoom: false, kitchens: 0 }
+    case 'duplex_end_study': return { mainDoor: '', bedroomDoors: 3, washroomDoors: 3, toilets: 3, balconyDoors: 1, utilityDoors: 0, poojaRoom: false, kitchens: 0 }
+    case 'duplex_end': return { mainDoor: '', bedroomDoors: 2, washroomDoors: 2, toilets: 2, balconyDoors: 1, utilityDoors: 0, poojaRoom: false, kitchens: 0 }
     case 'parking_only': case 'parking_lift': case 'commercial_parking': return { mainDoor: '', bedroomDoors: 0, washroomDoors: 1, toilets: 1, balconyDoors: 0, utilityDoors: 0, poojaRoom: false, kitchens: 0 }
     default: return { mainDoor: 'teak_3x7', bedroomDoors: 1, washroomDoors: 1, toilets: 1, balconyDoors: 0, utilityDoors: 0, poojaRoom: false, kitchens: 1 }
   }
@@ -491,6 +496,9 @@ export default function EditProjectPage() {
                         <select className="w-full h-10 px-3 border border-gray-200 rounded-lg text-sm bg-white" value={floor.type} onChange={e => handleFloorTypeChange(index, e.target.value)}>
                           <option value="">— Select floor type —</option>
                           {(() => {
+                            const prevType = index > 0 ? floors[index - 1]?.type : null
+                            const isDuplexNext = ['duplex_gf', 'duplex_ff', 'duplex_sf'].includes(prevType)
+                            if (isDuplexNext) return DUPLEX_END_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)
                             const groups = index === 0 ? GROUND_GROUPS : UPPER_GROUPS
                             const types = index === 0 ? GROUND_TYPES : UPPER_TYPES
                             return groups.map(g => (
@@ -635,7 +643,7 @@ export default function EditProjectPage() {
                           </div>
                           <div className="space-y-1.5">
                             <Label className="text-xs">Window Area (sqft)</Label>
-                            <Input type="number" placeholder={floor.sqft ? `Auto: ${Math.ceil((parseFloat(floor.sqft)||0)*0.1)} sqft` : 'Enter sqft'} value={floor.windowSqft} onChange={e => updateFloor(index, 'windowSqft', e.target.value)} />
+                            <Input type="number" placeholder={`Auto: ${Math.ceil((parseFloat(floor.sqft) || sqft || 0) * 0.1)} sqft`} value={floor.windowSqft} onChange={e => updateFloor(index, 'windowSqft', e.target.value)} />
                           </div>
                         </div>
                       </>
