@@ -87,7 +87,7 @@ function getDefaultDoors(floorType) {
     case '1bhk_2bhk': return { mainDoor: 'teak_3x7', bedroomDoors: 3, washroomDoors: 3, toilets: 3, balconyDoors: 2, utilityDoors: 1, poojaRoom: true, kitchens: 2 }
     case '2bhk_3bhk': return { mainDoor: 'teak_3x7', bedroomDoors: 5, washroomDoors: 4, toilets: 4, balconyDoors: 2, utilityDoors: 1, poojaRoom: true, kitchens: 2 }
     case '3bhk': return { mainDoor: 'teak_3x7', bedroomDoors: 3, washroomDoors: 2, toilets: 2, balconyDoors: 2, utilityDoors: 1, poojaRoom: true, kitchens: 1 }
-    case 'duplex_gf': case 'duplex_ff': case 'duplex_sf': return { mainDoor: 'teak_4x8', bedroomDoors: 3, washroomDoors: 3, toilets: 3, balconyDoors: 2, utilityDoors: 1, poojaRoom: true, kitchens: 1 }
+    case 'duplex_gf': case 'duplex_ff': case 'duplex_sf': return { mainDoor: 'teak_4x8', bedroomDoors: 1, washroomDoors: 1, toilets: 1, balconyDoors: 1, utilityDoors: 0, poojaRoom: false, kitchens: 1 }
     case 'duplex_end': return { mainDoor: '', bedroomDoors: 3, washroomDoors: 3, toilets: 3, balconyDoors: 2, utilityDoors: 0, poojaRoom: false, kitchens: 0 }
     case 'parking_only': case 'parking_lift': case 'commercial_parking': return { mainDoor: '', bedroomDoors: 0, washroomDoors: 1, toilets: 1, balconyDoors: 0, utilityDoors: 0, poojaRoom: false, kitchens: 0 }
     default: return { mainDoor: 'teak_3x7', bedroomDoors: 1, washroomDoors: 1, toilets: 1, balconyDoors: 0, utilityDoors: 0, poojaRoom: false, kitchens: 1 }
@@ -148,6 +148,8 @@ export default function EditProjectPage() {
   const [hasOht, setHasOht] = useState(true)
   const [ohtCapacity, setOhtCapacity] = useState('1000')
   const [ohtCustom, setOhtCustom] = useState('')
+  const [ohtCustomPrice, setOhtCustomPrice] = useState('')
+  const [mainGateCustomPrice, setMainGateCustomPrice] = useState('')
   const [hasMainGate, setHasMainGate] = useState(true)
   const [hasAc, setHasAc] = useState(false)
   const [hasCctv, setHasCctv] = useState(false)
@@ -213,6 +215,8 @@ export default function EditProjectPage() {
       if (proj.floors_data && proj.floors_data.length > 0) {
         setFloors(proj.floors_data)
         setSumpRateOverride(proj.floors_data[0]?.sumpRateOverride || '')
+        setOhtCustomPrice(proj.floors_data[0]?.ohtCustomPrice || '')
+        setMainGateCustomPrice(proj.floors_data[0]?.mainGateCustomPrice || '')
       } else {
         const count = proj.floor_count || proj.floors || 1
         setFloors(Array.from({ length: count }, (_, i) => createFloor(i)))
@@ -266,7 +270,7 @@ export default function EditProjectPage() {
     setFloors(prev => {
       const updated = [...prev]
       const from = updated[fromIndex]
-      updated[toIndex] = { ...updated[toIndex], sqft: from.sqft, mainDoor: from.mainDoor, bedroomDoors: from.bedroomDoors, washroomDoors: from.washroomDoors, toilets: from.toilets, balconyDoors: from.balconyDoors, utilityDoors: from.utilityDoors, poojaRoom: from.poojaRoom, poojaRoomPrice: from.poojaRoomPrice, kitchens: from.kitchens, staircaseType: from.staircaseType, staircaseSteps: from.staircaseSteps, tilesSquft: from.tilesSquft, tilesPricePerSqft: from.tilesPricePerSqft, railingType: from.railingType, railingRft: from.railingRft, acPoints: from.acPoints, upsUnits: from.upsUnits, windowSqft: from.windowSqft }
+      updated[toIndex] = { ...updated[toIndex], type: from.type, sqft: from.sqft, mainDoor: from.mainDoor, bedroomDoors: from.bedroomDoors, washroomDoors: from.washroomDoors, toilets: from.toilets, balconyDoors: from.balconyDoors, utilityDoors: from.utilityDoors, poojaRoom: from.poojaRoom, poojaRoomPrice: from.poojaRoomPrice, kitchens: from.kitchens, staircaseType: from.staircaseType, staircaseSteps: from.staircaseSteps, tilesSquft: from.tilesSquft, tilesPricePerSqft: from.tilesPricePerSqft, railingType: from.railingType, railingRft: from.railingRft, acPoints: from.acPoints, evPoints: from.evPoints, upsUnits: from.upsUnits, windowSqft: from.windowSqft }
       return updated
     })
   }
@@ -297,7 +301,15 @@ export default function EditProjectPage() {
 
     const finalOhtCapacity = ohtCapacity === 'custom' ? parseFloat(ohtCustom) : parseFloat(ohtCapacity)
     const totalEvPoints = floors.reduce((sum, f) => sum + (parseInt(f.evPoints) || 0), 0)
-    const floorsData = floors.map((f, i) => i === 0 && sumpRateOverride ? { ...f, sumpRateOverride: parseFloat(sumpRateOverride) } : f)
+    const floorsData = floors.map((f, i) => {
+      if (i !== 0) return f
+      return {
+        ...f,
+        ...(sumpRateOverride ? { sumpRateOverride: parseFloat(sumpRateOverride) } : {}),
+        ...(ohtCustomPrice ? { ohtCustomPrice: parseFloat(ohtCustomPrice) } : {}),
+        ...(mainGateCustomPrice ? { mainGateCustomPrice: parseFloat(mainGateCustomPrice) } : {}),
+      }
+    })
 
     const projectData = {
       client_name: clientName, client_phone: clientPhone, site_address: clientLocation,
@@ -741,7 +753,15 @@ export default function EditProjectPage() {
             <CardContent>
               {[
                 { label: 'Compound Wall', sub: 'Boundary wall on all 4 sides', state: hasCompoundWall, set: setHasCompoundWall, isDefault: true },
-                { label: 'Main Gate', sub: 'Entry gate — ₹30,000 to ₹50,000', state: hasMainGate, set: setHasMainGate, isDefault: true },
+                { label: 'Main Gate', sub: mainGateCustomPrice ? `Custom price: ₹${parseFloat(mainGateCustomPrice).toLocaleString('en-IN')}` : 'Entry gate — ₹30,000 to ₹50,000', state: hasMainGate, set: setHasMainGate, isDefault: true,
+                  extra: hasMainGate && (
+                    <div className="pl-4 border-l-2 border-blue-100 mt-1 pb-2">
+                      <div className="w-56 space-y-1"><Label className="text-xs">Custom Price (₹) — leave blank for auto</Label>
+                        <Input type="number" placeholder="Auto: ₹30,000–₹50,000" value={mainGateCustomPrice} onChange={e => setMainGateCustomPrice(e.target.value)} />
+                      </div>
+                    </div>
+                  )
+                },
                 { label: 'Overhead Tank (OHT)', sub: 'Water storage on terrace — ₹7/litre', state: hasOht, set: setHasOht, isDefault: true,
                   extra: hasOht && (
                     <div className="pl-4 border-l-2 border-blue-100 mt-2 pb-2">
@@ -757,9 +777,14 @@ export default function EditProjectPage() {
                           </select>
                         </div>
                         {ohtCapacity === 'custom' && (
-                          <div className="space-y-1.5"><Label className="text-xs">Custom Litres</Label>
-                            <Input type="number" value={ohtCustom} onChange={e => setOhtCustom(e.target.value)} />
-                          </div>
+                          <>
+                            <div className="space-y-1.5"><Label className="text-xs">Custom Litres</Label>
+                              <Input type="number" value={ohtCustom} onChange={e => setOhtCustom(e.target.value)} />
+                            </div>
+                            <div className="space-y-1.5"><Label className="text-xs">Custom Price (₹) — overrides per-litre calc</Label>
+                              <Input type="number" placeholder="e.g. 25000" value={ohtCustomPrice} onChange={e => setOhtCustomPrice(e.target.value)} />
+                            </div>
+                          </>
                         )}
                       </div>
                     </div>

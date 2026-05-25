@@ -112,7 +112,7 @@ function getDefaultDoors(floorType) {
     case 'duplex_gf':
     case 'duplex_ff':
     case 'duplex_sf':
-      return { mainDoor: 'teak_4x8', bedroomDoors: 3, washroomDoors: 3, toilets: 3, balconyDoors: 2, utilityDoors: 1, poojaRoom: true, kitchens: 1 }
+      return { mainDoor: 'teak_4x8', bedroomDoors: 1, washroomDoors: 1, toilets: 1, balconyDoors: 1, utilityDoors: 0, poojaRoom: false, kitchens: 1 }
     case 'duplex_end_2mb':
       return { mainDoor: '', bedroomDoors: 2, washroomDoors: 2, toilets: 2, balconyDoors: 1, utilityDoors: 0, poojaRoom: false, kitchens: 0 }
     case 'duplex_end_study':
@@ -199,13 +199,15 @@ export default function NewProjectPage() {
   const [hasOht, setHasOht] = useState(true)
   const [ohtCapacity, setOhtCapacity] = useState('1000')
   const [ohtCustom, setOhtCustom] = useState('')
+  const [ohtCustomPrice, setOhtCustomPrice] = useState('')
+  const [mainGateCustomPrice, setMainGateCustomPrice] = useState('')
   const [hasMainGate, setHasMainGate] = useState(true)
   const [hasAc, setHasAc] = useState(false)
   const [hasCctv, setHasCctv] = useState(false)
   const [hasSolar, setHasSolar] = useState(false)
   const [hasUps, setHasUps] = useState(false)
   const [hasWifi, setHasWifi] = useState(false)
-  const [paintingGrade, setPaintingGrade] = useState('')
+  const [paintingGrade, setPaintingGrade] = useState('royal_emulsion')
   const [windowType, setWindowType] = useState('upvc_white')
   const [railingType, setRailingType] = useState('')
   const [flooringType, setFlooringType] = useState('')
@@ -256,14 +258,14 @@ export default function NewProjectPage() {
     const draft = {
       clientName, clientPhone, clientLocation, width, length, isIrregular, sideFront, sideBack, sideLeft, sideRight, masonryType,
       floorCount, floors, hasLift, hasSump, sumpCapacity, sumpType, sumpRateOverride, hasSsm, ssmCourses,
-      hasCompoundWall, hasRainwater, hasGas, hasOht, ohtCapacity, ohtCustom,
+      hasCompoundWall, hasRainwater, hasGas, hasOht, ohtCapacity, ohtCustom, ohtCustomPrice, mainGateCustomPrice,
       hasMainGate, hasAc, hasCctv, hasSolar, hasUps, hasWifi,
       paintingGrade, windowType, railingType, flooringType, customItems,
     }
     localStorage.setItem(DRAFT_KEY, JSON.stringify(draft))
   }, [clientName, clientPhone, clientLocation, width, length, isIrregular, sideFront, sideBack, sideLeft, sideRight, masonryType,
       floorCount, floors, hasLift, hasSump, sumpCapacity, sumpType, sumpRateOverride, hasSsm, ssmCourses,
-      hasCompoundWall, hasRainwater, hasGas, hasOht, ohtCapacity, ohtCustom,
+      hasCompoundWall, hasRainwater, hasGas, hasOht, ohtCapacity, ohtCustom, ohtCustomPrice, mainGateCustomPrice,
       hasMainGate, hasAc, hasCctv, hasSolar, hasUps, hasWifi,
       paintingGrade, windowType, railingType, flooringType, customItems])
 
@@ -305,6 +307,8 @@ export default function NewProjectPage() {
       if (d.hasOht !== undefined) setHasOht(d.hasOht)
       if (d.ohtCapacity !== undefined) setOhtCapacity(d.ohtCapacity)
       if (d.ohtCustom !== undefined) setOhtCustom(d.ohtCustom)
+      if (d.ohtCustomPrice !== undefined) setOhtCustomPrice(d.ohtCustomPrice)
+      if (d.mainGateCustomPrice !== undefined) setMainGateCustomPrice(d.mainGateCustomPrice)
       if (d.hasMainGate !== undefined) setHasMainGate(d.hasMainGate)
       if (d.hasAc !== undefined) setHasAc(d.hasAc)
       if (d.hasCctv !== undefined) setHasCctv(d.hasCctv)
@@ -405,6 +409,7 @@ export default function NewProjectPage() {
       const from = updated[fromIndex]
       updated[toIndex] = {
         ...updated[toIndex],
+        type: from.type,
         sqft: from.sqft,
         mainDoor: from.mainDoor,
         bedroomDoors: from.bedroomDoors,
@@ -422,6 +427,7 @@ export default function NewProjectPage() {
         railingType: from.railingType,
         railingRft: from.railingRft,
         acPoints: from.acPoints,
+        evPoints: from.evPoints,
         upsUnits: from.upsUnits,
         windowSqft: from.windowSqft,
       }
@@ -500,7 +506,15 @@ export default function NewProjectPage() {
       masonry_type: masonryType,
       custom_block_price: customBlockPrice ? parseFloat(customBlockPrice) : null,
       custom_brick_price: customBrickPrice ? parseFloat(customBrickPrice) : null,
-      floors_data: floors.map((f, i) => i === 0 && sumpRateOverride ? { ...f, sumpRateOverride: parseFloat(sumpRateOverride) } : f),
+      floors_data: floors.map((f, i) => {
+        if (i !== 0) return f
+        return {
+          ...f,
+          ...(sumpRateOverride ? { sumpRateOverride: parseFloat(sumpRateOverride) } : {}),
+          ...(ohtCustomPrice ? { ohtCustomPrice: parseFloat(ohtCustomPrice) } : {}),
+          ...(mainGateCustomPrice ? { mainGateCustomPrice: parseFloat(mainGateCustomPrice) } : {}),
+        }
+      }),
       has_sump: hasSump, sump_capacity: sumpCapacity || null, sump_type: sumpType,
       has_ssm: hasSsm, ssm_courses: ssmCourses || null,
       has_compound_wall: hasCompoundWall,
@@ -533,7 +547,8 @@ export default function NewProjectPage() {
   }, [sqft, floors, masonryType, floorCount, sumpRateOverride, hasSump, sumpCapacity, sumpType,
       hasSsm, ssmCourses, hasCompoundWall, hasRainwater, hasGas, hasOht, ohtCapacity, ohtCustom,
       hasMainGate, hasAc, hasCctv, hasSolar, hasUps, hasWifi, paintingGrade, flooringType,
-      windowType, railingType, marketPrices, customBlockPrice, customBrickPrice, boqData])
+      windowType, railingType, marketPrices, customBlockPrice, customBrickPrice, boqData,
+      ohtCustomPrice, mainGateCustomPrice])
 
   async function handleSave() {
     const hasDimensions = isIrregular
@@ -561,9 +576,15 @@ export default function NewProjectPage() {
       side_right: isIrregular ? parseFloat(sideRight) : null,
       floors: floorCount,
       floor_count: floorCount,
-      floors_data: floors.map((f, i) => i === 0 && sumpRateOverride
-        ? { ...f, sumpRateOverride: parseFloat(sumpRateOverride) }
-        : f),
+      floors_data: floors.map((f, i) => {
+        if (i !== 0) return f
+        return {
+          ...f,
+          ...(sumpRateOverride ? { sumpRateOverride: parseFloat(sumpRateOverride) } : {}),
+          ...(ohtCustomPrice ? { ohtCustomPrice: parseFloat(ohtCustomPrice) } : {}),
+          ...(mainGateCustomPrice ? { mainGateCustomPrice: parseFloat(mainGateCustomPrice) } : {}),
+        }
+      }),
       ground_floor_type: floors[0]?.type || '',
       upper_floor_type: floors[1]?.type || '',
       has_lift: hasLift,
@@ -1428,10 +1449,18 @@ export default function NewProjectPage() {
               },
               {
                 label: 'Main Gate',
-                sub: `Entry gate — ${fmt(r.mainGateS)} (small) to ${fmt(r.mainGateL)} (large)`,
+                sub: mainGateCustomPrice ? `Custom price: ${fmt(parseFloat(mainGateCustomPrice))}` : `Entry gate — ${fmt(r.mainGateS)} (small) to ${fmt(r.mainGateL)} (large)`,
                 state: hasMainGate,
                 set: setHasMainGate,
                 isDefault: true,
+                extra: hasMainGate && (
+                  <div className="pl-4 border-l-2 border-blue-100 mt-1 pb-2">
+                    <div className="w-56 space-y-1">
+                      <Label className="text-xs">Custom Price (₹) — leave blank to use auto</Label>
+                      <Input type="number" placeholder={`Auto: ${fmt(r.mainGateS)}–${fmt(r.mainGateL)}`} value={mainGateCustomPrice} onChange={e => setMainGateCustomPrice(e.target.value)} />
+                    </div>
+                  </div>
+                ),
               },
               {
                 label: 'Overhead Tank (OHT)',
@@ -1459,16 +1488,28 @@ export default function NewProjectPage() {
                         </select>
                       </div>
                       {ohtCapacity === 'custom' && (
-                        <div className="space-y-1.5">
-                          <Label className="text-xs">Custom Litres</Label>
-                          <Input
-                            type="number"
-                            placeholder="e.g. 3000"
-                            value={ohtCustom}
-                            onChange={e => setOhtCustom(e.target.value)}
-                          />
-                          {ohtCustom && <p className="text-xs text-gray-400">{ohtCustom}L × {fmt(r.oht)}/L = {fmt(parseFloat(ohtCustom) * r.oht)}</p>}
-                        </div>
+                        <>
+                          <div className="space-y-1.5">
+                            <Label className="text-xs">Custom Litres</Label>
+                            <Input
+                              type="number"
+                              placeholder="e.g. 3000"
+                              value={ohtCustom}
+                              onChange={e => setOhtCustom(e.target.value)}
+                            />
+                            {ohtCustom && !ohtCustomPrice && <p className="text-xs text-gray-400">{ohtCustom}L × {fmt(r.oht)}/L = {fmt(parseFloat(ohtCustom) * r.oht)}</p>}
+                          </div>
+                          <div className="space-y-1.5">
+                            <Label className="text-xs">Custom Price (₹) — overrides per-litre calc</Label>
+                            <Input
+                              type="number"
+                              placeholder={ohtCustom ? `Auto: ${fmt(parseFloat(ohtCustom) * r.oht)}` : 'e.g. 25000'}
+                              value={ohtCustomPrice}
+                              onChange={e => setOhtCustomPrice(e.target.value)}
+                            />
+                            {ohtCustomPrice && <p className="text-xs text-gray-400">Fixed price: {fmt(parseFloat(ohtCustomPrice))}</p>}
+                          </div>
+                        </>
                       )}
                     </div>
                   </div>
