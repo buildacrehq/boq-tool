@@ -408,30 +408,8 @@ export default function NewProjectPage() {
     setFloors(prev => {
       const updated = [...prev]
       const from = updated[fromIndex]
-      updated[toIndex] = {
-        ...updated[toIndex],
-        type: from.type,
-        sqft: from.sqft,
-        mainDoor: from.mainDoor,
-        bedroomDoors: from.bedroomDoors,
-        washroomDoors: from.washroomDoors,
-        toilets: from.toilets,
-        balconyDoors: from.balconyDoors,
-        utilityDoors: from.utilityDoors,
-        poojaRoom: from.poojaRoom,
-        poojaRoomPrice: from.poojaRoomPrice,
-        kitchens: from.kitchens,
-        staircaseType: from.staircaseType,
-        staircaseSteps: from.staircaseSteps,
-        tilesSquft: from.tilesSquft,
-        tilesPricePerSqft: from.tilesPricePerSqft,
-        railingType: from.railingType,
-        railingRft: from.railingRft,
-        acPoints: from.acPoints,
-        evPoints: from.evPoints,
-        upsUnits: from.upsUnits,
-        windowSqft: from.windowSqft,
-      }
+      const to = updated[toIndex]
+      updated[toIndex] = { ...from, index: to.index, name: to.name }
       return updated
     })
   }
