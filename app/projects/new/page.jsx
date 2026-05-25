@@ -15,29 +15,45 @@ import { Badge } from '@/components/ui/badge'
 const FLOOR_NAMES = ['Ground Floor', 'First Floor', 'Second Floor', 'Third Floor', 'Fourth Floor', 'Fifth Floor', 'Sixth Floor']
 
 const GROUND_TYPES = [
-  { value: '1bhk', label: '1 BHK (Single Unit)' },
-  { value: '1bhk_2units', label: '1 BHK (2 Units)' },
-  { value: '2bhk', label: '2 BHK (Single Unit)' },
-  { value: '1bhk_2bhk', label: '1 BHK + 2 BHK Mix' },
-  { value: '2bhk_3bhk', label: '2 BHK + 3 BHK Mix' },
-  { value: '3bhk', label: '3 BHK' },
-  { value: '1bhk_parking', label: '1 BHK + Parking' },
-  { value: '2bhk_parking', label: '2 BHK + Parking' },
-  { value: 'parking_only', label: 'Only Parking' },
-  { value: 'parking_lift', label: 'Only Parking + Lift' },
-  { value: 'duplex_gf', label: 'Duplex Starts in GF' },
+  { value: '1bhk',            label: '1 BHK (Single Unit)' },
+  { value: '1bhk_2units',     label: '1 BHK (2 Units)' },
+  { value: '1bhk_parking',    label: '1 BHK + Parking' },
+  { value: '2bhk',            label: '2 BHK (Single Unit)' },
+  { value: '2bhk_parking',    label: '2 BHK + Parking' },
+  { value: '1bhk_2bhk',       label: '1 BHK + 2 BHK Mix' },
+  { value: '2bhk_3bhk',       label: '2 BHK + 3 BHK Mix' },
+  { value: '3bhk',            label: '3 BHK' },
+  { value: 'duplex_gf',       label: 'Duplex Starts in GF' },
+  { value: 'parking_only',    label: 'Only Parking' },
+  { value: 'parking_lift',    label: 'Only Parking + Lift' },
   { value: 'commercial_parking', label: 'Commercial + Parking' },
 ]
 
 const UPPER_TYPES = [
-  { value: '1bhk', label: '1 BHK (Single Unit)' },
+  { value: '1bhk',        label: '1 BHK (Single Unit)' },
   { value: '1bhk_2units', label: '1 BHK (2 Units)' },
-  { value: '2bhk', label: '2 BHK (Single Unit)' },
-  { value: '1bhk_2bhk', label: '1 BHK + 2 BHK Mix' },
-  { value: '2bhk_3bhk', label: '2 BHK + 3 BHK Mix' },
-  { value: '3bhk', label: '3 BHK' },
-  { value: 'duplex_ff', label: 'Duplex Starts in FF' },
-  { value: 'duplex_sf', label: 'Duplex Starts in SF' },
+  { value: '2bhk',        label: '2 BHK (Single Unit)' },
+  { value: '1bhk_2bhk',  label: '1 BHK + 2 BHK Mix' },
+  { value: '2bhk_3bhk',  label: '2 BHK + 3 BHK Mix' },
+  { value: '3bhk',        label: '3 BHK' },
+  { value: 'duplex_ff',   label: 'Duplex Starts in FF' },
+  { value: 'duplex_sf',   label: 'Duplex Starts in SF' },
+]
+
+const GROUND_GROUPS = [
+  { label: '1 BHK',     values: ['1bhk', '1bhk_2units', '1bhk_parking'] },
+  { label: '2 BHK',     values: ['2bhk', '2bhk_parking', '1bhk_2bhk', '2bhk_3bhk'] },
+  { label: '3 BHK',     values: ['3bhk'] },
+  { label: 'Duplex',    values: ['duplex_gf'] },
+  { label: 'Parking',   values: ['parking_only', 'parking_lift'] },
+  { label: 'Commercial',values: ['commercial_parking'] },
+]
+
+const UPPER_GROUPS = [
+  { label: '1 BHK',  values: ['1bhk', '1bhk_2units'] },
+  { label: '2 BHK',  values: ['2bhk', '1bhk_2bhk', '2bhk_3bhk'] },
+  { label: '3 BHK',  values: ['3bhk'] },
+  { label: 'Duplex', values: ['duplex_ff', 'duplex_sf'] },
 ]
 
 const DUPLEX_END_TYPES = [
@@ -365,9 +381,15 @@ export default function NewProjectPage() {
     const defaults = getDefaultDoors(type)
     const isDuplexEnd = ['duplex_end_2mb', 'duplex_end_study', 'duplex_end'].includes(type)
     const isDuplex = ['duplex_gf', 'duplex_ff', 'duplex_sf'].includes(type) || isDuplexEnd
+    const isParkingType = ['parking_only', 'parking_lift', 'commercial_parking'].includes(type)
     setFloors(prev => {
       const updated = [...prev]
-      updated[index] = { ...updated[index], type, ...defaults, railingType: isDuplex ? 'ss_glass' : 'ss' }
+      updated[index] = {
+        ...updated[index], type, ...defaults,
+        railingType: isDuplex ? 'ss_glass' : 'ss',
+        staircaseType: isDuplex ? 'chain' : 'normal',
+        acPoints: isParkingType ? 0 : 2,
+      }
       // When a duplex start is selected, clear the next floor so user must pick an end option
       if (['duplex_gf', 'duplex_ff', 'duplex_sf'].includes(type) && index + 1 < updated.length) {
         updated[index + 1] = { ...updated[index + 1], type: '' }
@@ -868,7 +890,13 @@ export default function NewProjectPage() {
                           const prevType = index > 0 ? floors[index - 1]?.type : null
                           const isDuplexNext = ['duplex_gf', 'duplex_ff', 'duplex_sf'].includes(prevType)
                           if (isDuplexNext) return DUPLEX_END_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)
-                          return (index === 0 ? GROUND_TYPES : UPPER_TYPES).map(t => <option key={t.value} value={t.value}>{t.label}</option>)
+                          const groups = index === 0 ? GROUND_GROUPS : UPPER_GROUPS
+                          const types = index === 0 ? GROUND_TYPES : UPPER_TYPES
+                          return groups.map(g => (
+                            <optgroup key={g.label} label={g.label}>
+                              {g.values.map(v => { const t = types.find(x => x.value === v); return t ? <option key={t.value} value={t.value}>{t.label}</option> : null })}
+                            </optgroup>
+                          ))
                         })()}
                       </select>
                       <p className="text-xs text-gray-400">
@@ -981,16 +1009,14 @@ export default function NewProjectPage() {
                             </p>
                           </div>
                           <div className="space-y-1.5">
-                            <Label className="text-xs">Washroom Doors</Label>
-                            <Input type="number" min="0" value={floor.washroomDoors} onChange={e => updateFloor(index, 'washroomDoors', e.target.value)} />
+                            <Label className="text-xs">Washrooms</Label>
+                            <Input type="number" min="0" value={floor.washroomDoors} onChange={e => {
+                              const v = e.target.value
+                              setFloors(prev => { const u = [...prev]; u[index] = { ...u[index], washroomDoors: v, toilets: v }; return u })
+                            }} />
                             <p className="text-xs text-gray-400">
-                              {parseInt(floor.washroomDoors) > 0 ? `${floor.washroomDoors} × ${fmt(r.washroomDoor)} = ${fmt(parseInt(floor.washroomDoors) * r.washroomDoor)}` : `Typical: ${fmt(r.washroomDoor)}/door`}
+                              {parseInt(floor.washroomDoors) > 0 ? `${floor.washroomDoors} × door (${fmt(r.washroomDoor)}) + plumbing` : 'Door + plumbing per washroom'}
                             </p>
-                          </div>
-                          <div className="space-y-1.5">
-                            <Label className="text-xs">Toilets / Bathrooms</Label>
-                            <Input type="number" min="0" value={floor.toilets} onChange={e => updateFloor(index, 'toilets', e.target.value)} />
-                            <p className="text-xs text-gray-400">For plumbing calculation</p>
                           </div>
                           <div className="space-y-1.5">
                             <Label className="text-xs">Balcony Doors</Label>

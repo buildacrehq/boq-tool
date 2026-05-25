@@ -14,23 +14,43 @@ import AppLayout from '@/components/layout/AppLayout'
 
 const FLOOR_NAMES = ['Ground Floor', 'First Floor', 'Second Floor', 'Third Floor', 'Fourth Floor', 'Fifth Floor', 'Sixth Floor']
 const GROUND_TYPES = [
-  { value: 'parking_only', label: 'Only Parking' },
-  { value: 'parking_lift', label: 'Only Parking + Lift' },
-  { value: '1bhk_parking', label: '1 BHK + Parking' },
-  { value: '2bhk_parking', label: '2 BHK + Parking' },
-  { value: 'duplex_gf', label: 'Duplex Starts in GF' },
+  { value: '1bhk',            label: '1 BHK (Single Unit)' },
+  { value: '1bhk_2units',     label: '1 BHK (2 Units)' },
+  { value: '1bhk_parking',    label: '1 BHK + Parking' },
+  { value: '2bhk',            label: '2 BHK (Single Unit)' },
+  { value: '2bhk_parking',    label: '2 BHK + Parking' },
+  { value: '1bhk_2bhk',       label: '1 BHK + 2 BHK Mix' },
+  { value: '2bhk_3bhk',       label: '2 BHK + 3 BHK Mix' },
+  { value: '3bhk',            label: '3 BHK' },
+  { value: 'duplex_gf',       label: 'Duplex Starts in GF' },
+  { value: 'parking_only',    label: 'Only Parking' },
+  { value: 'parking_lift',    label: 'Only Parking + Lift' },
   { value: 'commercial_parking', label: 'Commercial + Parking' },
 ]
 const UPPER_TYPES = [
-  { value: '1bhk', label: '1 BHK (Single Unit)' },
+  { value: '1bhk',        label: '1 BHK (Single Unit)' },
   { value: '1bhk_2units', label: '1 BHK (2 Units)' },
-  { value: '2bhk', label: '2 BHK (Single Unit)' },
-  { value: '1bhk_2bhk', label: '1 BHK + 2 BHK Mix' },
-  { value: '2bhk_3bhk', label: '2 BHK + 3 BHK Mix' },
-  { value: '3bhk', label: '3 BHK' },
-  { value: 'duplex_ff', label: 'Duplex Starts in FF' },
-  { value: 'duplex_sf', label: 'Duplex Starts in SF' },
-  { value: 'duplex_end', label: 'Duplex End (Upper Floor)' },
+  { value: '2bhk',        label: '2 BHK (Single Unit)' },
+  { value: '1bhk_2bhk',  label: '1 BHK + 2 BHK Mix' },
+  { value: '2bhk_3bhk',  label: '2 BHK + 3 BHK Mix' },
+  { value: '3bhk',        label: '3 BHK' },
+  { value: 'duplex_ff',   label: 'Duplex Starts in FF' },
+  { value: 'duplex_sf',   label: 'Duplex Starts in SF' },
+  { value: 'duplex_end',  label: 'Duplex End (Upper Floor)' },
+]
+const GROUND_GROUPS = [
+  { label: '1 BHK',      values: ['1bhk', '1bhk_2units', '1bhk_parking'] },
+  { label: '2 BHK',      values: ['2bhk', '2bhk_parking', '1bhk_2bhk', '2bhk_3bhk'] },
+  { label: '3 BHK',      values: ['3bhk'] },
+  { label: 'Duplex',     values: ['duplex_gf'] },
+  { label: 'Parking',    values: ['parking_only', 'parking_lift'] },
+  { label: 'Commercial', values: ['commercial_parking'] },
+]
+const UPPER_GROUPS = [
+  { label: '1 BHK',  values: ['1bhk', '1bhk_2units'] },
+  { label: '2 BHK',  values: ['2bhk', '1bhk_2bhk', '2bhk_3bhk'] },
+  { label: '3 BHK',  values: ['3bhk'] },
+  { label: 'Duplex', values: ['duplex_ff', 'duplex_sf', 'duplex_end'] },
 ]
 const MAIN_DOOR_TYPES = [
   { value: 'teak_3x7', label: 'Teak 3×7 — ₹50,000' },
@@ -214,9 +234,17 @@ export default function EditProjectPage() {
 
   function handleFloorTypeChange(index, type) {
     const defaults = getDefaultDoors(type)
+    const isDuplexEnd = ['duplex_end_2mb', 'duplex_end_study', 'duplex_end'].includes(type)
+    const isDuplex = ['duplex_gf', 'duplex_ff', 'duplex_sf'].includes(type) || isDuplexEnd
+    const isParkingType = ['parking_only', 'parking_lift', 'commercial_parking'].includes(type)
     setFloors(prev => {
       const updated = [...prev]
-      updated[index] = { ...updated[index], type, ...defaults }
+      updated[index] = {
+        ...updated[index], type, ...defaults,
+        railingType: isDuplex ? 'ss_glass' : (updated[index].railingType || 'ss'),
+        staircaseType: isDuplex ? 'chain' : 'normal',
+        acPoints: isParkingType ? 0 : (updated[index].acPoints || 2),
+      }
       if (['duplex_ff', 'duplex_sf'].includes(type) && index + 1 < updated.length) {
         const endDefaults = getDefaultDoors('duplex_end')
         updated[index + 1] = { ...updated[index + 1], type: 'duplex_end', ...endDefaults }
@@ -426,7 +454,15 @@ export default function EditProjectPage() {
                         <Label>Floor Type *</Label>
                         <select className="w-full h-10 px-3 border border-gray-200 rounded-lg text-sm bg-white" value={floor.type} onChange={e => handleFloorTypeChange(index, e.target.value)}>
                           <option value="">— Select floor type —</option>
-                          {(index === 0 ? GROUND_TYPES : UPPER_TYPES).map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+                          {(() => {
+                            const groups = index === 0 ? GROUND_GROUPS : UPPER_GROUPS
+                            const types = index === 0 ? GROUND_TYPES : UPPER_TYPES
+                            return groups.map(g => (
+                              <optgroup key={g.label} label={g.label}>
+                                {g.values.map(v => { const t = types.find(x => x.value === v); return t ? <option key={t.value} value={t.value}>{t.label}</option> : null })}
+                              </optgroup>
+                            ))
+                          })()}
                         </select>
                       </div>
                       <div className="space-y-1.5">
@@ -495,8 +531,6 @@ export default function EditProjectPage() {
                           )}
                           {[
                             { field: 'bedroomDoors', label: 'Bedroom Doors', note: '₹12,000 each' },
-                            { field: 'washroomDoors', label: 'Washroom Doors', note: '₹10,000 each' },
-                            { field: 'toilets', label: 'Toilets/Bathrooms', note: 'For plumbing' },
                             { field: 'balconyDoors', label: 'Balcony Doors', note: '₹12,000 each' },
                             { field: 'utilityDoors', label: 'Utility Doors', note: '₹10,000 each' },
                             ...(floor.type !== 'duplex_end' ? [{ field: 'kitchens', label: 'Kitchens', note: 'For plumbing' }] : []),
@@ -507,6 +541,14 @@ export default function EditProjectPage() {
                               <p className="text-xs text-gray-400">{d.note}</p>
                             </div>
                           ))}
+                          <div className="space-y-1.5">
+                            <Label className="text-xs">Washrooms</Label>
+                            <Input type="number" min="0" value={floor.washroomDoors} onChange={e => {
+                              const v = e.target.value
+                              setFloors(prev => { const u = [...prev]; u[index] = { ...u[index], washroomDoors: v, toilets: v }; return u })
+                            }} />
+                            <p className="text-xs text-gray-400">Door (₹10,000) + plumbing per washroom</p>
+                          </div>
                           <div className="space-y-1.5">
                             <Label className="text-xs">Pooja Room Door</Label>
                             <div className="h-10 flex items-center gap-2"><Switch checked={floor.poojaRoom} onCheckedChange={v => updateFloor(index, 'poojaRoom', v)} /><span className="text-xs text-gray-400">₹20,000</span></div>
