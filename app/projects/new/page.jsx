@@ -169,6 +169,7 @@ export default function NewProjectPage() {
   const [showDiscardModal, setShowDiscardModal] = useState(false)
   const [mobileTab, setMobileTab] = useState('form')
   const autoSaveReady = useRef(false)
+  const submittingRef = useRef(false)
 
   // All state declarations must come before useEffect hooks that reference them
   const [clientName, setClientName] = useState('')
@@ -551,6 +552,7 @@ export default function NewProjectPage() {
       ohtCustomPrice, mainGateCustomPrice])
 
   async function handleSave() {
+    if (submittingRef.current) return
     const hasDimensions = isIrregular
       ? (sideFront && sideBack && sideLeft && sideRight)
       : (width && length)
@@ -558,6 +560,7 @@ export default function NewProjectPage() {
       alert('Please fill Client Name and Dimensions')
       return
     }
+    submittingRef.current = true
     setSaving(true)
 
     const finalOhtCapacity = ohtCapacity === 'custom' ? parseFloat(ohtCustom) : parseFloat(ohtCapacity)
@@ -627,6 +630,7 @@ export default function NewProjectPage() {
 
     if (error) {
       alert('Error saving: ' + error.message)
+      submittingRef.current = false
       setSaving(false)
       return
     }

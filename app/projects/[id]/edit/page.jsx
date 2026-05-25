@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -112,6 +112,7 @@ export default function EditProjectPage() {
   const { id } = useParams()
   const [saving, setSaving] = useState(false)
   const [loading, setLoading] = useState(true)
+  const submittingRef = useRef(false)
 
   const [clientName, setClientName] = useState('')
   const [clientPhone, setClientPhone] = useState('')
@@ -291,10 +292,12 @@ export default function EditProjectPage() {
   const totalSlabSqft = floors.reduce((sum, f) => sum + (parseFloat(f.sqft) || 0), 0)
 
   async function handleUpdate() {
+    if (submittingRef.current) return
     const hasDimensions = isIrregular ? (sideFront && sideBack && sideLeft && sideRight) : (width && length)
     if (!clientName || !hasDimensions) { alert('Please fill Client Name and Dimensions'); return }
     const emptyFloors = floors.filter(f => !f.type)
     if (emptyFloors.length > 0) { alert(`Select floor type for: ${emptyFloors.map(f => f.name).join(', ')}`); return }
+    submittingRef.current = true
     setSaving(true)
 
     const finalOhtCapacity = ohtCapacity === 'custom' ? parseFloat(ohtCustom) : parseFloat(ohtCapacity)
@@ -335,7 +338,7 @@ export default function EditProjectPage() {
     }
 
     const { error } = await supabase.from('projects').update(projectData).eq('id', id)
-    if (error) { alert('Error: ' + error.message); setSaving(false); return }
+    if (error) { alert('Error: ' + error.message); submittingRef.current = false; setSaving(false); return }
 
     await supabase.from('custom_items').delete().eq('project_id', id)
     const validItems = customItems.filter(i => i.item_name && i.unit_price)
