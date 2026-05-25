@@ -141,7 +141,7 @@ export default function EditProjectPage() {
 
   const [hasLift, setHasLift] = useState(false)
   const [hasSump, setHasSump] = useState(false)
-  const [sumpCapacity, setSumpCapacity] = useState('')
+  const [sumpCapacity, setSumpCapacity] = useState('10000')
   const [sumpType, setSumpType] = useState('block')
   const [sumpRateOverride, setSumpRateOverride] = useState('')
   const [hasSsm, setHasSsm] = useState(false)
@@ -196,7 +196,7 @@ export default function EditProjectPage() {
       setFloorCount(proj.floor_count || proj.floors || 1)
       setHasLift(proj.has_lift || false)
       setHasSump(proj.has_sump || false)
-      setSumpCapacity(proj.sump_capacity || '')
+      setSumpCapacity(proj.sump_capacity || '10000')
       setSumpType(proj.sump_type || 'block')
       setHasSsm(proj.has_ssm || false)
       setSsmCourses(proj.ssm_courses || '')
@@ -760,7 +760,7 @@ export default function EditProjectPage() {
               <div className="space-y-3">
                 <div className="flex items-center justify-between py-2">
                   <div><p className="text-sm font-medium">Underground Sump</p><p className="text-xs text-gray-400">RCC: ₹13/litre · Block: ₹30,000 fixed</p></div>
-                  <Switch checked={hasSump} onCheckedChange={setHasSump} />
+                  <Switch checked={hasSump} onCheckedChange={v => { setHasSump(v); if (v && !sumpCapacity) setSumpCapacity('10000') }} />
                 </div>
                 {hasSump && (
                   <div className="grid grid-cols-2 gap-4 pl-4 border-l-2 border-blue-100">

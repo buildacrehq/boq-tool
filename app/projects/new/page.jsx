@@ -189,7 +189,7 @@ export default function NewProjectPage() {
   const [floors, setFloors] = useState([createFloor(0)])
   const [hasLift, setHasLift] = useState(false)
   const [hasSump, setHasSump] = useState(true)
-  const [sumpCapacity, setSumpCapacity] = useState('')
+  const [sumpCapacity, setSumpCapacity] = useState('10000')
   const [sumpType, setSumpType] = useState('rcc')
   const [sumpRateOverride, setSumpRateOverride] = useState('')
   const [hasSsm, setHasSsm] = useState(false)
@@ -1371,7 +1371,7 @@ export default function NewProjectPage() {
                   <p className="text-sm font-medium">Underground Sump</p>
                   <p className="text-xs text-gray-400">Water storage tank below ground</p>
                 </div>
-                <Switch checked={hasSump} onCheckedChange={setHasSump} />
+                <Switch checked={hasSump} onCheckedChange={v => { setHasSump(v); if (v && !sumpCapacity) setSumpCapacity('10000') }} />
               </div>
               {hasSump && (
                 <div className="grid grid-cols-2 gap-4 pl-4 border-l-2 border-blue-100">
