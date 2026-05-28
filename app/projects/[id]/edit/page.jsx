@@ -164,6 +164,16 @@ export default function EditProjectPage() {
   const [solarCustomCost, setSolarCustomCost] = useState('')
   const [upsCustomRate, setUpsCustomRate] = useState('')
   const [wifiCustomCost, setWifiCustomCost] = useState('')
+  const [hasLabourShed, setHasLabourShed] = useState(true)
+  const [labourShedCustomCost, setLabourShedCustomCost] = useState('')
+  const [hasWatchman, setHasWatchman] = useState(true)
+  const [watchmanCustomCost, setWatchmanCustomCost] = useState('')
+  const [hasMiscExpense, setHasMiscExpense] = useState(true)
+  const [miscExpenseCustomCost, setMiscExpenseCustomCost] = useState('')
+  const [hasWashroomWaterproofing, setHasWashroomWaterproofing] = useState(true)
+  const [washroomWaterproofingCustomRate, setWashroomWaterproofingCustomRate] = useState('')
+  const [hasCinderBackfilling, setHasCinderBackfilling] = useState(true)
+  const [cinderBackfillingCustomRate, setCinderBackfillingCustomRate] = useState('')
   const [hasMainGate, setHasMainGate] = useState(true)
   const [hasAc, setHasAc] = useState(false)
   const [hasCctv, setHasCctv] = useState(false)
@@ -242,6 +252,16 @@ export default function EditProjectPage() {
         setUpsCustomRate(proj.floors_data[0]?.upsCustomRate ? String(proj.floors_data[0].upsCustomRate) : '')
         setWifiCustomCost(proj.floors_data[0]?.wifiCustomCost ? String(proj.floors_data[0].wifiCustomCost) : '')
         setPaintingCustomRate(proj.floors_data[0]?.paintingCustomRate ? String(proj.floors_data[0].paintingCustomRate) : '')
+        setHasLabourShed(proj.floors_data[0]?.labourShedEnabled !== false)
+        setLabourShedCustomCost(proj.floors_data[0]?.labourShedCustomCost ? String(proj.floors_data[0].labourShedCustomCost) : '')
+        setHasWatchman(proj.floors_data[0]?.watchmanEnabled !== false)
+        setWatchmanCustomCost(proj.floors_data[0]?.watchmanCustomCost ? String(proj.floors_data[0].watchmanCustomCost) : '')
+        setHasMiscExpense(proj.floors_data[0]?.miscExpenseEnabled !== false)
+        setMiscExpenseCustomCost(proj.floors_data[0]?.miscExpenseCustomCost ? String(proj.floors_data[0].miscExpenseCustomCost) : '')
+        setHasWashroomWaterproofing(proj.floors_data[0]?.washroomWaterproofingEnabled !== false)
+        setWashroomWaterproofingCustomRate(proj.floors_data[0]?.washroomWaterproofingCustomRate ? String(proj.floors_data[0].washroomWaterproofingCustomRate) : '')
+        setHasCinderBackfilling(proj.floors_data[0]?.cinderBackfillingEnabled !== false)
+        setCinderBackfillingCustomRate(proj.floors_data[0]?.cinderBackfillingCustomRate ? String(proj.floors_data[0].cinderBackfillingCustomRate) : '')
       } else {
         const count = proj.floor_count || proj.floors || 1
         setFloors(Array.from({ length: count }, (_, i) => createFloor(i)))
@@ -344,6 +364,16 @@ export default function EditProjectPage() {
         ...(upsCustomRate ? { upsCustomRate: parseFloat(upsCustomRate) } : {}),
         ...(wifiCustomCost ? { wifiCustomCost: parseFloat(wifiCustomCost) } : {}),
         ...(paintingCustomRate ? { paintingCustomRate: parseFloat(paintingCustomRate) } : {}),
+        labourShedEnabled: hasLabourShed,
+        ...(labourShedCustomCost ? { labourShedCustomCost: parseFloat(labourShedCustomCost) } : {}),
+        watchmanEnabled: hasWatchman,
+        ...(watchmanCustomCost ? { watchmanCustomCost: parseFloat(watchmanCustomCost) } : {}),
+        miscExpenseEnabled: hasMiscExpense,
+        ...(miscExpenseCustomCost ? { miscExpenseCustomCost: parseFloat(miscExpenseCustomCost) } : {}),
+        washroomWaterproofingEnabled: hasWashroomWaterproofing,
+        ...(washroomWaterproofingCustomRate ? { washroomWaterproofingCustomRate: parseFloat(washroomWaterproofingCustomRate) } : {}),
+        cinderBackfillingEnabled: hasCinderBackfilling,
+        ...(cinderBackfillingCustomRate ? { cinderBackfillingCustomRate: parseFloat(cinderBackfillingCustomRate) } : {}),
       }
     })
 
@@ -945,6 +975,31 @@ export default function EditProjectPage() {
                   <div className="w-48 space-y-1"><Label className="text-xs">Custom Cost (₹)</Label><Input type="number" placeholder="18000" value={earthingCustomCost} onChange={e => setEarthingCustomCost(e.target.value)} /></div>
                 </div>
               </div>
+              {[
+                { label: 'Labour Shed', state: hasLabourShed, set: setHasLabourShed, customVal: labourShedCustomCost, setCustom: setLabourShedCustomCost, placeholder: '50000', unit: '₹' },
+                { label: 'Watchman', state: hasWatchman, set: setHasWatchman, customVal: watchmanCustomCost, setCustom: setWatchmanCustomCost, placeholder: '50000', unit: '₹' },
+                { label: 'Misc Expense', state: hasMiscExpense, set: setHasMiscExpense, customVal: miscExpenseCustomCost, setCustom: setMiscExpenseCustomCost, placeholder: '150000', unit: '₹' },
+                { label: 'Washroom Waterproofing', state: hasWashroomWaterproofing, set: setHasWashroomWaterproofing, customVal: washroomWaterproofingCustomRate, setCustom: setWashroomWaterproofingCustomRate, placeholder: '2000', unit: '₹/toilet' },
+                { label: 'Cinder Backfilling', state: hasCinderBackfilling, set: setHasCinderBackfilling, customVal: cinderBackfillingCustomRate, setCustom: setCinderBackfillingCustomRate, placeholder: '4000', unit: '₹/toilet' },
+              ].map((item, i) => (
+                <div key={i} className="border-b border-gray-50 last:border-0">
+                  <div className="flex items-center justify-between py-3 px-1">
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">{item.label}</p>
+                      <p className="text-xs text-gray-400 mt-0.5">{item.customVal ? `Custom: ₹${parseFloat(item.customVal).toLocaleString('en-IN')} ${item.unit.includes('/') ? item.unit.split('/')[1] : ''}` : `Market rate — ${item.unit}`}</p>
+                    </div>
+                    <Switch checked={item.state} onCheckedChange={item.set} />
+                  </div>
+                  {item.state && (
+                    <div className="pl-4 border-l-2 border-blue-100 mb-2">
+                      <div className="w-48 space-y-1">
+                        <Label className="text-xs">Custom {item.unit.includes('/') ? `Rate (${item.unit})` : 'Cost (₹)'}</Label>
+                        <Input type="number" placeholder={item.placeholder} value={item.customVal} onChange={e => item.setCustom(e.target.value)} />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
             </CardContent>
           </Card>
 
