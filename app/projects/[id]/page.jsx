@@ -555,6 +555,17 @@ export default function ProjectPage() {
         ...(solarCustomCost ? { solarCustomCost: parseFloat(solarCustomCost) } : {}),
         ...(upsCustomRate ? { upsCustomRate: parseFloat(upsCustomRate) } : {}),
         ...(wifiCustomCost ? { wifiCustomCost: parseFloat(wifiCustomCost) } : {}),
+        ...(paintingCustomRate ? { paintingCustomRate: parseFloat(paintingCustomRate) } : {}),
+        labourShedEnabled: hasLabourShed,
+        ...(labourShedCustomCost ? { labourShedCustomCost: parseFloat(labourShedCustomCost) } : {}),
+        watchmanEnabled: hasWatchman,
+        ...(watchmanCustomCost ? { watchmanCustomCost: parseFloat(watchmanCustomCost) } : {}),
+        miscExpenseEnabled: hasMiscExpense,
+        ...(miscExpenseCustomCost ? { miscExpenseCustomCost: parseFloat(miscExpenseCustomCost) } : {}),
+        washroomWaterproofingEnabled: hasWashroomWaterproofing,
+        ...(washroomWaterproofingCustomRate ? { washroomWaterproofingCustomRate: parseFloat(washroomWaterproofingCustomRate) } : {}),
+        cinderBackfillingEnabled: hasCinderBackfilling,
+        ...(cinderBackfillingCustomRate ? { cinderBackfillingCustomRate: parseFloat(cinderBackfillingCustomRate) } : {}),
       }
     })
 
