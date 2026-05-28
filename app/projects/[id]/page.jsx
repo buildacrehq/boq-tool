@@ -112,6 +112,7 @@ export default function ProjectPage() {
 
   const [boqOverrides, setBoqOverrides] = useState({})
   const saveTimeoutRef = useRef(null)
+  const submittingRef = useRef(false)
 
   // Shared
   const [project, setProject] = useState(null)
@@ -538,91 +539,115 @@ export default function ProjectPage() {
     poojaRoom: acc.poojaRoom + (f.poojaRoom ? 1 : 0),
   }), { bedroom: 0, washroom: 0, toilets: 0, balcony: 0, utility: 0, kitchens: 0, poojaRoom: 0 })
 
+  // Strip empty-string fields from floor objects before saving (reduces payload)
+  function cleanFloor(f) {
+    const out = {}
+    for (const [k, v] of Object.entries(f)) {
+      if (v !== '' && v !== undefined) out[k] = v
+    }
+    return out
+  }
+
   async function handleUpdate() {
+    if (submittingRef.current) return
     const hasDimensions = isIrregular ? (sideFront && sideBack && sideLeft && sideRight) : (width && length)
     if (!clientName || !hasDimensions) { alert('Please fill Client Name and Dimensions'); return }
     const emptyFloors = floors.filter(f => !f.type)
     if (emptyFloors.length > 0) { alert(`Select floor type for: ${emptyFloors.map(f => f.name).join(', ')}`); return }
+
+    // Cancel any pending autosave of overrides
+    if (saveTimeoutRef.current) { clearTimeout(saveTimeoutRef.current); saveTimeoutRef.current = null }
+
+    submittingRef.current = true
     setSaving(true)
 
-    const finalOhtCapacity = ohtCapacity === 'custom' ? parseFloat(ohtCustom) : parseFloat(ohtCapacity)
-    const totalEvPoints = floors.reduce((sum, f) => sum + (parseInt(f.evPoints) || 0), 0)
-    const floorsData = floors.map((f, i) => {
-      if (i !== 0) return f
-      return {
-        ...f,
-        ...(sumpRateOverride ? { sumpRateOverride: parseFloat(sumpRateOverride) } : {}),
-        ...(ohtCustomPrice ? { ohtCustomPrice: parseFloat(ohtCustomPrice) } : {}),
-        ...(mainGateCustomPrice ? { mainGateCustomPrice: parseFloat(mainGateCustomPrice) } : {}),
-        ...(rainwaterCustomCost ? { rainwaterCustomCost: parseFloat(rainwaterCustomCost) } : {}),
-        ...(gasCustomRate ? { gasCustomRate: parseFloat(gasCustomRate) } : {}),
-        ...(acCustomRate ? { acCustomRate: parseFloat(acCustomRate) } : {}),
-        ...(cctvCustomRate ? { cctvCustomRate: parseFloat(cctvCustomRate) } : {}),
-        ...(earthingCustomCost ? { earthingCustomCost: parseFloat(earthingCustomCost) } : {}),
-        ...(solarCustomCost ? { solarCustomCost: parseFloat(solarCustomCost) } : {}),
-        ...(upsCustomRate ? { upsCustomRate: parseFloat(upsCustomRate) } : {}),
-        ...(wifiCustomCost ? { wifiCustomCost: parseFloat(wifiCustomCost) } : {}),
-        ...(paintingCustomRate ? { paintingCustomRate: parseFloat(paintingCustomRate) } : {}),
-        labourShedEnabled: hasLabourShed,
-        ...(labourShedCustomCost ? { labourShedCustomCost: parseFloat(labourShedCustomCost) } : {}),
-        watchmanEnabled: hasWatchman,
-        ...(watchmanCustomCost ? { watchmanCustomCost: parseFloat(watchmanCustomCost) } : {}),
-        miscExpenseEnabled: hasMiscExpense,
-        ...(miscExpenseCustomCost ? { miscExpenseCustomCost: parseFloat(miscExpenseCustomCost) } : {}),
-        washroomWaterproofingEnabled: hasWashroomWaterproofing,
-        ...(washroomWaterproofingCustomRate ? { washroomWaterproofingCustomRate: parseFloat(washroomWaterproofingCustomRate) } : {}),
-        cinderBackfillingEnabled: hasCinderBackfilling,
-        ...(cinderBackfillingCustomRate ? { cinderBackfillingCustomRate: parseFloat(cinderBackfillingCustomRate) } : {}),
+    try {
+      const finalOhtCapacity = ohtCapacity === 'custom' ? parseFloat(ohtCustom) : parseFloat(ohtCapacity)
+      const totalEvPoints = floors.reduce((sum, f) => sum + (parseInt(f.evPoints) || 0), 0)
+      const floorsData = floors.map((f, i) => {
+        const base = cleanFloor(f)
+        if (i !== 0) return base
+        return {
+          ...base,
+          ...(sumpRateOverride ? { sumpRateOverride: parseFloat(sumpRateOverride) } : {}),
+          ...(ohtCustomPrice ? { ohtCustomPrice: parseFloat(ohtCustomPrice) } : {}),
+          ...(mainGateCustomPrice ? { mainGateCustomPrice: parseFloat(mainGateCustomPrice) } : {}),
+          ...(rainwaterCustomCost ? { rainwaterCustomCost: parseFloat(rainwaterCustomCost) } : {}),
+          ...(gasCustomRate ? { gasCustomRate: parseFloat(gasCustomRate) } : {}),
+          ...(acCustomRate ? { acCustomRate: parseFloat(acCustomRate) } : {}),
+          ...(cctvCustomRate ? { cctvCustomRate: parseFloat(cctvCustomRate) } : {}),
+          ...(cctvUnits ? { cctvUnits: parseInt(cctvUnits) } : {}),
+          ...(earthingCustomCost ? { earthingCustomCost: parseFloat(earthingCustomCost) } : {}),
+          ...(solarCustomCost ? { solarCustomCost: parseFloat(solarCustomCost) } : {}),
+          ...(upsCustomRate ? { upsCustomRate: parseFloat(upsCustomRate) } : {}),
+          ...(wifiCustomCost ? { wifiCustomCost: parseFloat(wifiCustomCost) } : {}),
+          ...(paintingCustomRate ? { paintingCustomRate: parseFloat(paintingCustomRate) } : {}),
+          parapetEnabled: hasParapet,
+          labourShedEnabled: hasLabourShed,
+          ...(labourShedCustomCost ? { labourShedCustomCost: parseFloat(labourShedCustomCost) } : {}),
+          watchmanEnabled: hasWatchman,
+          ...(watchmanCustomCost ? { watchmanCustomCost: parseFloat(watchmanCustomCost) } : {}),
+          miscExpenseEnabled: hasMiscExpense,
+          ...(miscExpenseCustomCost ? { miscExpenseCustomCost: parseFloat(miscExpenseCustomCost) } : {}),
+          washroomWaterproofingEnabled: hasWashroomWaterproofing,
+          ...(washroomWaterproofingCustomRate ? { washroomWaterproofingCustomRate: parseFloat(washroomWaterproofingCustomRate) } : {}),
+          cinderBackfillingEnabled: hasCinderBackfilling,
+          ...(cinderBackfillingCustomRate ? { cinderBackfillingCustomRate: parseFloat(cinderBackfillingCustomRate) } : {}),
+        }
+      })
+
+      const projectData = {
+        client_name: clientName, client_phone: clientPhone, site_address: clientLocation,
+        is_irregular: isIrregular,
+        dimension_width: isIrregular ? null : parseFloat(width),
+        dimension_length: isIrregular ? null : parseFloat(length),
+        side_front: isIrregular ? parseFloat(sideFront) : null,
+        side_back: isIrregular ? parseFloat(sideBack) : null,
+        side_left: isIrregular ? parseFloat(sideLeft) : null,
+        side_right: isIrregular ? parseFloat(sideRight) : null,
+        total_sqft: sqft,
+        floors: floorCount, floor_count: floorCount, floors_data: floorsData,
+        ground_floor_type: floors[0]?.type || '', upper_floor_type: floors[1]?.type || '',
+        masonry_type: masonryType,
+        custom_block_price: customBlockPrice ? parseFloat(customBlockPrice) : null,
+        custom_brick_price: customBrickPrice ? parseFloat(customBrickPrice) : null,
+        has_lift: hasLift, has_sump: hasSump,
+        sump_capacity: sumpCapacity ? parseFloat(sumpCapacity) : null, sump_type: sumpType,
+        has_ssm: hasSsm, ssm_courses: ssmCourses ? parseInt(ssmCourses) : null,
+        has_compound_wall: hasCompoundWall, has_rainwater: hasRainwater, has_gas: hasGas,
+        has_oht: hasOht, oht_capacity: finalOhtCapacity, has_main_gate: hasMainGate,
+        has_ac: hasAc, has_cctv: hasCctv, has_ev: totalEvPoints > 0, has_solar: hasSolar,
+        has_ups: hasUps, has_wifi: hasWifi, painting_grade: paintingGrade,
+        flooring_type: flooringType, window_type: windowType, railing_type: railingType,
+        bedroom_doors: totalDoors.bedroom, washroom_doors: totalDoors.washroom,
+        balcony_doors: totalDoors.balcony, utility_doors: totalDoors.utility,
+        has_pooja_room_door: totalDoors.poojaRoom > 0,
       }
-    })
 
-    const projectData = {
-      client_name: clientName, client_phone: clientPhone, site_address: clientLocation,
-      is_irregular: isIrregular,
-      dimension_width: isIrregular ? null : parseFloat(width),
-      dimension_length: isIrregular ? null : parseFloat(length),
-      side_front: isIrregular ? parseFloat(sideFront) : null,
-      side_back: isIrregular ? parseFloat(sideBack) : null,
-      side_left: isIrregular ? parseFloat(sideLeft) : null,
-      side_right: isIrregular ? parseFloat(sideRight) : null,
-      total_sqft: sqft,
-      floors: floorCount, floor_count: floorCount, floors_data: floorsData,
-      ground_floor_type: floors[0]?.type || '', upper_floor_type: floors[1]?.type || '',
-      masonry_type: masonryType,
-      custom_block_price: customBlockPrice ? parseFloat(customBlockPrice) : null,
-      custom_brick_price: customBrickPrice ? parseFloat(customBrickPrice) : null,
-      has_lift: hasLift, has_sump: hasSump,
-      sump_capacity: sumpCapacity ? parseFloat(sumpCapacity) : null, sump_type: sumpType,
-      has_ssm: hasSsm, ssm_courses: ssmCourses ? parseInt(ssmCourses) : null,
-      has_compound_wall: hasCompoundWall, has_rainwater: hasRainwater, has_gas: hasGas,
-      has_oht: hasOht, oht_capacity: finalOhtCapacity, has_main_gate: hasMainGate,
-      has_ac: hasAc, has_cctv: hasCctv, has_ev: totalEvPoints > 0, has_solar: hasSolar,
-      has_ups: hasUps, has_wifi: hasWifi, painting_grade: paintingGrade,
-      flooring_type: flooringType, window_type: windowType, railing_type: railingType,
-      bedroom_doors: totalDoors.bedroom, washroom_doors: totalDoors.washroom,
-      balcony_doors: totalDoors.balcony, utility_doors: totalDoors.utility,
-      has_pooja_room_door: totalDoors.poojaRoom > 0,
+      const { error } = await supabase.from('projects').update(projectData).eq('id', id)
+      if (error) throw new Error(error.message)
+
+      await supabase.from('custom_items').delete().eq('project_id', id)
+      const validItems = editCustomItems.filter(i => i.item_name && i.unit_price)
+      if (validItems.length > 0) {
+        await supabase.from('custom_items').insert(validItems.map(item => ({
+          project_id: id, item_name: item.item_name,
+          quantity: parseFloat(item.quantity) || 1,
+          unit_price: parseFloat(item.unit_price),
+          total_price: (parseFloat(item.quantity) || 1) * parseFloat(item.unit_price),
+          notes: item.notes,
+        })))
+      }
+
+      await supabase.from('projects').update({ boq_overrides: {} }).eq('id', id)
+      await fetchAll()
+      setBoqOverrides({})
+    } catch (err) {
+      alert('Error saving: ' + (err.message || 'Network error — please try again'))
+    } finally {
+      submittingRef.current = false
+      setSaving(false)
     }
-
-    const { error } = await supabase.from('projects').update(projectData).eq('id', id)
-    if (error) { alert('Error: ' + error.message); setSaving(false); return }
-
-    await supabase.from('custom_items').delete().eq('project_id', id)
-    const validItems = editCustomItems.filter(i => i.item_name && i.unit_price)
-    if (validItems.length > 0) {
-      await supabase.from('custom_items').insert(validItems.map(item => ({
-        project_id: id, item_name: item.item_name,
-        quantity: parseFloat(item.quantity) || 1,
-        unit_price: parseFloat(item.unit_price),
-        total_price: (parseFloat(item.quantity) || 1) * parseFloat(item.unit_price),
-        notes: item.notes,
-      })))
-    }
-
-    await supabase.from('projects').update({ boq_overrides: {} }).eq('id', id)
-    await fetchAll()
-    setBoqOverrides({})
-    setSaving(false)
   }
 
   function formatCurrency(amount) {
