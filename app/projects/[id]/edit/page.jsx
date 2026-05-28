@@ -164,6 +164,7 @@ export default function EditProjectPage() {
   const [solarCustomCost, setSolarCustomCost] = useState('')
   const [upsCustomRate, setUpsCustomRate] = useState('')
   const [wifiCustomCost, setWifiCustomCost] = useState('')
+  const [hasParapet, setHasParapet] = useState(true)
   const [hasLabourShed, setHasLabourShed] = useState(true)
   const [labourShedCustomCost, setLabourShedCustomCost] = useState('')
   const [hasWatchman, setHasWatchman] = useState(true)
@@ -252,6 +253,7 @@ export default function EditProjectPage() {
         setUpsCustomRate(proj.floors_data[0]?.upsCustomRate ? String(proj.floors_data[0].upsCustomRate) : '')
         setWifiCustomCost(proj.floors_data[0]?.wifiCustomCost ? String(proj.floors_data[0].wifiCustomCost) : '')
         setPaintingCustomRate(proj.floors_data[0]?.paintingCustomRate ? String(proj.floors_data[0].paintingCustomRate) : '')
+        setHasParapet(proj.floors_data[0]?.parapetEnabled !== false)
         setHasLabourShed(proj.floors_data[0]?.labourShedEnabled !== false)
         setLabourShedCustomCost(proj.floors_data[0]?.labourShedCustomCost ? String(proj.floors_data[0].labourShedCustomCost) : '')
         setHasWatchman(proj.floors_data[0]?.watchmanEnabled !== false)
@@ -365,6 +367,7 @@ export default function EditProjectPage() {
         ...(upsCustomRate ? { upsCustomRate: parseFloat(upsCustomRate) } : {}),
         ...(wifiCustomCost ? { wifiCustomCost: parseFloat(wifiCustomCost) } : {}),
         ...(paintingCustomRate ? { paintingCustomRate: parseFloat(paintingCustomRate) } : {}),
+        parapetEnabled: hasParapet,
         labourShedEnabled: hasLabourShed,
         ...(labourShedCustomCost ? { labourShedCustomCost: parseFloat(labourShedCustomCost) } : {}),
         watchmanEnabled: hasWatchman,
@@ -891,6 +894,7 @@ export default function EditProjectPage() {
             <CardContent>
               {[
                 { label: 'Compound Wall', sub: 'Boundary wall on all 4 sides', state: hasCompoundWall, set: setHasCompoundWall, isDefault: true },
+                { label: 'Parapet Wall', sub: 'Terrace perimeter wall — blocks + cement + M Sand + 20mm', state: hasParapet, set: setHasParapet, isDefault: true },
                 { label: 'Main Gate', sub: mainGateCustomPrice ? `Custom price: ₹${parseFloat(mainGateCustomPrice).toLocaleString('en-IN')}` : 'Entry gate — ₹30,000 to ₹50,000', state: hasMainGate, set: setHasMainGate, isDefault: true,
                   extra: hasMainGate && (
                     <div className="pl-4 border-l-2 border-blue-100 mt-1 pb-2">
