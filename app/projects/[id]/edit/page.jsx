@@ -52,8 +52,7 @@ const UPPER_GROUPS = [
   { label: 'Duplex', values: ['duplex_ff', 'duplex_sf'] },
 ]
 const DUPLEX_END_TYPES = [
-  { value: 'duplex_end_2mb',   label: 'Duplex End — 2 Master Bedrooms' },
-  { value: 'duplex_end_study', label: 'Duplex End — 2 Master Beds + Study Room' },
+  { value: 'duplex_cont', label: 'Duplex Continuous' },
 ]
 const MAIN_DOOR_TYPES = [
   { value: 'teak_3x7', label: 'Teak 3×7 — ₹50,000' },
@@ -91,9 +90,7 @@ function getDefaultDoors(floorType) {
     case '2bhk_3bhk': return { mainDoor: 'teak_3x7', bedroomDoors: 5, washroomDoors: 4, toilets: 4, balconyDoors: 2, utilityDoors: 1, poojaRoom: true, kitchens: 2 }
     case '3bhk': return { mainDoor: 'teak_3x7', bedroomDoors: 3, washroomDoors: 2, toilets: 2, balconyDoors: 2, utilityDoors: 1, poojaRoom: true, kitchens: 1 }
     case 'duplex_gf': case 'duplex_ff': case 'duplex_sf': return { mainDoor: 'teak_4x8', bedroomDoors: 1, washroomDoors: 1, toilets: 1, balconyDoors: 1, utilityDoors: 0, poojaRoom: false, kitchens: 1 }
-    case 'duplex_end_2mb': return { mainDoor: '', bedroomDoors: 2, washroomDoors: 2, toilets: 2, balconyDoors: 1, utilityDoors: 0, poojaRoom: false, kitchens: 0 }
-    case 'duplex_end_study': return { mainDoor: '', bedroomDoors: 3, washroomDoors: 3, toilets: 3, balconyDoors: 1, utilityDoors: 0, poojaRoom: false, kitchens: 0 }
-    case 'duplex_end': return { mainDoor: '', bedroomDoors: 2, washroomDoors: 2, toilets: 2, balconyDoors: 1, utilityDoors: 0, poojaRoom: false, kitchens: 0 }
+    case 'duplex_cont': case 'duplex_end': case 'duplex_end_2mb': case 'duplex_end_study': return { mainDoor: '', bedroomDoors: 2, washroomDoors: 2, toilets: 2, balconyDoors: 1, utilityDoors: 0, poojaRoom: false, kitchens: 0 }
     case 'parking_only': case 'parking_lift': case 'commercial_parking': return { mainDoor: '', bedroomDoors: 0, washroomDoors: 1, toilets: 1, balconyDoors: 0, utilityDoors: 0, poojaRoom: false, kitchens: 0 }
     default: return { mainDoor: 'teak_3x7', bedroomDoors: 1, washroomDoors: 1, toilets: 1, balconyDoors: 0, utilityDoors: 0, poojaRoom: false, kitchens: 1 }
   }
@@ -246,7 +243,7 @@ export default function EditProjectPage() {
 
   function handleFloorTypeChange(index, type) {
     const defaults = getDefaultDoors(type)
-    const isDuplexEnd = ['duplex_end_2mb', 'duplex_end_study', 'duplex_end'].includes(type)
+    const isDuplexEnd = ['duplex_cont', 'duplex_end', 'duplex_end_2mb', 'duplex_end_study'].includes(type)
     const isDuplex = ['duplex_gf', 'duplex_ff', 'duplex_sf'].includes(type) || isDuplexEnd
     const isParkingType = ['parking_only', 'parking_lift', 'commercial_parking'].includes(type)
     setFloors(prev => {
@@ -258,7 +255,7 @@ export default function EditProjectPage() {
         acPoints: isParkingType ? 0 : (updated[index].acPoints || 2),
         evPoints: (index === 0 && !isParkingType) ? (updated[index].evPoints || 2) : 0,
       }
-      if (['duplex_gf', 'duplex_ff', 'duplex_sf'].includes(type) && index + 1 < updated.length) {
+      if (['duplex_gf', 'duplex_ff', 'duplex_sf', 'duplex_cont'].includes(type) && index + 1 < updated.length) {
         updated[index + 1] = { ...updated[index + 1], type: '' }
       }
       return updated
@@ -497,8 +494,8 @@ export default function EditProjectPage() {
                   <div className="bg-gray-800 text-white px-4 py-2.5 flex items-center gap-2">
                     <div className="w-2 h-2 rounded-full bg-blue-400"></div>
                     <span className="text-sm font-semibold">{floor.name}</span>
-                    {['duplex_end_2mb', 'duplex_end_study', 'duplex_end'].includes(floor.type)
-                      ? <Badge className="ml-2 bg-purple-600 text-white text-xs border-0">{DUPLEX_END_TYPES.find(t => t.value === floor.type)?.label || 'Duplex End'}</Badge>
+                    {['duplex_cont', 'duplex_end', 'duplex_end_2mb', 'duplex_end_study'].includes(floor.type)
+                      ? <Badge className="ml-2 bg-purple-600 text-white text-xs border-0">{DUPLEX_END_TYPES.find(t => t.value === floor.type)?.label || 'Duplex Continuous'}</Badge>
                       : floor.type && <Badge className="ml-2 bg-blue-600 text-white text-xs border-0">{[...GROUND_TYPES, ...UPPER_TYPES].find(t => t.value === floor.type)?.label || floor.type}</Badge>
                     }
                     {index > 0 && (
@@ -513,7 +510,7 @@ export default function EditProjectPage() {
                           <option value="">— Select floor type —</option>
                           {(() => {
                             const prevType = index > 0 ? floors[index - 1]?.type : null
-                            const isDuplexNext = ['duplex_gf', 'duplex_ff', 'duplex_sf'].includes(prevType)
+                            const isDuplexNext = ['duplex_gf', 'duplex_ff', 'duplex_sf', 'duplex_cont'].includes(prevType)
                             if (isDuplexNext) return DUPLEX_END_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)
                             const groups = index === 0 ? GROUND_GROUPS : UPPER_GROUPS
                             const types = index === 0 ? GROUND_TYPES : UPPER_TYPES
@@ -580,7 +577,7 @@ export default function EditProjectPage() {
                         <Separator />
                         <p className="text-sm font-medium text-gray-700">Doors &amp; Rooms</p>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                          {!['duplex_end_2mb', 'duplex_end_study', 'duplex_end'].includes(floor.type) && (
+                          {!['duplex_cont', 'duplex_end', 'duplex_end_2mb', 'duplex_end_study'].includes(floor.type) && (
                             <div className="space-y-1.5">
                               <Label className="text-xs">Main Door</Label>
                               <select className="w-full h-10 px-3 border border-gray-200 rounded-lg text-sm bg-white" value={floor.mainDoor} onChange={e => updateFloor(index, 'mainDoor', e.target.value)}>
@@ -593,7 +590,7 @@ export default function EditProjectPage() {
                             { field: 'bedroomDoors', label: 'Bedroom Doors', note: '₹12,000 each' },
                             { field: 'balconyDoors', label: 'Balcony Doors', note: '₹12,000 each' },
                             { field: 'utilityDoors', label: 'Utility Doors', note: '₹10,000 each' },
-                            ...(!['duplex_end_2mb', 'duplex_end_study', 'duplex_end'].includes(floor.type) ? [{ field: 'kitchens', label: 'Kitchens', note: 'For plumbing' }] : []),
+                            ...(!['duplex_cont', 'duplex_end', 'duplex_end_2mb', 'duplex_end_study'].includes(floor.type) ? [{ field: 'kitchens', label: 'Kitchens', note: 'For plumbing' }] : []),
                           ].map(d => (
                             <div key={d.field} className="space-y-1.5">
                               <Label className="text-xs">{d.label}</Label>
