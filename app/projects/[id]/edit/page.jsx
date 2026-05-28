@@ -160,6 +160,7 @@ export default function EditProjectPage() {
   const [gasCustomRate, setGasCustomRate] = useState('')
   const [acCustomRate, setAcCustomRate] = useState('')
   const [cctvCustomRate, setCctvCustomRate] = useState('')
+  const [cctvUnits, setCctvUnits] = useState('')
   const [earthingCustomCost, setEarthingCustomCost] = useState('')
   const [solarCustomCost, setSolarCustomCost] = useState('')
   const [upsCustomRate, setUpsCustomRate] = useState('')
@@ -248,6 +249,7 @@ export default function EditProjectPage() {
         setGasCustomRate(proj.floors_data[0]?.gasCustomRate ? String(proj.floors_data[0].gasCustomRate) : '')
         setAcCustomRate(proj.floors_data[0]?.acCustomRate ? String(proj.floors_data[0].acCustomRate) : '')
         setCctvCustomRate(proj.floors_data[0]?.cctvCustomRate ? String(proj.floors_data[0].cctvCustomRate) : '')
+        setCctvUnits(proj.floors_data[0]?.cctvUnits ? String(proj.floors_data[0].cctvUnits) : '')
         setEarthingCustomCost(proj.floors_data[0]?.earthingCustomCost ? String(proj.floors_data[0].earthingCustomCost) : '')
         setSolarCustomCost(proj.floors_data[0]?.solarCustomCost ? String(proj.floors_data[0].solarCustomCost) : '')
         setUpsCustomRate(proj.floors_data[0]?.upsCustomRate ? String(proj.floors_data[0].upsCustomRate) : '')
@@ -362,6 +364,7 @@ export default function EditProjectPage() {
         ...(gasCustomRate ? { gasCustomRate: parseFloat(gasCustomRate) } : {}),
         ...(acCustomRate ? { acCustomRate: parseFloat(acCustomRate) } : {}),
         ...(cctvCustomRate ? { cctvCustomRate: parseFloat(cctvCustomRate) } : {}),
+        ...(cctvUnits ? { cctvUnits: parseInt(cctvUnits) } : {}),
         ...(earthingCustomCost ? { earthingCustomCost: parseFloat(earthingCustomCost) } : {}),
         ...(solarCustomCost ? { solarCustomCost: parseFloat(solarCustomCost) } : {}),
         ...(upsCustomRate ? { upsCustomRate: parseFloat(upsCustomRate) } : {}),
@@ -940,8 +943,13 @@ export default function EditProjectPage() {
                 { label: 'AC Provision', sub: acCustomRate ? `₹${parseFloat(acCustomRate).toLocaleString('en-IN')}/point` : '₹10,000 per point — set points per floor above', state: hasAc, set: setHasAc, isDefault: false,
                   extra: hasAc && <div className="pl-4 border-l-2 border-blue-100 mt-1 pb-2"><div className="w-48 space-y-1"><Label className="text-xs">Custom Rate (₹/point)</Label><Input type="number" placeholder="10000" value={acCustomRate} onChange={e => setAcCustomRate(e.target.value)} /></div></div>
                 },
-                { label: 'CCTV Provision', sub: cctvCustomRate ? `₹${parseFloat(cctvCustomRate).toLocaleString('en-IN')}/camera` : '2 cameras × floors × ₹10,000', state: hasCctv, set: setHasCctv, isDefault: false,
-                  extra: hasCctv && <div className="pl-4 border-l-2 border-blue-100 mt-1 pb-2"><div className="w-48 space-y-1"><Label className="text-xs">Custom Rate (₹/camera)</Label><Input type="number" placeholder="10000" value={cctvCustomRate} onChange={e => setCctvCustomRate(e.target.value)} /></div></div>
+                { label: 'CCTV Provision', sub: (() => { const u = parseInt(cctvUnits) || (2 * floorCount); const r = parseFloat(cctvCustomRate) || 10000; return `${u} cameras × ₹${r.toLocaleString('en-IN')} = ₹${(u * r).toLocaleString('en-IN')}` })(), state: hasCctv, set: setHasCctv, isDefault: false,
+                  extra: hasCctv && (
+                    <div className="pl-4 border-l-2 border-blue-100 mt-1 pb-2 grid grid-cols-2 gap-3">
+                      <div className="space-y-1"><Label className="text-xs">Total Cameras</Label><Input type="number" placeholder={String(2 * floorCount)} value={cctvUnits} onChange={e => setCctvUnits(e.target.value)} /></div>
+                      <div className="space-y-1"><Label className="text-xs">Rate (₹/camera)</Label><Input type="number" placeholder="10000" value={cctvCustomRate} onChange={e => setCctvCustomRate(e.target.value)} /></div>
+                    </div>
+                  )
                 },
                 { label: 'Solar Provision', sub: solarCustomCost ? `Custom: ₹${parseFloat(solarCustomCost).toLocaleString('en-IN')}` : 'Wiring & mounting — ₹30,000', state: hasSolar, set: setHasSolar, isDefault: false,
                   extra: hasSolar && <div className="pl-4 border-l-2 border-blue-100 mt-1 pb-2"><div className="w-48 space-y-1"><Label className="text-xs">Custom Cost (₹)</Label><Input type="number" placeholder="30000" value={solarCustomCost} onChange={e => setSolarCustomCost(e.target.value)} /></div></div>
