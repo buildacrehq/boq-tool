@@ -296,7 +296,8 @@ export default function EditProjectPage() {
         evPoints: (index === 0 && !isParkingType) ? (updated[index].evPoints || 2) : 0,
       }
       if (['duplex_gf', 'duplex_ff', 'duplex_sf', 'duplex_cont'].includes(type) && index + 1 < updated.length) {
-        updated[index + 1] = { ...updated[index + 1], type: '' }
+        const contDefaults = getDefaultDoors('duplex_cont')
+        updated[index + 1] = { ...updated[index + 1], type: 'duplex_cont', ...contDefaults, railingType: 'ss_glass', staircaseType: 'chain', acPoints: 0, evPoints: 0 }
       }
       return updated
     })
