@@ -130,16 +130,22 @@ function createFloor(index, defaultTilePrice = 50) {
     type: '',
     sqft: '',
     mainDoor: 'teak_3x7',
+    mainDoorCustomPrice: '',
     bedroomDoors: 1,
+    bedroomDoorPrice: '',
     washroomDoors: 1,
+    washroomDoorPrice: '',
     toilets: 1,
     balconyDoors: 0,
+    balconyDoorPrice: '',
     utilityDoors: 0,
+    utilityDoorPrice: '',
     poojaRoom: false,
     poojaRoomPrice: '',
     kitchens: 1,
     staircaseType: 'normal',
-    staircaseSteps: 19,
+    staircaseSteps: 21,
+    staircaseCostPerStep: '',
     tilesSquft: '',
     tilesPricePerSqft: defaultTilePrice,
     railingType: 'ss',
@@ -148,6 +154,7 @@ function createFloor(index, defaultTilePrice = 50) {
     evPoints: 0,
     upsUnits: 1,
     windowSqft: '',
+    windowPricePerSqft: '',
   }
 }
 
@@ -419,7 +426,7 @@ export default function NewProjectPage() {
   function adjustSteps(index, delta) {
     setFloors(prev => {
       const updated = [...prev]
-      const current = parseInt(updated[index].staircaseSteps) || 19
+      const current = parseInt(updated[index].staircaseSteps) || 21
       updated[index] = { ...updated[index], staircaseSteps: Math.max(1, current + delta) }
       return updated
     })
@@ -955,7 +962,7 @@ export default function NewProjectPage() {
                         <p className="text-xs text-gray-400">Chain staircase is a premium decorative staircase</p>
                       </div>
                       {floor.staircaseType === 'chain' && (
-                        <div className="space-y-1.5">
+                        <div className="space-y-2">
                           <Label className="text-xs text-gray-500">Number of Steps</Label>
                           <div className="flex items-center gap-2">
                             <button
@@ -970,9 +977,11 @@ export default function NewProjectPage() {
                               className="w-10 h-10 rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 font-bold text-lg flex items-center justify-center"
                             >+</button>
                           </div>
-                          <p className="text-xs text-gray-400">
-                            Cost: ₹{(floor.staircaseSteps * 2300).toLocaleString('en-IN')} (default 19 steps = 1 floor)
-                          </p>
+                          <div className="flex items-center gap-2">
+                            <Label className="text-xs text-gray-400 w-14 shrink-0">₹/step</Label>
+                            <Input type="number" placeholder="2300" value={floor.staircaseCostPerStep || ''} onChange={e => updateFloor(index, 'staircaseCostPerStep', e.target.value)} className="h-8 text-sm" />
+                          </div>
+                          <p className="text-xs text-gray-400">Total: ₹{((parseInt(floor.staircaseSteps) || 21) * (parseFloat(floor.staircaseCostPerStep) || 2300)).toLocaleString('en-IN')}</p>
                         </div>
                       )}
                     </div>
@@ -1021,14 +1030,19 @@ export default function NewProjectPage() {
                                   <option key={t.value} value={t.value}>{t.label} — {fmt(mp(t.priceKey, t.fallback))}</option>
                                 ))}
                               </select>
+                              {floor.mainDoor && (
+                                <>
+                                  <Input type="number" placeholder={String(mp(MAIN_DOOR_TYPES.find(t => t.value === floor.mainDoor)?.priceKey || '', MAIN_DOOR_TYPES.find(t => t.value === floor.mainDoor)?.fallback || 50000))} value={floor.mainDoorCustomPrice || ''} onChange={e => updateFloor(index, 'mainDoorCustomPrice', e.target.value)} className="h-8 text-sm" />
+                                  <p className="text-xs text-gray-400">₹{(parseFloat(floor.mainDoorCustomPrice) || mp(MAIN_DOOR_TYPES.find(t => t.value === floor.mainDoor)?.priceKey || '', MAIN_DOOR_TYPES.find(t => t.value === floor.mainDoor)?.fallback || 50000)).toLocaleString('en-IN')}</p>
+                                </>
+                              )}
                             </div>
                           )}
                           <div className="space-y-1.5">
                             <Label className="text-xs">Bedroom Doors</Label>
                             <Input type="number" min="0" value={floor.bedroomDoors} onChange={e => updateFloor(index, 'bedroomDoors', e.target.value)} />
-                            <p className="text-xs text-gray-400">
-                              {parseInt(floor.bedroomDoors) > 0 ? `${floor.bedroomDoors} × ${fmt(r.bedroomDoor)} = ${fmt(parseInt(floor.bedroomDoors) * r.bedroomDoor)}` : `Typical: ${fmt(r.bedroomDoor)}/door`}
-                            </p>
+                            <Input type="number" placeholder={String(r.bedroomDoor)} value={floor.bedroomDoorPrice || ''} onChange={e => updateFloor(index, 'bedroomDoorPrice', e.target.value)} className="h-8 text-sm" />
+                            <p className="text-xs text-gray-400">{parseInt(floor.bedroomDoors) > 0 ? `${floor.bedroomDoors} × ₹${(parseFloat(floor.bedroomDoorPrice) || r.bedroomDoor).toLocaleString('en-IN')} = ${fmt(parseInt(floor.bedroomDoors) * (parseFloat(floor.bedroomDoorPrice) || r.bedroomDoor))}` : `₹${r.bedroomDoor.toLocaleString('en-IN')}/door`}</p>
                           </div>
                           <div className="space-y-1.5">
                             <Label className="text-xs">Washrooms</Label>
@@ -1036,23 +1050,20 @@ export default function NewProjectPage() {
                               const v = e.target.value
                               setFloors(prev => { const u = [...prev]; u[index] = { ...u[index], washroomDoors: v, toilets: v }; return u })
                             }} />
-                            <p className="text-xs text-gray-400">
-                              {parseInt(floor.washroomDoors) > 0 ? `${floor.washroomDoors} × door (${fmt(r.washroomDoor)}) + plumbing` : 'Door + plumbing per washroom'}
-                            </p>
+                            <Input type="number" placeholder={String(r.washroomDoor)} value={floor.washroomDoorPrice || ''} onChange={e => updateFloor(index, 'washroomDoorPrice', e.target.value)} className="h-8 text-sm" />
+                            <p className="text-xs text-gray-400">{parseInt(floor.washroomDoors) > 0 ? `${floor.washroomDoors} × ₹${(parseFloat(floor.washroomDoorPrice) || r.washroomDoor).toLocaleString('en-IN')} + plumbing` : 'Door + plumbing'}</p>
                           </div>
                           <div className="space-y-1.5">
                             <Label className="text-xs">Balcony Doors</Label>
                             <Input type="number" min="0" value={floor.balconyDoors} onChange={e => updateFloor(index, 'balconyDoors', e.target.value)} />
-                            <p className="text-xs text-gray-400">
-                              {parseInt(floor.balconyDoors) > 0 ? `${floor.balconyDoors} × ${fmt(r.balconyDoor)} = ${fmt(parseInt(floor.balconyDoors) * r.balconyDoor)}` : `Typical: ${fmt(r.balconyDoor)}/door`}
-                            </p>
+                            <Input type="number" placeholder={String(r.balconyDoor)} value={floor.balconyDoorPrice || ''} onChange={e => updateFloor(index, 'balconyDoorPrice', e.target.value)} className="h-8 text-sm" />
+                            <p className="text-xs text-gray-400">{parseInt(floor.balconyDoors) > 0 ? `${floor.balconyDoors} × ₹${(parseFloat(floor.balconyDoorPrice) || r.balconyDoor).toLocaleString('en-IN')} = ${fmt(parseInt(floor.balconyDoors) * (parseFloat(floor.balconyDoorPrice) || r.balconyDoor))}` : `₹${r.balconyDoor.toLocaleString('en-IN')}/door`}</p>
                           </div>
                           <div className="space-y-1.5">
                             <Label className="text-xs">Utility Doors</Label>
                             <Input type="number" min="0" value={floor.utilityDoors} onChange={e => updateFloor(index, 'utilityDoors', e.target.value)} />
-                            <p className="text-xs text-gray-400">
-                              {parseInt(floor.utilityDoors) > 0 ? `${floor.utilityDoors} × ${fmt(r.utilityDoor)} = ${fmt(parseInt(floor.utilityDoors) * r.utilityDoor)}` : `Typical: ${fmt(r.utilityDoor)}/door`}
-                            </p>
+                            <Input type="number" placeholder={String(r.utilityDoor)} value={floor.utilityDoorPrice || ''} onChange={e => updateFloor(index, 'utilityDoorPrice', e.target.value)} className="h-8 text-sm" />
+                            <p className="text-xs text-gray-400">{parseInt(floor.utilityDoors) > 0 ? `${floor.utilityDoors} × ₹${(parseFloat(floor.utilityDoorPrice) || r.utilityDoor).toLocaleString('en-IN')} = ${fmt(parseInt(floor.utilityDoors) * (parseFloat(floor.utilityDoorPrice) || r.utilityDoor))}` : `₹${r.utilityDoor.toLocaleString('en-IN')}/door`}</p>
                           </div>
                           {!['duplex_cont', 'duplex_end', 'duplex_end_2mb', 'duplex_end_study'].includes(floor.type) && (
                             <div className="space-y-1.5">
@@ -1113,6 +1124,7 @@ export default function NewProjectPage() {
                               <option value="tiles">Basic Tiles</option>
                               <option value="vitrified">Vitrified</option>
                               <option value="marble">Marble</option>
+                              <option value="smart_marble">Smart Marble</option>
                               <option value="granite">Granite</option>
                             </select>
                           </div>
@@ -1148,7 +1160,7 @@ export default function NewProjectPage() {
                       <Separator />
                       <div>
                         <p className="text-sm font-medium text-gray-700 mb-3">Windows</p>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-3 bg-gray-50 rounded-lg">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-3 bg-gray-50 rounded-lg">
                           <div className="space-y-1.5">
                             <Label className="text-xs text-gray-500">Window Type</Label>
                             <select
@@ -1170,7 +1182,22 @@ export default function NewProjectPage() {
                               value={floor.windowSqft}
                               onChange={e => updateFloor(index, 'windowSqft', e.target.value)}
                             />
-                            <p className="text-xs text-gray-400">10% of floor area. Override if needed.</p>
+                          </div>
+                          <div className="space-y-1.5">
+                            <Label className="text-xs text-gray-500">Price per sqft (₹)</Label>
+                            <Input
+                              type="number"
+                              placeholder={String(mp(WINDOW_TYPES.find(t => t.value === windowType)?.priceKey || '', WINDOW_TYPES.find(t => t.value === windowType)?.fallback || 600))}
+                              value={floor.windowPricePerSqft || ''}
+                              onChange={e => updateFloor(index, 'windowPricePerSqft', e.target.value)}
+                            />
+                            <p className="text-xs text-gray-400">{(() => {
+                              const autoSqft = Math.ceil((parseFloat(floor.sqft) || sqft || 0) * 0.1)
+                              const usedSqft = parseFloat(floor.windowSqft) || autoSqft
+                              const wt = WINDOW_TYPES.find(t => t.value === windowType)
+                              const price = parseFloat(floor.windowPricePerSqft) || (wt ? mp(wt.priceKey, wt.fallback) : 600)
+                              return usedSqft > 0 && price > 0 ? `Total: ₹${(usedSqft * price).toLocaleString('en-IN')} (${usedSqft} sqft)` : 'Enter sqft'
+                            })()}</p>
                           </div>
                         </div>
                       </div>
