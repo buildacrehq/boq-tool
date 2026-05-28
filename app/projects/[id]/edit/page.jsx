@@ -172,6 +172,7 @@ export default function EditProjectPage() {
   const [hasWifi, setHasWifi] = useState(false)
 
   const [paintingGrade, setPaintingGrade] = useState('')
+  const [paintingCustomRate, setPaintingCustomRate] = useState('')
   const [windowType, setWindowType] = useState('')
   const [railingType, setRailingType] = useState('')
   const [flooringType, setFlooringType] = useState('')
@@ -240,6 +241,7 @@ export default function EditProjectPage() {
         setSolarCustomCost(proj.floors_data[0]?.solarCustomCost ? String(proj.floors_data[0].solarCustomCost) : '')
         setUpsCustomRate(proj.floors_data[0]?.upsCustomRate ? String(proj.floors_data[0].upsCustomRate) : '')
         setWifiCustomCost(proj.floors_data[0]?.wifiCustomCost ? String(proj.floors_data[0].wifiCustomCost) : '')
+        setPaintingCustomRate(proj.floors_data[0]?.paintingCustomRate ? String(proj.floors_data[0].paintingCustomRate) : '')
       } else {
         const count = proj.floor_count || proj.floors || 1
         setFloors(Array.from({ length: count }, (_, i) => createFloor(i)))
@@ -341,6 +343,7 @@ export default function EditProjectPage() {
         ...(solarCustomCost ? { solarCustomCost: parseFloat(solarCustomCost) } : {}),
         ...(upsCustomRate ? { upsCustomRate: parseFloat(upsCustomRate) } : {}),
         ...(wifiCustomCost ? { wifiCustomCost: parseFloat(wifiCustomCost) } : {}),
+        ...(paintingCustomRate ? { paintingCustomRate: parseFloat(paintingCustomRate) } : {}),
       }
     })
 
@@ -948,11 +951,20 @@ export default function EditProjectPage() {
           {/* Section 6 — Painting */}
           <Card>
             <CardHeader><CardTitle className="text-base flex items-center gap-2"><Badge variant="outline">6</Badge>Painting</CardTitle></CardHeader>
-            <CardContent>
+            <CardContent className="space-y-3">
               <select className="w-full h-10 px-3 border border-gray-200 rounded-lg text-sm bg-white" value={paintingGrade} onChange={e => setPaintingGrade(e.target.value)}>
                 <option value="">— Select painting grade —</option>
                 {PAINTING_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
               </select>
+              {paintingGrade && (
+                <div className="flex items-center gap-3">
+                  <div className="space-y-1 w-48">
+                    <Label className="text-xs text-gray-500">Custom Rate (₹/chadra)</Label>
+                    <Input type="number" placeholder={{ premium_emulsion: '8500', tractor_emulsion: '7500', royal_emulsion: '10000', royal_ultima: '13000' }[paintingGrade] || '10000'} value={paintingCustomRate} onChange={e => setPaintingCustomRate(e.target.value)} />
+                  </div>
+                  {paintingCustomRate && <p className="text-xs text-gray-400 mt-4">₹{parseFloat(paintingCustomRate).toLocaleString('en-IN')}/chadra</p>}
+                </div>
+              )}
             </CardContent>
           </Card>
 
