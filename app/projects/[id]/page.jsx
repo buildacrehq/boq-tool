@@ -166,6 +166,14 @@ export default function ProjectPage() {
   const [sumpRateOverride, setSumpRateOverride] = useState('')
   const [ohtCustomPrice, setOhtCustomPrice] = useState('')
   const [mainGateCustomPrice, setMainGateCustomPrice] = useState('')
+  const [rainwaterCustomCost, setRainwaterCustomCost] = useState('')
+  const [gasCustomRate, setGasCustomRate] = useState('')
+  const [acCustomRate, setAcCustomRate] = useState('')
+  const [cctvCustomRate, setCctvCustomRate] = useState('')
+  const [earthingCustomCost, setEarthingCustomCost] = useState('')
+  const [solarCustomCost, setSolarCustomCost] = useState('')
+  const [upsCustomRate, setUpsCustomRate] = useState('')
+  const [wifiCustomCost, setWifiCustomCost] = useState('')
   const [hasAc, setHasAc] = useState(false)
   const [hasCctv, setHasCctv] = useState(false)
   const [hasSolar, setHasSolar] = useState(false)
@@ -262,6 +270,14 @@ export default function ProjectPage() {
         setSumpRateOverride(proj.floors_data[0]?.sumpRateOverride || '')
         setOhtCustomPrice(proj.floors_data[0]?.ohtCustomPrice ? String(proj.floors_data[0].ohtCustomPrice) : '')
         setMainGateCustomPrice(proj.floors_data[0]?.mainGateCustomPrice ? String(proj.floors_data[0].mainGateCustomPrice) : '')
+        setRainwaterCustomCost(proj.floors_data[0]?.rainwaterCustomCost ? String(proj.floors_data[0].rainwaterCustomCost) : '')
+        setGasCustomRate(proj.floors_data[0]?.gasCustomRate ? String(proj.floors_data[0].gasCustomRate) : '')
+        setAcCustomRate(proj.floors_data[0]?.acCustomRate ? String(proj.floors_data[0].acCustomRate) : '')
+        setCctvCustomRate(proj.floors_data[0]?.cctvCustomRate ? String(proj.floors_data[0].cctvCustomRate) : '')
+        setEarthingCustomCost(proj.floors_data[0]?.earthingCustomCost ? String(proj.floors_data[0].earthingCustomCost) : '')
+        setSolarCustomCost(proj.floors_data[0]?.solarCustomCost ? String(proj.floors_data[0].solarCustomCost) : '')
+        setUpsCustomRate(proj.floors_data[0]?.upsCustomRate ? String(proj.floors_data[0].upsCustomRate) : '')
+        setWifiCustomCost(proj.floors_data[0]?.wifiCustomCost ? String(proj.floors_data[0].wifiCustomCost) : '')
       } else {
         const count = proj.floor_count || proj.floors || 1
         setFloors(Array.from({ length: count }, (_, i) => createFloor(i)))
@@ -321,6 +337,14 @@ export default function ProjectPage() {
           ...(sumpRateOverride ? { sumpRateOverride: parseFloat(sumpRateOverride) } : {}),
           ...(ohtCustomPrice ? { ohtCustomPrice: parseFloat(ohtCustomPrice) } : {}),
           ...(mainGateCustomPrice ? { mainGateCustomPrice: parseFloat(mainGateCustomPrice) } : {}),
+          ...(rainwaterCustomCost ? { rainwaterCustomCost: parseFloat(rainwaterCustomCost) } : {}),
+          ...(gasCustomRate ? { gasCustomRate: parseFloat(gasCustomRate) } : {}),
+          ...(acCustomRate ? { acCustomRate: parseFloat(acCustomRate) } : {}),
+          ...(cctvCustomRate ? { cctvCustomRate: parseFloat(cctvCustomRate) } : {}),
+          ...(earthingCustomCost ? { earthingCustomCost: parseFloat(earthingCustomCost) } : {}),
+          ...(solarCustomCost ? { solarCustomCost: parseFloat(solarCustomCost) } : {}),
+          ...(upsCustomRate ? { upsCustomRate: parseFloat(upsCustomRate) } : {}),
+          ...(wifiCustomCost ? { wifiCustomCost: parseFloat(wifiCustomCost) } : {}),
         }
       }),
       has_sump: hasSump, sump_capacity: sumpCapacity || null, sump_type: sumpType,
@@ -351,6 +375,8 @@ export default function ProjectPage() {
   }, [sqft, floors, masonryType, floorCount, sumpRateOverride, hasSump, sumpCapacity, sumpType,
       hasSsm, ssmCourses, hasCompoundWall, hasRainwater, hasGas, hasOht, ohtCapacity, ohtCustom,
       ohtCustomPrice, mainGateCustomPrice,
+      rainwaterCustomCost, gasCustomRate, acCustomRate, cctvCustomRate,
+      earthingCustomCost, solarCustomCost, upsCustomRate, wifiCustomCost,
       hasMainGate, hasAc, hasCctv, hasSolar, hasUps, hasWifi, paintingGrade, flooringType,
       windowType, railingType, marketPrices, project, customBlockPrice, customBrickPrice, boqData, vehicleData])
 
@@ -484,6 +510,14 @@ export default function ProjectPage() {
         ...(sumpRateOverride ? { sumpRateOverride: parseFloat(sumpRateOverride) } : {}),
         ...(ohtCustomPrice ? { ohtCustomPrice: parseFloat(ohtCustomPrice) } : {}),
         ...(mainGateCustomPrice ? { mainGateCustomPrice: parseFloat(mainGateCustomPrice) } : {}),
+        ...(rainwaterCustomCost ? { rainwaterCustomCost: parseFloat(rainwaterCustomCost) } : {}),
+        ...(gasCustomRate ? { gasCustomRate: parseFloat(gasCustomRate) } : {}),
+        ...(acCustomRate ? { acCustomRate: parseFloat(acCustomRate) } : {}),
+        ...(cctvCustomRate ? { cctvCustomRate: parseFloat(cctvCustomRate) } : {}),
+        ...(earthingCustomCost ? { earthingCustomCost: parseFloat(earthingCustomCost) } : {}),
+        ...(solarCustomCost ? { solarCustomCost: parseFloat(solarCustomCost) } : {}),
+        ...(upsCustomRate ? { upsCustomRate: parseFloat(upsCustomRate) } : {}),
+        ...(wifiCustomCost ? { wifiCustomCost: parseFloat(wifiCustomCost) } : {}),
       }
     })
 
@@ -1190,13 +1224,27 @@ export default function ProjectPage() {
                       </div>
                     )
                   },
-                  { label: 'Rainwater Harvesting', sub: 'Drain covers + pit —', state: hasRainwater, set: setHasRainwater, isDefault: true },
-                  { label: 'Gas Pipeline', sub: '15 rft per floor ', state: hasGas, set: setHasGas, isDefault: true },
-                  { label: 'AC Provision', sub: 'Enter points per floor above', state: hasAc, set: setHasAc, isDefault: false },
-                  { label: 'CCTV Provision', sub: '₹10,000 per floor', state: hasCctv, set: setHasCctv, isDefault: false },
-                  { label: 'Solar Provision', sub: '₹30,000', state: hasSolar, set: setHasSolar, isDefault: false },
-                  { label: 'UPS Provision', sub: 'Enter units per floor above · ₹20,000/unit', state: hasUps, set: setHasUps, isDefault: false },
-                  { label: 'WiFi & Cable Provision', sub: '₹10,000', state: hasWifi, set: setHasWifi, isDefault: false },
+                  { label: 'Rainwater Harvesting', sub: rainwaterCustomCost ? `Custom: ₹${parseFloat(rainwaterCustomCost).toLocaleString('en-IN')}` : 'Drain covers, pit — ₹20,000', state: hasRainwater, set: setHasRainwater, isDefault: true,
+                    extra: hasRainwater && <div className="pl-4 border-l-2 border-blue-100 mt-1 pb-2"><div className="w-48 space-y-1"><Label className="text-xs">Custom Cost (₹)</Label><Input type="number" placeholder="20000" value={rainwaterCustomCost} onChange={e => setRainwaterCustomCost(e.target.value)} /></div></div>
+                  },
+                  { label: 'Gas Pipeline', sub: gasCustomRate ? `₹${parseFloat(gasCustomRate).toLocaleString('en-IN')}/rft` : '15 rft/floor @ ₹400/rft', state: hasGas, set: setHasGas, isDefault: true,
+                    extra: hasGas && <div className="pl-4 border-l-2 border-blue-100 mt-1 pb-2"><div className="w-48 space-y-1"><Label className="text-xs">Custom Rate (₹/rft)</Label><Input type="number" placeholder="400" value={gasCustomRate} onChange={e => setGasCustomRate(e.target.value)} /></div></div>
+                  },
+                  { label: 'AC Provision', sub: acCustomRate ? `₹${parseFloat(acCustomRate).toLocaleString('en-IN')}/point` : '₹10,000 per point — set points per floor above', state: hasAc, set: setHasAc, isDefault: false,
+                    extra: hasAc && <div className="pl-4 border-l-2 border-blue-100 mt-1 pb-2"><div className="w-48 space-y-1"><Label className="text-xs">Custom Rate (₹/point)</Label><Input type="number" placeholder="10000" value={acCustomRate} onChange={e => setAcCustomRate(e.target.value)} /></div></div>
+                  },
+                  { label: 'CCTV Provision', sub: cctvCustomRate ? `₹${parseFloat(cctvCustomRate).toLocaleString('en-IN')}/camera` : '2 cameras × floors × ₹10,000', state: hasCctv, set: setHasCctv, isDefault: false,
+                    extra: hasCctv && <div className="pl-4 border-l-2 border-blue-100 mt-1 pb-2"><div className="w-48 space-y-1"><Label className="text-xs">Custom Rate (₹/camera)</Label><Input type="number" placeholder="10000" value={cctvCustomRate} onChange={e => setCctvCustomRate(e.target.value)} /></div></div>
+                  },
+                  { label: 'Solar Provision', sub: solarCustomCost ? `Custom: ₹${parseFloat(solarCustomCost).toLocaleString('en-IN')}` : 'Wiring & mounting — ₹30,000', state: hasSolar, set: setHasSolar, isDefault: false,
+                    extra: hasSolar && <div className="pl-4 border-l-2 border-blue-100 mt-1 pb-2"><div className="w-48 space-y-1"><Label className="text-xs">Custom Cost (₹)</Label><Input type="number" placeholder="30000" value={solarCustomCost} onChange={e => setSolarCustomCost(e.target.value)} /></div></div>
+                  },
+                  { label: 'UPS Provision', sub: upsCustomRate ? `₹${parseFloat(upsCustomRate).toLocaleString('en-IN')}/unit` : '₹20,000/unit — set units per floor above', state: hasUps, set: setHasUps, isDefault: false,
+                    extra: hasUps && <div className="pl-4 border-l-2 border-blue-100 mt-1 pb-2"><div className="w-48 space-y-1"><Label className="text-xs">Custom Rate (₹/unit)</Label><Input type="number" placeholder="20000" value={upsCustomRate} onChange={e => setUpsCustomRate(e.target.value)} /></div></div>
+                  },
+                  { label: 'WiFi & Cable Provision', sub: wifiCustomCost ? `Custom: ₹${parseFloat(wifiCustomCost).toLocaleString('en-IN')}` : 'Conduit & junction boxes — ₹10,000', state: hasWifi, set: setHasWifi, isDefault: false,
+                    extra: hasWifi && <div className="pl-4 border-l-2 border-blue-100 mt-1 pb-2"><div className="w-48 space-y-1"><Label className="text-xs">Custom Cost (₹)</Label><Input type="number" placeholder="10000" value={wifiCustomCost} onChange={e => setWifiCustomCost(e.target.value)} /></div></div>
+                  },
                 ].map((item, i) => (
                   <div key={i} className="border-b border-gray-50 last:border-0">
                     <div className="flex items-center justify-between py-3 px-1">
@@ -1212,6 +1260,19 @@ export default function ProjectPage() {
                     {item.extra}
                   </div>
                 ))}
+                {/* Earthing Pit — always included, no toggle */}
+                <div className="border-b border-gray-50 last:border-0">
+                  <div className="flex items-center justify-between py-3 px-1">
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">Earthing Pit</p>
+                      <p className="text-xs text-gray-400 mt-0.5">{earthingCustomCost ? `Custom: ₹${parseFloat(earthingCustomCost).toLocaleString('en-IN')}` : 'Always included — ₹18,000'}</p>
+                    </div>
+                    <Badge variant="outline" className="text-xs text-blue-700 border-blue-200 bg-blue-50">always on</Badge>
+                  </div>
+                  <div className="pl-4 border-l-2 border-blue-100 mb-2">
+                    <div className="w-48 space-y-1"><Label className="text-xs">Custom Cost (₹)</Label><Input type="number" placeholder="18000" value={earthingCustomCost} onChange={e => setEarthingCustomCost(e.target.value)} /></div>
+                  </div>
+                </div>
               </CardContent>
             </Card>
 
