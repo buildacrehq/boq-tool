@@ -248,6 +248,10 @@ export default function NewProjectPage() {
   const [flooringType, setFlooringType] = useState('smart_marble')
   const [customItems, setCustomItems] = useState([{ item_name: '', quantity: '', unit_price: '', notes: '' }])
 
+  const [liftCustomCost, setLiftCustomCost] = useState('')
+  const [terraceRoomCustomRate, setTerraceRoomCustomRate] = useState('')
+  const [terraceRoomCustomWashroomCost, setTerraceRoomCustomWashroomCost] = useState('')
+
   // Always-on services with toggle + custom price (stored in floorsData[0])
   const [labourShedEnabled, setLabourShedEnabled] = useState(true)
   const [labourShedCustomCost, setLabourShedCustomCost] = useState('')
@@ -328,6 +332,7 @@ export default function NewProjectPage() {
       hasTerrace, terraceCustomSqft, terraceWashrooms,
       rainwaterCustomCost, gasCustomRate, acCustomRate, cctvCustomRate, solarCustomCost, upsCustomRate, wifiCustomCost, paintingCustomRate,
       labourShedEnabled, labourShedCustomCost, watchmanEnabled, watchmanCustomCost, miscExpenseEnabled, miscExpenseCustomCost, earthingEnabled, earthingCustomCost,
+      liftCustomCost, terraceRoomCustomRate, terraceRoomCustomWashroomCost,
     }
     localStorage.setItem(DRAFT_KEY, JSON.stringify(draft))
   }, [clientName, clientPhone, clientLocation, width, length, isIrregular, sideFront, sideBack, sideLeft, sideRight, masonryType,
@@ -337,7 +342,8 @@ export default function NewProjectPage() {
       paintingGrade, windowType, railingType, flooringType, customItems,
       hasTerrace, terraceCustomSqft, terraceWashrooms,
       rainwaterCustomCost, gasCustomRate, acCustomRate, cctvCustomRate, solarCustomCost, upsCustomRate, wifiCustomCost, paintingCustomRate,
-      labourShedEnabled, labourShedCustomCost, watchmanEnabled, watchmanCustomCost, miscExpenseEnabled, miscExpenseCustomCost, earthingEnabled, earthingCustomCost])
+      labourShedEnabled, labourShedCustomCost, watchmanEnabled, watchmanCustomCost, miscExpenseEnabled, miscExpenseCustomCost, earthingEnabled, earthingCustomCost,
+      liftCustomCost, terraceRoomCustomRate, terraceRoomCustomWashroomCost])
 
   // Warn on browser back / tab close
   useEffect(() => {
@@ -409,6 +415,9 @@ export default function NewProjectPage() {
       if (d.miscExpenseCustomCost !== undefined) setMiscExpenseCustomCost(d.miscExpenseCustomCost)
       if (d.earthingEnabled !== undefined) setEarthingEnabled(d.earthingEnabled)
       if (d.earthingCustomCost !== undefined) setEarthingCustomCost(d.earthingCustomCost)
+      if (d.liftCustomCost !== undefined) setLiftCustomCost(d.liftCustomCost)
+      if (d.terraceRoomCustomRate !== undefined) setTerraceRoomCustomRate(d.terraceRoomCustomRate)
+      if (d.terraceRoomCustomWashroomCost !== undefined) setTerraceRoomCustomWashroomCost(d.terraceRoomCustomWashroomCost)
     } catch {}
     setShowRestorePrompt(false)
   }
@@ -599,6 +608,9 @@ export default function NewProjectPage() {
           terraceRoomEnabled: hasTerrace,
           ...(hasTerrace && terraceCustomSqft ? { terraceRoomSqft: parseFloat(terraceCustomSqft) } : {}),
           terraceRoomWashrooms: hasTerrace ? (parseInt(terraceWashrooms) || 0) : 0,
+          ...(hasTerrace && terraceRoomCustomRate ? { terraceRoomCustomRate: parseFloat(terraceRoomCustomRate) } : {}),
+          ...(hasTerrace && terraceRoomCustomWashroomCost ? { terraceRoomCustomWashroomCost: parseFloat(terraceRoomCustomWashroomCost) } : {}),
+          ...(hasLift && liftCustomCost ? { liftCustomCost: parseFloat(liftCustomCost) } : {}),
         }
       }),
       has_sump: hasSump, sump_capacity: sumpCapacity || null, sump_type: sumpType,
@@ -636,7 +648,8 @@ export default function NewProjectPage() {
       windowType, railingType, marketPrices, customBlockPrice, customBrickPrice, boqData,
       ohtCustomPrice, mainGateCustomPrice, hasTerrace, terraceCustomSqft,
       rainwaterCustomCost, gasCustomRate, acCustomRate, cctvCustomRate, solarCustomCost, upsCustomRate, wifiCustomCost, paintingCustomRate,
-      labourShedEnabled, labourShedCustomCost, watchmanEnabled, watchmanCustomCost, miscExpenseEnabled, miscExpenseCustomCost, earthingEnabled, earthingCustomCost])
+      labourShedEnabled, labourShedCustomCost, watchmanEnabled, watchmanCustomCost, miscExpenseEnabled, miscExpenseCustomCost, earthingEnabled, earthingCustomCost,
+      liftCustomCost, terraceRoomCustomRate, terraceRoomCustomWashroomCost])
 
   async function handleSave() {
     if (submittingRef.current) return
@@ -697,6 +710,9 @@ export default function NewProjectPage() {
           terraceRoomEnabled: hasTerrace,
           ...(hasTerrace && terraceCustomSqft ? { terraceRoomSqft: parseFloat(terraceCustomSqft) } : {}),
           terraceRoomWashrooms: hasTerrace ? (parseInt(terraceWashrooms) || 0) : 0,
+          ...(hasTerrace && terraceRoomCustomRate ? { terraceRoomCustomRate: parseFloat(terraceRoomCustomRate) } : {}),
+          ...(hasTerrace && terraceRoomCustomWashroomCost ? { terraceRoomCustomWashroomCost: parseFloat(terraceRoomCustomWashroomCost) } : {}),
+          ...(hasLift && liftCustomCost ? { liftCustomCost: parseFloat(liftCustomCost) } : {}),
         }
       }),
       ground_floor_type: floors[0]?.type || '',
@@ -1551,37 +1567,44 @@ export default function NewProjectPage() {
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
                     <Label className="text-xs text-gray-500">Area (sqft)</Label>
-                    <Input
-                      type="number"
-                      placeholder="e.g. 200"
-                      value={terraceCustomSqft}
-                      onChange={e => setTerraceCustomSqft(e.target.value)}
-                    />
+                    <Input type="number" placeholder="e.g. 200" value={terraceCustomSqft} onChange={e => setTerraceCustomSqft(e.target.value)} />
                   </div>
                   <div className="space-y-1.5">
                     <Label className="text-xs text-gray-500">No. of Washrooms</Label>
+                    <Input type="number" placeholder="0" min="0" value={terraceWashrooms} onChange={e => setTerraceWashrooms(e.target.value)} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs text-gray-500">Rate per sqft (₹) — override</Label>
                     <Input
                       type="number"
-                      placeholder="0"
-                      min="0"
-                      value={terraceWashrooms}
-                      onChange={e => setTerraceWashrooms(e.target.value)}
+                      placeholder={`Default: ₹${mp('Terrace Room Rate', 1700).toLocaleString('en-IN')}/sqft`}
+                      value={terraceRoomCustomRate}
+                      onChange={e => setTerraceRoomCustomRate(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs text-gray-500">Per washroom cost (₹) — override</Label>
+                    <Input
+                      type="number"
+                      placeholder={`Default: ₹${mp('Terrace Room Washroom', 85000).toLocaleString('en-IN')}`}
+                      value={terraceRoomCustomWashroomCost}
+                      onChange={e => setTerraceRoomCustomWashroomCost(e.target.value)}
                     />
                   </div>
                 </div>
-                {terraceCustomSqft && (
-                  <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 space-y-1">
-                    <p className="text-xs text-gray-500">
-                      ({terraceCustomSqft} sqft × ₹{(mp('Terrace Room Rate', 1700)).toLocaleString('en-IN')}) + ({terraceWashrooms || 0} washrooms × ₹{(mp('Terrace Room Washroom', 85000)).toLocaleString('en-IN')})
-                    </p>
-                    <p className="text-sm font-semibold text-blue-700">
-                      = ₹{(
-                        parseFloat(terraceCustomSqft) * mp('Terrace Room Rate', 1700) +
-                        (parseInt(terraceWashrooms) || 0) * mp('Terrace Room Washroom', 85000)
-                      ).toLocaleString('en-IN')}
-                    </p>
-                  </div>
-                )}
+                {terraceCustomSqft && (() => {
+                  const rate = parseFloat(terraceRoomCustomRate) || mp('Terrace Room Rate', 1700)
+                  const washCost = parseFloat(terraceRoomCustomWashroomCost) || mp('Terrace Room Washroom', 85000)
+                  const total = parseFloat(terraceCustomSqft) * rate + (parseInt(terraceWashrooms) || 0) * washCost
+                  return (
+                    <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 space-y-1">
+                      <p className="text-xs text-gray-500">
+                        ({terraceCustomSqft} sqft × ₹{rate.toLocaleString('en-IN')}) + ({terraceWashrooms || 0} washrooms × ₹{washCost.toLocaleString('en-IN')})
+                      </p>
+                      <p className="text-sm font-semibold text-blue-700">= ₹{total.toLocaleString('en-IN')}</p>
+                    </div>
+                  )
+                })()}
               </>
             )}
           </CardContent>
@@ -1598,12 +1621,30 @@ export default function NewProjectPage() {
           <CardContent className="space-y-4">
 
             {/* Lift */}
-            <div className="flex items-center justify-between py-2">
-              <div>
-                <p className="text-sm font-medium">Lift</p>
-                <p className="text-xs text-gray-400">Include lift shaft and machine room provision</p>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between py-2">
+                <div>
+                  <p className="text-sm font-medium">Lift</p>
+                  <p className="text-xs text-gray-400">
+                    {liftCustomCost ? `Custom: ${fmt(parseFloat(liftCustomCost))}` : `Lift shaft, machine room, installation — ${fmt(mp('Lift', 0) || 0)}`}
+                  </p>
+                </div>
+                <Switch checked={hasLift} onCheckedChange={setHasLift} />
               </div>
-              <Switch checked={hasLift} onCheckedChange={setHasLift} />
+              {hasLift && (
+                <div className="pl-4 border-l-2 border-blue-100 pb-2">
+                  <div className="w-56 space-y-1">
+                    <Label className="text-xs">Total Lift Cost (₹)</Label>
+                    <Input
+                      type="number"
+                      placeholder={mp('Lift', 0) ? `Market: ${fmt(mp('Lift', 0))}` : 'e.g. 500000'}
+                      value={liftCustomCost}
+                      onChange={e => setLiftCustomCost(e.target.value)}
+                    />
+                    <p className="text-xs text-gray-400">Set Lift price in market prices or enter custom here</p>
+                  </div>
+                </div>
+              )}
             </div>
 
             <Separator />
