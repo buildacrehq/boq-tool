@@ -58,6 +58,7 @@ export default function ProjectsPage() {
                   <th className="text-left px-4 py-3 text-xs font-medium text-gray-500">Dimension</th>
                   <th className="text-left px-4 py-3 text-xs font-medium text-gray-500">Floors</th>
                   <th className="text-left px-4 py-3 text-xs font-medium text-gray-500">Status</th>
+                  <th className="text-left px-4 py-3 text-xs font-medium text-gray-500">Created By</th>
                   <th className="text-left px-4 py-3 text-xs font-medium text-gray-500">Date</th>
                   <th className="px-6 py-3"></th>
                 </tr>
@@ -74,6 +75,7 @@ export default function ProjectsPage() {
                         {p.status}
                       </span>
                     </td>
+                    <td className="px-4 py-3 text-gray-500">{p.created_by || '—'}</td>
                     <td className="px-4 py-3 text-gray-400">{new Date(p.created_at).toLocaleDateString('en-IN')}</td>
                     <td className="px-6 py-3 text-right">
                       <button className="text-xs text-blue-600 hover:underline">View →</button>
