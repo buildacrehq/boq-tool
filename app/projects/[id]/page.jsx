@@ -676,6 +676,7 @@ export default function ProjectPage() {
       ['Client Name', project.client_name],
       ['Phone', project.client_phone || '—'],
       ['Location', project.site_address || '—'],
+      ['Created By', project.created_by || '—'],
       ['Dimension', `${project.dimension_width} × ${project.dimension_length} ft`],
       ['Total Area', `${project.total_sqft} sqft`],
       ['Floors', project.floors === 1 ? 'G only' : `G+${project.floors - 1}`],
@@ -760,7 +761,7 @@ export default function ProjectPage() {
                 <button onClick={() => router.push('/projects')} className="text-gray-400 hover:text-gray-600 text-sm">←</button>
                 <h1 className="text-base font-semibold text-gray-800">{project.client_name}</h1>
               </div>
-              <p className="text-xs text-gray-400 mt-0.5">{project.site_address} · {project.dimension_width}×{project.dimension_length} ft</p>
+              <p className="text-xs text-gray-400 mt-0.5">{project.site_address} · {project.dimension_width}×{project.dimension_length} ft · Created by <span className="font-medium text-gray-600">{project.created_by || '—'}</span></p>
             </div>
             <div className="flex items-center gap-2">
               {frozenAt ? (
