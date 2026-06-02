@@ -248,6 +248,16 @@ export default function NewProjectPage() {
   const [flooringType, setFlooringType] = useState('smart_marble')
   const [customItems, setCustomItems] = useState([{ item_name: '', quantity: '', unit_price: '', notes: '' }])
 
+  // Always-on services with toggle + custom price (stored in floorsData[0])
+  const [labourShedEnabled, setLabourShedEnabled] = useState(true)
+  const [labourShedCustomCost, setLabourShedCustomCost] = useState('')
+  const [watchmanEnabled, setWatchmanEnabled] = useState(true)
+  const [watchmanCustomCost, setWatchmanCustomCost] = useState('')
+  const [miscExpenseEnabled, setMiscExpenseEnabled] = useState(true)
+  const [miscExpenseCustomCost, setMiscExpenseCustomCost] = useState('')
+  const [earthingEnabled, setEarthingEnabled] = useState(true)
+  const [earthingCustomCost, setEarthingCustomCost] = useState('')
+
   // Custom price overrides for services (stored in floorsData[0], already supported by calculate.js)
   const [rainwaterCustomCost, setRainwaterCustomCost] = useState('')
   const [gasCustomRate, setGasCustomRate] = useState('')
@@ -318,6 +328,7 @@ export default function NewProjectPage() {
       paintingGrade, windowType, railingType, flooringType, customItems,
       hasTerrace, terraceType, terraceCustomSqft, terraceCustomRate,
       rainwaterCustomCost, gasCustomRate, acCustomRate, cctvCustomRate, solarCustomCost, upsCustomRate, wifiCustomCost, paintingCustomRate,
+      labourShedEnabled, labourShedCustomCost, watchmanEnabled, watchmanCustomCost, miscExpenseEnabled, miscExpenseCustomCost, earthingEnabled, earthingCustomCost,
     }
     localStorage.setItem(DRAFT_KEY, JSON.stringify(draft))
   }, [clientName, clientPhone, clientLocation, width, length, isIrregular, sideFront, sideBack, sideLeft, sideRight, masonryType,
@@ -326,7 +337,8 @@ export default function NewProjectPage() {
       hasMainGate, hasAc, hasCctv, hasSolar, hasUps, hasWifi,
       paintingGrade, windowType, railingType, flooringType, customItems,
       hasTerrace, terraceType, terraceCustomSqft, terraceCustomRate,
-      rainwaterCustomCost, gasCustomRate, acCustomRate, cctvCustomRate, solarCustomCost, upsCustomRate, wifiCustomCost, paintingCustomRate])
+      rainwaterCustomCost, gasCustomRate, acCustomRate, cctvCustomRate, solarCustomCost, upsCustomRate, wifiCustomCost, paintingCustomRate,
+      labourShedEnabled, labourShedCustomCost, watchmanEnabled, watchmanCustomCost, miscExpenseEnabled, miscExpenseCustomCost, earthingEnabled, earthingCustomCost])
 
   // Warn on browser back / tab close
   useEffect(() => {
@@ -391,6 +403,14 @@ export default function NewProjectPage() {
       if (d.upsCustomRate !== undefined) setUpsCustomRate(d.upsCustomRate)
       if (d.wifiCustomCost !== undefined) setWifiCustomCost(d.wifiCustomCost)
       if (d.paintingCustomRate !== undefined) setPaintingCustomRate(d.paintingCustomRate)
+      if (d.labourShedEnabled !== undefined) setLabourShedEnabled(d.labourShedEnabled)
+      if (d.labourShedCustomCost !== undefined) setLabourShedCustomCost(d.labourShedCustomCost)
+      if (d.watchmanEnabled !== undefined) setWatchmanEnabled(d.watchmanEnabled)
+      if (d.watchmanCustomCost !== undefined) setWatchmanCustomCost(d.watchmanCustomCost)
+      if (d.miscExpenseEnabled !== undefined) setMiscExpenseEnabled(d.miscExpenseEnabled)
+      if (d.miscExpenseCustomCost !== undefined) setMiscExpenseCustomCost(d.miscExpenseCustomCost)
+      if (d.earthingEnabled !== undefined) setEarthingEnabled(d.earthingEnabled)
+      if (d.earthingCustomCost !== undefined) setEarthingCustomCost(d.earthingCustomCost)
     } catch {}
     setShowRestorePrompt(false)
   }
@@ -570,6 +590,14 @@ export default function NewProjectPage() {
           ...(upsCustomRate ? { upsCustomRate: parseFloat(upsCustomRate) } : {}),
           ...(wifiCustomCost ? { wifiCustomCost: parseFloat(wifiCustomCost) } : {}),
           ...(paintingCustomRate ? { paintingCustomRate: parseFloat(paintingCustomRate) } : {}),
+          labourShedEnabled,
+          ...(labourShedCustomCost ? { labourShedCustomCost: parseFloat(labourShedCustomCost) } : {}),
+          watchmanEnabled,
+          ...(watchmanCustomCost ? { watchmanCustomCost: parseFloat(watchmanCustomCost) } : {}),
+          miscExpenseEnabled,
+          ...(miscExpenseCustomCost ? { miscExpenseCustomCost: parseFloat(miscExpenseCustomCost) } : {}),
+          earthingEnabled,
+          ...(earthingCustomCost ? { earthingCustomCost: parseFloat(earthingCustomCost) } : {}),
         }
       }),
       has_sump: hasSump, sump_capacity: sumpCapacity || null, sump_type: sumpType,
@@ -609,7 +637,8 @@ export default function NewProjectPage() {
       hasMainGate, hasAc, hasCctv, hasSolar, hasUps, hasWifi, paintingGrade, flooringType,
       windowType, railingType, marketPrices, customBlockPrice, customBrickPrice, boqData,
       ohtCustomPrice, mainGateCustomPrice, hasTerrace, terraceType, terraceCustomSqft, terraceCustomRate,
-      rainwaterCustomCost, gasCustomRate, acCustomRate, cctvCustomRate, solarCustomCost, upsCustomRate, wifiCustomCost, paintingCustomRate])
+      rainwaterCustomCost, gasCustomRate, acCustomRate, cctvCustomRate, solarCustomCost, upsCustomRate, wifiCustomCost, paintingCustomRate,
+      labourShedEnabled, labourShedCustomCost, watchmanEnabled, watchmanCustomCost, miscExpenseEnabled, miscExpenseCustomCost, earthingEnabled, earthingCustomCost])
 
   async function handleSave() {
     if (submittingRef.current) return
@@ -659,6 +688,14 @@ export default function NewProjectPage() {
           ...(upsCustomRate ? { upsCustomRate: parseFloat(upsCustomRate) } : {}),
           ...(wifiCustomCost ? { wifiCustomCost: parseFloat(wifiCustomCost) } : {}),
           ...(paintingCustomRate ? { paintingCustomRate: parseFloat(paintingCustomRate) } : {}),
+          labourShedEnabled,
+          ...(labourShedCustomCost ? { labourShedCustomCost: parseFloat(labourShedCustomCost) } : {}),
+          watchmanEnabled,
+          ...(watchmanCustomCost ? { watchmanCustomCost: parseFloat(watchmanCustomCost) } : {}),
+          miscExpenseEnabled,
+          ...(miscExpenseCustomCost ? { miscExpenseCustomCost: parseFloat(miscExpenseCustomCost) } : {}),
+          earthingEnabled,
+          ...(earthingCustomCost ? { earthingCustomCost: parseFloat(earthingCustomCost) } : {}),
         }
       }),
       ground_floor_type: floors[0]?.type || '',
@@ -1842,6 +1879,66 @@ export default function NewProjectPage() {
                     <div className="w-56 space-y-1">
                       <Label className="text-xs">Custom Price (₹) — leave blank for market rate</Label>
                       <Input type="number" placeholder={`Market: ${fmt(r.wifi)}`} value={wifiCustomCost} onChange={e => setWifiCustomCost(e.target.value)} />
+                    </div>
+                  </div>
+                ),
+              },
+              {
+                label: 'Labour Shed',
+                sub: labourShedCustomCost ? `Custom: ${fmt(parseFloat(labourShedCustomCost))}` : `Temporary shed for construction workers — ${fmt(mp('Labour Shed', 50000))}`,
+                state: labourShedEnabled,
+                set: setLabourShedEnabled,
+                isDefault: true,
+                extra: labourShedEnabled && (
+                  <div className="pl-4 border-l-2 border-blue-100 mt-1 pb-2">
+                    <div className="w-56 space-y-1">
+                      <Label className="text-xs">Custom Price (₹) — leave blank for market rate</Label>
+                      <Input type="number" placeholder={`Market: ${fmt(mp('Labour Shed', 50000))}`} value={labourShedCustomCost} onChange={e => setLabourShedCustomCost(e.target.value)} />
+                    </div>
+                  </div>
+                ),
+              },
+              {
+                label: 'Watchman',
+                sub: watchmanCustomCost ? `Custom: ${fmt(parseFloat(watchmanCustomCost))}` : `Security watchman provision — ${fmt(mp('Watchman', 50000))}`,
+                state: watchmanEnabled,
+                set: setWatchmanEnabled,
+                isDefault: true,
+                extra: watchmanEnabled && (
+                  <div className="pl-4 border-l-2 border-blue-100 mt-1 pb-2">
+                    <div className="w-56 space-y-1">
+                      <Label className="text-xs">Custom Price (₹) — leave blank for market rate</Label>
+                      <Input type="number" placeholder={`Market: ${fmt(mp('Watchman', 50000))}`} value={watchmanCustomCost} onChange={e => setWatchmanCustomCost(e.target.value)} />
+                    </div>
+                  </div>
+                ),
+              },
+              {
+                label: 'Misc Expense',
+                sub: miscExpenseCustomCost ? `Custom: ${fmt(parseFloat(miscExpenseCustomCost))}` : `Miscellaneous site expenses — ${fmt(mp('Misc Expense', 150000))}`,
+                state: miscExpenseEnabled,
+                set: setMiscExpenseEnabled,
+                isDefault: true,
+                extra: miscExpenseEnabled && (
+                  <div className="pl-4 border-l-2 border-blue-100 mt-1 pb-2">
+                    <div className="w-56 space-y-1">
+                      <Label className="text-xs">Custom Price (₹) — leave blank for market rate</Label>
+                      <Input type="number" placeholder={`Market: ${fmt(mp('Misc Expense', 150000))}`} value={miscExpenseCustomCost} onChange={e => setMiscExpenseCustomCost(e.target.value)} />
+                    </div>
+                  </div>
+                ),
+              },
+              {
+                label: 'Earthing Pit',
+                sub: earthingCustomCost ? `Custom: ${fmt(parseFloat(earthingCustomCost))}` : `Electrical earthing pit — ${fmt(mp('Earthing Pit', 18000))}`,
+                state: earthingEnabled,
+                set: setEarthingEnabled,
+                isDefault: true,
+                extra: earthingEnabled && (
+                  <div className="pl-4 border-l-2 border-blue-100 mt-1 pb-2">
+                    <div className="w-56 space-y-1">
+                      <Label className="text-xs">Custom Price (₹) — leave blank for market rate</Label>
+                      <Input type="number" placeholder={`Market: ${fmt(mp('Earthing Pit', 18000))}`} value={earthingCustomCost} onChange={e => setEarthingCustomCost(e.target.value)} />
                     </div>
                   </div>
                 ),
