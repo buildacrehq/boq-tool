@@ -1626,7 +1626,7 @@ export default function NewProjectPage() {
                 <div>
                   <p className="text-sm font-medium">Lift</p>
                   <p className="text-xs text-gray-400">
-                    {liftCustomCost ? `Custom: ${fmt(parseFloat(liftCustomCost))}` : `Lift shaft, machine room, installation — ${fmt(mp('Lift', 500000))}`}
+                    {liftCustomCost ? `Custom: ${fmt(parseFloat(liftCustomCost))}` : mp('Lift', 0) ? `Market: ${fmt(mp('Lift', 0))}` : 'Set price in market prices or enter custom below'}
                   </p>
                 </div>
                 <Switch checked={hasLift} onCheckedChange={setHasLift} />
@@ -1637,7 +1637,7 @@ export default function NewProjectPage() {
                     <Label className="text-xs">Total Lift Cost (₹)</Label>
                     <Input
                       type="number"
-                      placeholder={`Market: ${fmt(mp('Lift', 500000))}`}
+                      placeholder={mp('Lift', 0) ? `Market: ${fmt(mp('Lift', 0))}` : 'e.g. 400000'}
                       value={liftCustomCost}
                       onChange={e => setLiftCustomCost(e.target.value)}
                     />
