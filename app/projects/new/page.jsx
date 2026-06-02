@@ -941,7 +941,7 @@ export default function NewProjectPage() {
             <div className="space-y-3">
               <div className="flex items-center justify-between py-2">
                 <div>
-                  <p className="text-sm font-medium">SSM Work (Size Stone Masonry)</p>
+                  <p className="text-sm font-medium">🪨 SSM Work (Size Stone Masonry)</p>
                   <p className="text-xs text-gray-400">Stone masonry below plinth level. Minimum 2 courses.</p>
                 </div>
                 <Switch checked={hasSsm} onCheckedChange={setHasSsm} />
@@ -1624,7 +1624,7 @@ export default function NewProjectPage() {
             <div className="space-y-2">
               <div className="flex items-center justify-between py-2">
                 <div>
-                  <p className="text-sm font-medium">Lift</p>
+                  <p className="text-sm font-medium">🛗 Lift</p>
                   <p className="text-xs text-gray-400">
                     {liftCustomCost ? `Custom: ${fmt(parseFloat(liftCustomCost))}` : mp('Lift', 0) ? `Market: ${fmt(mp('Lift', 0))}` : 'Set price in market prices or enter custom below'}
                   </p>
@@ -1653,7 +1653,7 @@ export default function NewProjectPage() {
             <div className="space-y-3">
               <div className="flex items-center justify-between py-2">
                 <div>
-                  <p className="text-sm font-medium">Underground Sump</p>
+                  <p className="text-sm font-medium">🪣 Underground Sump</p>
                   <p className="text-xs text-gray-400">Water storage tank below ground</p>
                 </div>
                 <Switch checked={hasSump} onCheckedChange={v => { setHasSump(v); if (v && !sumpCapacity) setSumpCapacity('10000') }} />
@@ -1710,14 +1710,14 @@ export default function NewProjectPage() {
           <CardContent className="space-y-0">
             {[
               {
-                label: 'Compound Wall',
+                label: '🧱 Compound Wall',
                 sub: 'Boundary wall on all 4 sides of the site',
                 state: hasCompoundWall,
                 set: setHasCompoundWall,
                 isDefault: true,
               },
               {
-                label: 'Main Gate',
+                label: '🚪 Main Gate',
                 sub: mainGateCustomPrice ? `Custom price: ${fmt(parseFloat(mainGateCustomPrice))}` : `Entry gate — ${fmt(r.mainGateS)} (small) to ${fmt(r.mainGateL)} (large)`,
                 state: hasMainGate,
                 set: setHasMainGate,
@@ -1732,7 +1732,7 @@ export default function NewProjectPage() {
                 ),
               },
               {
-                label: 'Overhead Tank (OHT)',
+                label: '🪣 Overhead Tank (OHT)',
                 sub: (() => {
                   if (ohtCustomPrice) return `Custom price: ${fmt(parseFloat(ohtCustomPrice))}`
                   const cap = ohtCapacity === 'custom' ? parseFloat(ohtCustom) : parseFloat(ohtCapacity)
@@ -1787,7 +1787,7 @@ export default function NewProjectPage() {
                 ),
               },
               {
-                label: 'Rainwater Harvesting',
+                label: '🌧️ Rainwater Harvesting',
                 sub: rainwaterCustomCost ? `Custom: ${fmt(parseFloat(rainwaterCustomCost))}` : `Drain covers, pit and recharge system — ${fmt(r.rainwater)}`,
                 state: hasRainwater,
                 set: setHasRainwater,
@@ -1802,7 +1802,7 @@ export default function NewProjectPage() {
                 ),
               },
               {
-                label: 'Gas Pipeline',
+                label: '🔥 Gas Pipeline',
                 sub: (() => {
                   const rate = gasCustomRate ? parseFloat(gasCustomRate) : r.gas
                   return gasCustomRate ? `Custom: ${fmt(rate)}/rft × ${floorCount * 15} rft = ${fmt(rate * floorCount * 15)}` : `${floorCount} floor${floorCount > 1 ? 's' : ''} × 15 rft × ${fmt(r.gas)}/rft = ${fmt(floorCount * 15 * r.gas)}`
@@ -1820,7 +1820,7 @@ export default function NewProjectPage() {
                 ),
               },
               {
-                label: 'AC Provision',
+                label: '❄️ AC Provision',
                 sub: (() => {
                   const pts = floors.reduce((s, f) => s + (parseInt(f.acPoints) || 0), 0)
                   const rate = acCustomRate ? parseFloat(acCustomRate) : r.ac
@@ -1839,7 +1839,7 @@ export default function NewProjectPage() {
                 ),
               },
               {
-                label: 'CCTV Provision',
+                label: '📷 CCTV Provision',
                 sub: (() => {
                   const rate = cctvCustomRate ? parseFloat(cctvCustomRate) : r.cctv
                   return `2 cameras × ${floorCount} floor${floorCount > 1 ? 's' : ''} × ${fmt(rate)} = ${fmt(2 * floorCount * rate)}`
@@ -1857,7 +1857,7 @@ export default function NewProjectPage() {
                 ),
               },
               {
-                label: 'Solar Provision',
+                label: '☀️ Solar Provision',
                 sub: solarCustomCost ? `Custom: ${fmt(parseFloat(solarCustomCost))}` : `Wiring and mounting structure — ${fmt(r.solar)}`,
                 state: hasSolar,
                 set: setHasSolar,
@@ -1872,7 +1872,7 @@ export default function NewProjectPage() {
                 ),
               },
               {
-                label: 'UPS Provision',
+                label: '🔋 UPS Provision',
                 sub: (() => {
                   const kFloors = floors.filter(f => !['parking_only','parking_lift','commercial_parking'].includes(f.type) && (parseInt(f.kitchens)||0) > 0).length
                   const total = hasUps ? floors.filter(f => !['parking_only','parking_lift','commercial_parking'].includes(f.type)).length : kFloors
@@ -1892,7 +1892,7 @@ export default function NewProjectPage() {
                 ),
               },
               {
-                label: 'WiFi & Cable Provision',
+                label: '📶 WiFi & Cable Provision',
                 sub: wifiCustomCost ? `Custom: ${fmt(parseFloat(wifiCustomCost))}` : `Conduit and junction boxes for WiFi and cable TV — ${fmt(r.wifi)}`,
                 state: hasWifi,
                 set: setHasWifi,
@@ -1907,7 +1907,7 @@ export default function NewProjectPage() {
                 ),
               },
               {
-                label: 'Labour Shed',
+                label: '🏗️ Labour Shed',
                 sub: labourShedCustomCost ? `Custom: ${fmt(parseFloat(labourShedCustomCost))}` : `Temporary shed for construction workers — ${fmt(mp('Labour Shed', 50000))}`,
                 state: labourShedEnabled,
                 set: setLabourShedEnabled,
@@ -1922,7 +1922,7 @@ export default function NewProjectPage() {
                 ),
               },
               {
-                label: 'Watchman',
+                label: '👷 Watchman',
                 sub: watchmanCustomCost ? `Custom: ${fmt(parseFloat(watchmanCustomCost))}` : `Security watchman provision — ${fmt(mp('Watchman', 50000))}`,
                 state: watchmanEnabled,
                 set: setWatchmanEnabled,
@@ -1937,7 +1937,7 @@ export default function NewProjectPage() {
                 ),
               },
               {
-                label: 'Misc Expense',
+                label: '📋 Misc Expense',
                 sub: miscExpenseCustomCost ? `Custom: ${fmt(parseFloat(miscExpenseCustomCost))}` : `Miscellaneous site expenses — ${fmt(mp('Misc Expense', 150000))}`,
                 state: miscExpenseEnabled,
                 set: setMiscExpenseEnabled,
@@ -1952,7 +1952,7 @@ export default function NewProjectPage() {
                 ),
               },
               {
-                label: 'Earthing Pit',
+                label: '🌍 Earthing Pit',
                 sub: earthingCustomCost ? `Custom: ${fmt(parseFloat(earthingCustomCost))}` : `Electrical earthing pit — ${fmt(mp('Earthing Pit', 18000))}`,
                 state: earthingEnabled,
                 set: setEarthingEnabled,
