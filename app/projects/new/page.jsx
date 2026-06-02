@@ -155,7 +155,7 @@ function getDefaultDoors(floorType) {
   }
 }
 
-function createFloor(index, defaultTilePrice = 50) {
+function createFloor(index, defaultTilePrice = 100) {
   return {
     index,
     name: FLOOR_NAMES[index],
@@ -449,7 +449,7 @@ export default function NewProjectPage() {
   function handleFloorCountChange(count) {
     const newCount = parseInt(count)
     setFloorCount(newCount)
-    setFloors(prev => Array.from({ length: newCount }, (_, i) => prev[i] || createFloor(i, marketPrices['Tiles Basic'] || 50)))
+    setFloors(prev => Array.from({ length: newCount }, (_, i) => prev[i] || createFloor(i, marketPrices['Tiles Basic'] || 100)))
   }
 
   function handleFloorTypeChange(index, type) {
