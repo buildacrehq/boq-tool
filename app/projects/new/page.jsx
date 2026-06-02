@@ -596,6 +596,9 @@ export default function NewProjectPage() {
           ...(miscExpenseCustomCost ? { miscExpenseCustomCost: parseFloat(miscExpenseCustomCost) } : {}),
           earthingEnabled,
           ...(earthingCustomCost ? { earthingCustomCost: parseFloat(earthingCustomCost) } : {}),
+          terraceRoomEnabled: hasTerrace,
+          ...(hasTerrace && terraceCustomSqft ? { terraceRoomSqft: parseFloat(terraceCustomSqft) } : {}),
+          terraceRoomWashrooms: hasTerrace ? (parseInt(terraceWashrooms) || 0) : 0,
         }
       }),
       has_sump: hasSump, sump_capacity: sumpCapacity || null, sump_type: sumpType,
@@ -611,9 +614,6 @@ export default function NewProjectPage() {
       bedroom_doors: td.bedroom, washroom_doors: td.washroom,
       balcony_doors: td.balcony, utility_doors: td.utility,
       has_pooja_room_door: td.poojaRoom > 0,
-      terrace_room_type: hasTerrace ? 'formula' : null,
-      terrace_room_sqft: terraceCustomSqft ? parseFloat(terraceCustomSqft) : null,
-      terrace_room_washrooms: terraceWashrooms ? parseInt(terraceWashrooms) : 0,
     }
 
     const effectivePrices = {
@@ -694,6 +694,9 @@ export default function NewProjectPage() {
           ...(miscExpenseCustomCost ? { miscExpenseCustomCost: parseFloat(miscExpenseCustomCost) } : {}),
           earthingEnabled,
           ...(earthingCustomCost ? { earthingCustomCost: parseFloat(earthingCustomCost) } : {}),
+          terraceRoomEnabled: hasTerrace,
+          ...(hasTerrace && terraceCustomSqft ? { terraceRoomSqft: parseFloat(terraceCustomSqft) } : {}),
+          terraceRoomWashrooms: hasTerrace ? (parseInt(terraceWashrooms) || 0) : 0,
         }
       }),
       ground_floor_type: floors[0]?.type || '',
@@ -726,9 +729,6 @@ export default function NewProjectPage() {
       utility_doors: totalDoors.utility,
       has_pooja_room_door: totalDoors.poojaRoom > 0,
       masonry_type: masonryType,
-      terrace_room_type: hasTerrace ? 'formula' : null,
-      terrace_room_sqft: (hasTerrace && terraceCustomSqft) ? parseFloat(terraceCustomSqft) : null,
-      terrace_room_washrooms: hasTerrace ? (parseInt(terraceWashrooms) || 0) : null,
       status: 'draft',
       created_by: user?.name,
     }
