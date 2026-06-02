@@ -60,6 +60,38 @@ const DUPLEX_END_TYPES = [
   { value: 'duplex_cont', label: 'Duplex Continuous' },
 ]
 
+// Ground floor restrictions by plot size
+// '20x30' (≤600 sqft): only parking types allowed
+// '20x40' (≤800 sqft): 2BHK, 3BHK, duplex blocked
+const GROUND_RESTRICTIONS = {
+  '20x30': {
+    blocked: ['1bhk', '1bhk_2units', '1bhk_parking', '2bhk', '2bhk_parking', '1bhk_2bhk', '2bhk_3bhk', '3bhk', 'duplex_gf'],
+    message: '20×30 plot (600 sqft) — only parking types can be constructed on ground floor.',
+  },
+  '20x40': {
+    blocked: ['2bhk', '2bhk_parking', '1bhk_2bhk', '2bhk_3bhk', '3bhk', 'duplex_gf'],
+    message: '20×40 plot (800 sqft) — 2 BHK and above require a minimum 30×40 plot.',
+  },
+}
+
+// Standard bin thresholds (ascending)
+const SIZE_BIN_THRESHOLDS = [
+  { area: 600,  key: '20x30' },
+  { area: 800,  key: '20x40' },
+  { area: 1200, key: '30x40' },
+  { area: 1500, key: '30x50' },
+  { area: 1600, key: '40x40' },
+  { area: 2400, key: '40x60' },
+]
+
+// Returns restriction object or null. Uses upper bin (conservative for custom sizes).
+function getGroundFloorRestriction(sqft) {
+  if (!sqft || sqft <= 0) return null
+  const bin = SIZE_BIN_THRESHOLDS.find(b => sqft <= b.area)
+  if (!bin) return null
+  return GROUND_RESTRICTIONS[bin.key] || null
+}
+
 const MAIN_DOOR_TYPES = [
   { value: 'teak_3x7',        label: 'Teak 3×7',                  priceKey: 'Main Door Teak 3x7',        fallback: 50000 },
   { value: 'teak_3x7_window', label: 'Teak 3×7 with Window',       priceKey: 'Main Door Teak 3x7 Window', fallback: 70000 },
@@ -213,8 +245,23 @@ export default function NewProjectPage() {
   const [paintingGrade, setPaintingGrade] = useState('royal_emulsion')
   const [windowType, setWindowType] = useState('upvc_white')
   const [railingType, setRailingType] = useState('')
-  const [flooringType, setFlooringType] = useState('')
+  const [flooringType, setFlooringType] = useState('smart_marble')
   const [customItems, setCustomItems] = useState([{ item_name: '', quantity: '', unit_price: '', notes: '' }])
+
+  // Custom price overrides for services (stored in floorsData[0], already supported by calculate.js)
+  const [rainwaterCustomCost, setRainwaterCustomCost] = useState('')
+  const [gasCustomRate, setGasCustomRate] = useState('')
+  const [acCustomRate, setAcCustomRate] = useState('')
+  const [cctvCustomRate, setCctvCustomRate] = useState('')
+  const [solarCustomCost, setSolarCustomCost] = useState('')
+  const [upsCustomRate, setUpsCustomRate] = useState('')
+  const [wifiCustomCost, setWifiCustomCost] = useState('')
+  const [paintingCustomRate, setPaintingCustomRate] = useState('')
+
+  const [hasTerrace, setHasTerrace] = useState(false)
+  const [terraceType, setTerraceType] = useState('preset_basic') // 'preset_basic' | 'preset_bath' | 'custom'
+  const [terraceCustomSqft, setTerraceCustomSqft] = useState('')
+  const [terraceCustomRate, setTerraceCustomRate] = useState('')
 
   const mp = (key, fallback) => parseFloat(marketPrices[key]) || fallback
   const fmt = (n) => `₹${Math.round(n).toLocaleString('en-IN')}`
@@ -255,22 +302,31 @@ export default function NewProjectPage() {
     setTimeout(() => { autoSaveReady.current = true }, 500)
   }, [])
 
-  // Auto-save draft to localStorage
+  // Auto-save draft to localStorage — only when form has real data
   useEffect(() => {
     if (!autoSaveReady.current) return
+    const hasData = clientName || width || length || floors.some(f => f.type)
+    if (!hasData) {
+      localStorage.removeItem(DRAFT_KEY)
+      return
+    }
     const draft = {
       clientName, clientPhone, clientLocation, width, length, isIrregular, sideFront, sideBack, sideLeft, sideRight, masonryType,
       floorCount, floors, hasLift, hasSump, sumpCapacity, sumpType, sumpRateOverride, hasSsm, ssmCourses,
       hasCompoundWall, hasRainwater, hasGas, hasOht, ohtCapacity, ohtCustom, ohtCustomPrice, mainGateCustomPrice,
       hasMainGate, hasAc, hasCctv, hasSolar, hasUps, hasWifi,
       paintingGrade, windowType, railingType, flooringType, customItems,
+      hasTerrace, terraceType, terraceCustomSqft, terraceCustomRate,
+      rainwaterCustomCost, gasCustomRate, acCustomRate, cctvCustomRate, solarCustomCost, upsCustomRate, wifiCustomCost, paintingCustomRate,
     }
     localStorage.setItem(DRAFT_KEY, JSON.stringify(draft))
   }, [clientName, clientPhone, clientLocation, width, length, isIrregular, sideFront, sideBack, sideLeft, sideRight, masonryType,
       floorCount, floors, hasLift, hasSump, sumpCapacity, sumpType, sumpRateOverride, hasSsm, ssmCourses,
       hasCompoundWall, hasRainwater, hasGas, hasOht, ohtCapacity, ohtCustom, ohtCustomPrice, mainGateCustomPrice,
       hasMainGate, hasAc, hasCctv, hasSolar, hasUps, hasWifi,
-      paintingGrade, windowType, railingType, flooringType, customItems])
+      paintingGrade, windowType, railingType, flooringType, customItems,
+      hasTerrace, terraceType, terraceCustomSqft, terraceCustomRate,
+      rainwaterCustomCost, gasCustomRate, acCustomRate, cctvCustomRate, solarCustomCost, upsCustomRate, wifiCustomCost, paintingCustomRate])
 
   // Warn on browser back / tab close
   useEffect(() => {
@@ -323,6 +379,18 @@ export default function NewProjectPage() {
       if (d.railingType !== undefined) setRailingType(d.railingType)
       if (d.flooringType !== undefined) setFlooringType(d.flooringType)
       if (d.customItems !== undefined) setCustomItems(d.customItems)
+      if (d.hasTerrace !== undefined) setHasTerrace(d.hasTerrace)
+      if (d.terraceType !== undefined) setTerraceType(d.terraceType)
+      if (d.terraceCustomSqft !== undefined) setTerraceCustomSqft(d.terraceCustomSqft)
+      if (d.terraceCustomRate !== undefined) setTerraceCustomRate(d.terraceCustomRate)
+      if (d.rainwaterCustomCost !== undefined) setRainwaterCustomCost(d.rainwaterCustomCost)
+      if (d.gasCustomRate !== undefined) setGasCustomRate(d.gasCustomRate)
+      if (d.acCustomRate !== undefined) setAcCustomRate(d.acCustomRate)
+      if (d.cctvCustomRate !== undefined) setCctvCustomRate(d.cctvCustomRate)
+      if (d.solarCustomCost !== undefined) setSolarCustomCost(d.solarCustomCost)
+      if (d.upsCustomRate !== undefined) setUpsCustomRate(d.upsCustomRate)
+      if (d.wifiCustomCost !== undefined) setWifiCustomCost(d.wifiCustomCost)
+      if (d.paintingCustomRate !== undefined) setPaintingCustomRate(d.paintingCustomRate)
     } catch {}
     setShowRestorePrompt(false)
   }
@@ -494,6 +562,14 @@ export default function NewProjectPage() {
           ...(sumpRateOverride ? { sumpRateOverride: parseFloat(sumpRateOverride) } : {}),
           ...(ohtCustomPrice ? { ohtCustomPrice: parseFloat(ohtCustomPrice) } : {}),
           ...(mainGateCustomPrice ? { mainGateCustomPrice: parseFloat(mainGateCustomPrice) } : {}),
+          ...(rainwaterCustomCost ? { rainwaterCustomCost: parseFloat(rainwaterCustomCost) } : {}),
+          ...(gasCustomRate ? { gasCustomRate: parseFloat(gasCustomRate) } : {}),
+          ...(acCustomRate ? { acCustomRate: parseFloat(acCustomRate) } : {}),
+          ...(cctvCustomRate ? { cctvCustomRate: parseFloat(cctvCustomRate) } : {}),
+          ...(solarCustomCost ? { solarCustomCost: parseFloat(solarCustomCost) } : {}),
+          ...(upsCustomRate ? { upsCustomRate: parseFloat(upsCustomRate) } : {}),
+          ...(wifiCustomCost ? { wifiCustomCost: parseFloat(wifiCustomCost) } : {}),
+          ...(paintingCustomRate ? { paintingCustomRate: parseFloat(paintingCustomRate) } : {}),
         }
       }),
       has_sump: hasSump, sump_capacity: sumpCapacity || null, sump_type: sumpType,
@@ -509,6 +585,9 @@ export default function NewProjectPage() {
       bedroom_doors: td.bedroom, washroom_doors: td.washroom,
       balcony_doors: td.balcony, utility_doors: td.utility,
       has_pooja_room_door: td.poojaRoom > 0,
+      terrace_room_type: hasTerrace ? terraceType : null,
+      terrace_room_sqft: terraceCustomSqft ? parseFloat(terraceCustomSqft) : null,
+      terrace_room_rate: terraceCustomRate ? parseFloat(terraceCustomRate) : null,
     }
 
     const effectivePrices = {
@@ -529,7 +608,8 @@ export default function NewProjectPage() {
       hasSsm, ssmCourses, hasCompoundWall, hasRainwater, hasGas, hasOht, ohtCapacity, ohtCustom,
       hasMainGate, hasAc, hasCctv, hasSolar, hasUps, hasWifi, paintingGrade, flooringType,
       windowType, railingType, marketPrices, customBlockPrice, customBrickPrice, boqData,
-      ohtCustomPrice, mainGateCustomPrice])
+      ohtCustomPrice, mainGateCustomPrice, hasTerrace, terraceType, terraceCustomSqft, terraceCustomRate,
+      rainwaterCustomCost, gasCustomRate, acCustomRate, cctvCustomRate, solarCustomCost, upsCustomRate, wifiCustomCost, paintingCustomRate])
 
   async function handleSave() {
     if (submittingRef.current) return
@@ -538,6 +618,11 @@ export default function NewProjectPage() {
       : (width && length)
     if (!clientName || !hasDimensions) {
       alert('Please fill Client Name and Dimensions')
+      return
+    }
+    const gfRestriction = getGroundFloorRestriction(sqft)
+    if (gfRestriction && floors[0]?.type && gfRestriction.blocked.includes(floors[0].type)) {
+      alert(`Ground floor type "${floors[0].type}" is not allowed for this plot size.\n\n${gfRestriction.message}`)
       return
     }
     submittingRef.current = true
@@ -566,6 +651,14 @@ export default function NewProjectPage() {
           ...(sumpRateOverride ? { sumpRateOverride: parseFloat(sumpRateOverride) } : {}),
           ...(ohtCustomPrice ? { ohtCustomPrice: parseFloat(ohtCustomPrice) } : {}),
           ...(mainGateCustomPrice ? { mainGateCustomPrice: parseFloat(mainGateCustomPrice) } : {}),
+          ...(rainwaterCustomCost ? { rainwaterCustomCost: parseFloat(rainwaterCustomCost) } : {}),
+          ...(gasCustomRate ? { gasCustomRate: parseFloat(gasCustomRate) } : {}),
+          ...(acCustomRate ? { acCustomRate: parseFloat(acCustomRate) } : {}),
+          ...(cctvCustomRate ? { cctvCustomRate: parseFloat(cctvCustomRate) } : {}),
+          ...(solarCustomCost ? { solarCustomCost: parseFloat(solarCustomCost) } : {}),
+          ...(upsCustomRate ? { upsCustomRate: parseFloat(upsCustomRate) } : {}),
+          ...(wifiCustomCost ? { wifiCustomCost: parseFloat(wifiCustomCost) } : {}),
+          ...(paintingCustomRate ? { paintingCustomRate: parseFloat(paintingCustomRate) } : {}),
         }
       }),
       ground_floor_type: floors[0]?.type || '',
@@ -598,6 +691,9 @@ export default function NewProjectPage() {
       utility_doors: totalDoors.utility,
       has_pooja_room_door: totalDoors.poojaRoom > 0,
       masonry_type: masonryType,
+      terrace_room_type: hasTerrace ? terraceType : null,
+      terrace_room_sqft: (hasTerrace && terraceType === 'custom' && terraceCustomSqft) ? parseFloat(terraceCustomSqft) : null,
+      terrace_room_rate: (hasTerrace && terraceType === 'custom' && terraceCustomRate) ? parseFloat(terraceCustomRate) : null,
       status: 'draft',
       created_by: user?.name,
     }
@@ -907,11 +1003,15 @@ export default function NewProjectPage() {
                 <div className="p-4 space-y-4 bg-white">
 
                   {/* Row 1 — Type + Sqft */}
+                  {(() => {
+                    const restriction = index === 0 ? getGroundFloorRestriction(sqft) : null
+                    const isCurrentInvalid = restriction && floor.type && restriction.blocked.includes(floor.type)
+                    return (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
                       <Label>Floor Type *</Label>
                       <select
-                        className="w-full h-10 px-3 border border-gray-200 rounded-lg text-sm bg-white"
+                        className={`w-full h-10 px-3 border rounded-lg text-sm bg-white ${isCurrentInvalid ? 'border-red-400 ring-1 ring-red-300' : 'border-gray-200'}`}
                         value={floor.type}
                         onChange={e => handleFloorTypeChange(index, e.target.value)}
                       >
@@ -924,14 +1024,29 @@ export default function NewProjectPage() {
                           const types = index === 0 ? GROUND_TYPES : UPPER_TYPES
                           return groups.map(g => (
                             <optgroup key={g.label} label={g.label}>
-                              {g.values.map(v => { const t = types.find(x => x.value === v); return t ? <option key={t.value} value={t.value}>{t.label}</option> : null })}
+                              {g.values.map(v => {
+                                const t = types.find(x => x.value === v)
+                                if (!t) return null
+                                const isBlocked = restriction?.blocked.includes(t.value)
+                                return (
+                                  <option key={t.value} value={t.value} disabled={isBlocked}>
+                                    {isBlocked ? `${t.label} — plot too small` : t.label}
+                                  </option>
+                                )
+                              })}
                             </optgroup>
                           ))
                         })()}
                       </select>
-                      <p className="text-xs text-gray-400">
-                        {index === 0 ? 'Select what is being constructed on ground floor' : `Select the unit type for ${floor.name}`}
-                      </p>
+                      {isCurrentInvalid ? (
+                        <p className="text-xs text-red-500 font-medium">⚠ This type is not suitable for the entered plot size. Please select again.</p>
+                      ) : restriction ? (
+                        <p className="text-xs text-amber-600">{restriction.message}</p>
+                      ) : (
+                        <p className="text-xs text-gray-400">
+                          {index === 0 ? 'Select what is being constructed on ground floor' : `Select the unit type for ${floor.name}`}
+                        </p>
+                      )}
                     </div>
                     <div className="space-y-1.5">
                       <Label>Construction Area (sqft)</Label>
@@ -944,6 +1059,8 @@ export default function NewProjectPage() {
                       <p className="text-xs text-gray-400">How much area is being constructed on this floor</p>
                     </div>
                   </div>
+                    )
+                  })()}
 
                   {/* Staircase — show on all floors except last */}
                   <div className="space-y-1.5">
@@ -1365,6 +1482,92 @@ export default function NewProjectPage() {
           </CardContent>
         </Card>
 
+        {/* Section 3b — Terrace Room */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <Badge variant="outline">3b</Badge>
+              Terrace Room
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between py-2">
+              <div>
+                <p className="text-sm font-medium">Terrace Room / Additional Room</p>
+                <p className="text-xs text-gray-400">Room constructed on top of terrace slab</p>
+              </div>
+              <Switch checked={hasTerrace} onCheckedChange={setHasTerrace} />
+            </div>
+
+            {hasTerrace && (
+              <>
+                <Separator />
+
+                {/* Option 1 — Preset packages */}
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Choose option</p>
+
+                  <label className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${terraceType === 'preset_basic' ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300'}`}>
+                    <input type="radio" name="terraceType" value="preset_basic" checked={terraceType === 'preset_basic'} onChange={() => setTerraceType('preset_basic')} className="mt-0.5" />
+                    <div>
+                      <p className="text-sm font-medium">100 sqft Room — ₹70,000</p>
+                      <p className="text-xs text-gray-400">All-in: structure, plaster, flooring, electrical, doors</p>
+                    </div>
+                  </label>
+
+                  <label className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${terraceType === 'preset_bath' ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300'}`}>
+                    <input type="radio" name="terraceType" value="preset_bath" checked={terraceType === 'preset_bath'} onChange={() => setTerraceType('preset_bath')} className="mt-0.5" />
+                    <div>
+                      <p className="text-sm font-medium">100 sqft Room + Bathroom — ₹2,00,000</p>
+                      <p className="text-xs text-gray-400">All-in including plumbing, waterproofing, bathroom fittings</p>
+                    </div>
+                  </label>
+
+                  <label className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${terraceType === 'custom' ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300'}`}>
+                    <input type="radio" name="terraceType" value="custom" checked={terraceType === 'custom'} onChange={() => setTerraceType('custom')} className="mt-0.5" />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">Custom Area</p>
+                      <p className="text-xs text-gray-400">Enter sqft and rate per sqft</p>
+                    </div>
+                  </label>
+
+                  {terraceType === 'custom' && (
+                    <div className="ml-6 grid grid-cols-2 gap-3 pt-1">
+                      <div className="space-y-1">
+                        <Label className="text-xs text-gray-500">Area (sqft)</Label>
+                        <Input
+                          type="number"
+                          placeholder="e.g. 340"
+                          value={terraceCustomSqft}
+                          onChange={e => setTerraceCustomSqft(e.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs text-gray-500">Rate (₹/sqft)</Label>
+                        <Input
+                          type="number"
+                          placeholder={`Default: ${fmt(mp('Terrace Room Rate', 2000))}/sqft`}
+                          value={terraceCustomRate}
+                          onChange={e => setTerraceCustomRate(e.target.value)}
+                        />
+                        <p className="text-xs text-gray-400">Leave blank to use market rate</p>
+                      </div>
+                      {terraceCustomSqft && (
+                        <div className="col-span-2 bg-blue-50 border border-blue-100 rounded-lg p-2.5">
+                          <p className="text-sm font-semibold text-blue-700">
+                            {terraceCustomSqft} sqft × ₹{terraceCustomRate || mp('Terrace Room Rate', 2000)}/sqft
+                            {' = '}₹{(parseFloat(terraceCustomSqft) * (parseFloat(terraceCustomRate) || mp('Terrace Room Rate', 2000))).toLocaleString('en-IN')}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+          </CardContent>
+        </Card>
+
         {/* Section 4 — Optional Features */}
         <Card>
           <CardHeader>
@@ -1525,61 +1728,123 @@ export default function NewProjectPage() {
               },
               {
                 label: 'Rainwater Harvesting',
-                sub: `Drain covers, pit and recharge system — ${fmt(r.rainwater)}`,
+                sub: rainwaterCustomCost ? `Custom: ${fmt(parseFloat(rainwaterCustomCost))}` : `Drain covers, pit and recharge system — ${fmt(r.rainwater)}`,
                 state: hasRainwater,
                 set: setHasRainwater,
                 isDefault: true,
+                extra: hasRainwater && (
+                  <div className="pl-4 border-l-2 border-blue-100 mt-1 pb-2">
+                    <div className="w-56 space-y-1">
+                      <Label className="text-xs">Custom Price (₹) — leave blank to use market rate</Label>
+                      <Input type="number" placeholder={`Market: ${fmt(r.rainwater)}`} value={rainwaterCustomCost} onChange={e => setRainwaterCustomCost(e.target.value)} />
+                    </div>
+                  </div>
+                ),
               },
               {
                 label: 'Gas Pipeline',
-                sub: `${floorCount} floor${floorCount > 1 ? 's' : ''} × 15 rft × ${fmt(r.gas)}/rft = ${fmt(floorCount * 15 * r.gas)}`,
+                sub: (() => {
+                  const rate = gasCustomRate ? parseFloat(gasCustomRate) : r.gas
+                  return gasCustomRate ? `Custom: ${fmt(rate)}/rft × ${floorCount * 15} rft = ${fmt(rate * floorCount * 15)}` : `${floorCount} floor${floorCount > 1 ? 's' : ''} × 15 rft × ${fmt(r.gas)}/rft = ${fmt(floorCount * 15 * r.gas)}`
+                })(),
                 state: hasGas,
                 set: setHasGas,
                 isDefault: true,
+                extra: hasGas && (
+                  <div className="pl-4 border-l-2 border-blue-100 mt-1 pb-2">
+                    <div className="w-56 space-y-1">
+                      <Label className="text-xs">Custom Rate (₹/rft) — leave blank for market rate</Label>
+                      <Input type="number" placeholder={`Market: ${fmt(r.gas)}/rft`} value={gasCustomRate} onChange={e => setGasCustomRate(e.target.value)} />
+                    </div>
+                  </div>
+                ),
               },
               {
                 label: 'AC Provision',
                 sub: (() => {
                   const pts = floors.reduce((s, f) => s + (parseInt(f.acPoints) || 0), 0)
-                  return pts > 0 ? `${pts} points × ${fmt(r.ac)} = ${fmt(pts * r.ac)}` : `${fmt(r.ac)} per point — set points per floor above`
+                  const rate = acCustomRate ? parseFloat(acCustomRate) : r.ac
+                  return pts > 0 ? `${pts} points × ${fmt(rate)} = ${fmt(pts * rate)}` : `${fmt(rate)} per point — set points per floor above`
                 })(),
                 state: hasAc,
                 set: setHasAc,
                 isDefault: false,
+                extra: hasAc && (
+                  <div className="pl-4 border-l-2 border-blue-100 mt-1 pb-2">
+                    <div className="w-56 space-y-1">
+                      <Label className="text-xs">Custom Rate (₹/point) — leave blank for market rate</Label>
+                      <Input type="number" placeholder={`Market: ${fmt(r.ac)}/point`} value={acCustomRate} onChange={e => setAcCustomRate(e.target.value)} />
+                    </div>
+                  </div>
+                ),
               },
               {
                 label: 'CCTV Provision',
-                sub: `2 cameras × ${floorCount} floor${floorCount > 1 ? 's' : ''} × ${fmt(r.cctv)} = ${fmt(2 * floorCount * r.cctv)}`,
+                sub: (() => {
+                  const rate = cctvCustomRate ? parseFloat(cctvCustomRate) : r.cctv
+                  return `2 cameras × ${floorCount} floor${floorCount > 1 ? 's' : ''} × ${fmt(rate)} = ${fmt(2 * floorCount * rate)}`
+                })(),
                 state: hasCctv,
                 set: setHasCctv,
                 isDefault: false,
+                extra: hasCctv && (
+                  <div className="pl-4 border-l-2 border-blue-100 mt-1 pb-2">
+                    <div className="w-56 space-y-1">
+                      <Label className="text-xs">Custom Rate (₹/camera) — leave blank for market rate</Label>
+                      <Input type="number" placeholder={`Market: ${fmt(r.cctv)}/camera`} value={cctvCustomRate} onChange={e => setCctvCustomRate(e.target.value)} />
+                    </div>
+                  </div>
+                ),
               },
               {
                 label: 'Solar Provision',
-                sub: `Wiring and mounting structure — ${fmt(r.solar)}`,
+                sub: solarCustomCost ? `Custom: ${fmt(parseFloat(solarCustomCost))}` : `Wiring and mounting structure — ${fmt(r.solar)}`,
                 state: hasSolar,
                 set: setHasSolar,
                 isDefault: false,
+                extra: hasSolar && (
+                  <div className="pl-4 border-l-2 border-blue-100 mt-1 pb-2">
+                    <div className="w-56 space-y-1">
+                      <Label className="text-xs">Custom Price (₹) — leave blank for market rate</Label>
+                      <Input type="number" placeholder={`Market: ${fmt(r.solar)}`} value={solarCustomCost} onChange={e => setSolarCustomCost(e.target.value)} />
+                    </div>
+                  </div>
+                ),
               },
               {
                 label: 'UPS Provision',
                 sub: (() => {
                   const kFloors = floors.filter(f => !['parking_only','parking_lift','commercial_parking'].includes(f.type) && (parseInt(f.kitchens)||0) > 0).length
-                  const total = hasUps
-                    ? floors.filter(f => !['parking_only','parking_lift','commercial_parking'].includes(f.type)).length
-                    : kFloors
-                  return `Auto for ${kFloors} kitchen floor${kFloors !== 1 ? 's' : ''}${hasUps ? ` + all floors` : ''} — ${fmt(total * r.ups)} total`
+                  const total = hasUps ? floors.filter(f => !['parking_only','parking_lift','commercial_parking'].includes(f.type)).length : kFloors
+                  const rate = upsCustomRate ? parseFloat(upsCustomRate) : r.ups
+                  return `Auto for ${kFloors} kitchen floor${kFloors !== 1 ? 's' : ''}${hasUps ? ` + all floors` : ''} — ${fmt(total * rate)} total`
                 })(),
                 state: hasUps,
                 set: setHasUps,
                 isDefault: false,
+                extra: hasUps && (
+                  <div className="pl-4 border-l-2 border-blue-100 mt-1 pb-2">
+                    <div className="w-56 space-y-1">
+                      <Label className="text-xs">Custom Rate (₹/floor) — leave blank for market rate</Label>
+                      <Input type="number" placeholder={`Market: ${fmt(r.ups)}/floor`} value={upsCustomRate} onChange={e => setUpsCustomRate(e.target.value)} />
+                    </div>
+                  </div>
+                ),
               },
               {
                 label: 'WiFi & Cable Provision',
-                sub: `Conduit and junction boxes for WiFi and cable TV — ${fmt(r.wifi)}`,
+                sub: wifiCustomCost ? `Custom: ${fmt(parseFloat(wifiCustomCost))}` : `Conduit and junction boxes for WiFi and cable TV — ${fmt(r.wifi)}`,
                 state: hasWifi,
                 set: setHasWifi,
                 isDefault: false,
+                extra: hasWifi && (
+                  <div className="pl-4 border-l-2 border-blue-100 mt-1 pb-2">
+                    <div className="w-56 space-y-1">
+                      <Label className="text-xs">Custom Price (₹) — leave blank for market rate</Label>
+                      <Input type="number" placeholder={`Market: ${fmt(r.wifi)}`} value={wifiCustomCost} onChange={e => setWifiCustomCost(e.target.value)} />
+                    </div>
+                  </div>
+                ),
               },
             ].map((item, i) => (
               <div key={i} className="border-b border-gray-50 last:border-0">
@@ -1614,19 +1879,35 @@ export default function NewProjectPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-1.5">
-              <Label>Painting Grade</Label>
-              <select
-                className="w-full h-10 px-3 border border-gray-200 rounded-lg text-sm bg-white"
-                value={paintingGrade}
-                onChange={e => setPaintingGrade(e.target.value)}
-              >
-                <option value="">— Select painting grade —</option>
-                {PAINTING_TYPES.map(t => (
-                  <option key={t.value} value={t.value}>{t.label} — {fmt(mp(t.priceKey, t.fallback))}/chadra</option>
-                ))}
-              </select>
-              <p className="text-xs text-gray-400">Cost is calculated per chadra (1 chadra = 100 sqft of slab area)</p>
+            <div className="space-y-3">
+              <div className="space-y-1.5">
+                <Label>Painting Grade</Label>
+                <select
+                  className="w-full h-10 px-3 border border-gray-200 rounded-lg text-sm bg-white"
+                  value={paintingGrade}
+                  onChange={e => setPaintingGrade(e.target.value)}
+                >
+                  <option value="">— Select painting grade —</option>
+                  {PAINTING_TYPES.map(t => (
+                    <option key={t.value} value={t.value}>{t.label} — {fmt(mp(t.priceKey, t.fallback))}/chadra</option>
+                  ))}
+                </select>
+                <p className="text-xs text-gray-400">Cost is calculated per chadra (1 chadra = 100 sqft of slab area)</p>
+              </div>
+              {paintingGrade && (
+                <div className="space-y-1.5">
+                  <Label className="text-xs text-gray-500">Custom Rate (₹/chadra) — leave blank for market rate</Label>
+                  <Input
+                    type="number"
+                    placeholder={`Market: ${fmt(mp(PAINTING_TYPES.find(t => t.value === paintingGrade)?.priceKey || '', PAINTING_TYPES.find(t => t.value === paintingGrade)?.fallback || 8500))}/chadra`}
+                    value={paintingCustomRate}
+                    onChange={e => setPaintingCustomRate(e.target.value)}
+                  />
+                  {paintingCustomRate && liveMetrics?.chadra && (
+                    <p className="text-xs text-gray-400">Custom: {liveMetrics.chadra} chadra × {fmt(parseFloat(paintingCustomRate))} = {fmt(liveMetrics.chadra * parseFloat(paintingCustomRate))}</p>
+                  )}
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
