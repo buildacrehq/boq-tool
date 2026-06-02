@@ -1510,7 +1510,7 @@ export default function NewProjectPage() {
                   <label className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${terraceType === 'preset_basic' ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300'}`}>
                     <input type="radio" name="terraceType" value="preset_basic" checked={terraceType === 'preset_basic'} onChange={() => setTerraceType('preset_basic')} className="mt-0.5" />
                     <div>
-                      <p className="text-sm font-medium">100 sqft Room — ₹70,000</p>
+                      <p className="text-sm font-medium">100 sqft Room — {fmt(mp('Terrace Room Basic', 70000))}</p>
                       <p className="text-xs text-gray-400">All-in: structure, plaster, flooring, electrical, doors</p>
                     </div>
                   </label>
@@ -1518,7 +1518,7 @@ export default function NewProjectPage() {
                   <label className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${terraceType === 'preset_bath' ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300'}`}>
                     <input type="radio" name="terraceType" value="preset_bath" checked={terraceType === 'preset_bath'} onChange={() => setTerraceType('preset_bath')} className="mt-0.5" />
                     <div>
-                      <p className="text-sm font-medium">100 sqft Room + Bathroom — ₹2,00,000</p>
+                      <p className="text-sm font-medium">100 sqft Room + Bathroom — {fmt(mp('Terrace Room With Bathroom', 200000))}</p>
                       <p className="text-xs text-gray-400">All-in including plumbing, waterproofing, bathroom fittings</p>
                     </div>
                   </label>
