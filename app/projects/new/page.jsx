@@ -634,7 +634,7 @@ export default function NewProjectPage() {
       hasSsm, ssmCourses, hasCompoundWall, hasRainwater, hasGas, hasOht, ohtCapacity, ohtCustom,
       hasMainGate, hasAc, hasCctv, hasSolar, hasUps, hasWifi, paintingGrade, flooringType,
       windowType, railingType, marketPrices, customBlockPrice, customBrickPrice, boqData,
-      ohtCustomPrice, mainGateCustomPrice, hasTerrace, terraceType, terraceCustomSqft, terraceCustomRate,
+      ohtCustomPrice, mainGateCustomPrice, hasTerrace, terraceCustomSqft,
       rainwaterCustomCost, gasCustomRate, acCustomRate, cctvCustomRate, solarCustomCost, upsCustomRate, wifiCustomCost, paintingCustomRate,
       labourShedEnabled, labourShedCustomCost, watchmanEnabled, watchmanCustomCost, miscExpenseEnabled, miscExpenseCustomCost, earthingEnabled, earthingCustomCost])
 
@@ -726,7 +726,7 @@ export default function NewProjectPage() {
       utility_doors: totalDoors.utility,
       has_pooja_room_door: totalDoors.poojaRoom > 0,
       masonry_type: masonryType,
-      terrace_room_type: hasTerrace ? terraceType : null,
+      terrace_room_type: hasTerrace ? 'formula' : null,
       terrace_room_sqft: (hasTerrace && terraceCustomSqft) ? parseFloat(terraceCustomSqft) : null,
       terrace_room_washrooms: hasTerrace ? (parseInt(terraceWashrooms) || 0) : null,
       status: 'draft',
