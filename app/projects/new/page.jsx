@@ -267,6 +267,7 @@ export default function NewProjectPage() {
   const [gasCustomRate, setGasCustomRate] = useState('')
   const [acCustomRate, setAcCustomRate] = useState('')
   const [cctvCustomRate, setCctvCustomRate] = useState('')
+  const [cctvUnits, setCctvUnits] = useState('')
   const [solarCustomCost, setSolarCustomCost] = useState('')
   const [upsCustomRate, setUpsCustomRate] = useState('')
   const [wifiCustomCost, setWifiCustomCost] = useState('')
@@ -330,7 +331,7 @@ export default function NewProjectPage() {
       hasMainGate, hasAc, hasCctv, hasSolar, hasUps, hasWifi,
       paintingGrade, windowType, railingType, flooringType, customItems,
       hasTerrace, terraceCustomSqft, terraceWashrooms,
-      rainwaterCustomCost, gasCustomRate, acCustomRate, cctvCustomRate, solarCustomCost, upsCustomRate, wifiCustomCost, paintingCustomRate,
+      rainwaterCustomCost, gasCustomRate, acCustomRate, cctvCustomRate, cctvUnits, solarCustomCost, upsCustomRate, wifiCustomCost, paintingCustomRate,
       labourShedEnabled, labourShedCustomCost, watchmanEnabled, watchmanCustomCost, miscExpenseEnabled, miscExpenseCustomCost, earthingEnabled, earthingCustomCost,
       liftCustomCost, terraceRoomCustomRate, terraceRoomCustomWashroomCost,
     }
@@ -341,7 +342,7 @@ export default function NewProjectPage() {
       hasMainGate, hasAc, hasCctv, hasSolar, hasUps, hasWifi,
       paintingGrade, windowType, railingType, flooringType, customItems,
       hasTerrace, terraceCustomSqft, terraceWashrooms,
-      rainwaterCustomCost, gasCustomRate, acCustomRate, cctvCustomRate, solarCustomCost, upsCustomRate, wifiCustomCost, paintingCustomRate,
+      rainwaterCustomCost, gasCustomRate, acCustomRate, cctvCustomRate, cctvUnits, solarCustomCost, upsCustomRate, wifiCustomCost, paintingCustomRate,
       labourShedEnabled, labourShedCustomCost, watchmanEnabled, watchmanCustomCost, miscExpenseEnabled, miscExpenseCustomCost, earthingEnabled, earthingCustomCost,
       liftCustomCost, terraceRoomCustomRate, terraceRoomCustomWashroomCost])
 
@@ -403,6 +404,7 @@ export default function NewProjectPage() {
       if (d.gasCustomRate !== undefined) setGasCustomRate(d.gasCustomRate)
       if (d.acCustomRate !== undefined) setAcCustomRate(d.acCustomRate)
       if (d.cctvCustomRate !== undefined) setCctvCustomRate(d.cctvCustomRate)
+      if (d.cctvUnits !== undefined) setCctvUnits(d.cctvUnits)
       if (d.solarCustomCost !== undefined) setSolarCustomCost(d.solarCustomCost)
       if (d.upsCustomRate !== undefined) setUpsCustomRate(d.upsCustomRate)
       if (d.wifiCustomCost !== undefined) setWifiCustomCost(d.wifiCustomCost)
@@ -593,6 +595,7 @@ export default function NewProjectPage() {
           ...(gasCustomRate ? { gasCustomRate: parseFloat(gasCustomRate) } : {}),
           ...(acCustomRate ? { acCustomRate: parseFloat(acCustomRate) } : {}),
           ...(cctvCustomRate ? { cctvCustomRate: parseFloat(cctvCustomRate) } : {}),
+          ...(cctvUnits ? { cctvUnits: parseInt(cctvUnits) } : {}),
           ...(solarCustomCost ? { solarCustomCost: parseFloat(solarCustomCost) } : {}),
           ...(upsCustomRate ? { upsCustomRate: parseFloat(upsCustomRate) } : {}),
           ...(wifiCustomCost ? { wifiCustomCost: parseFloat(wifiCustomCost) } : {}),
@@ -647,7 +650,7 @@ export default function NewProjectPage() {
       hasMainGate, hasAc, hasCctv, hasSolar, hasUps, hasWifi, paintingGrade, flooringType,
       windowType, railingType, marketPrices, customBlockPrice, customBrickPrice, boqData,
       ohtCustomPrice, mainGateCustomPrice, hasTerrace, terraceCustomSqft,
-      rainwaterCustomCost, gasCustomRate, acCustomRate, cctvCustomRate, solarCustomCost, upsCustomRate, wifiCustomCost, paintingCustomRate,
+      rainwaterCustomCost, gasCustomRate, acCustomRate, cctvCustomRate, cctvUnits, solarCustomCost, upsCustomRate, wifiCustomCost, paintingCustomRate,
       labourShedEnabled, labourShedCustomCost, watchmanEnabled, watchmanCustomCost, miscExpenseEnabled, miscExpenseCustomCost, earthingEnabled, earthingCustomCost,
       liftCustomCost, terraceRoomCustomRate, terraceRoomCustomWashroomCost])
 
@@ -695,6 +698,7 @@ export default function NewProjectPage() {
           ...(gasCustomRate ? { gasCustomRate: parseFloat(gasCustomRate) } : {}),
           ...(acCustomRate ? { acCustomRate: parseFloat(acCustomRate) } : {}),
           ...(cctvCustomRate ? { cctvCustomRate: parseFloat(cctvCustomRate) } : {}),
+          ...(cctvUnits ? { cctvUnits: parseInt(cctvUnits) } : {}),
           ...(solarCustomCost ? { solarCustomCost: parseFloat(solarCustomCost) } : {}),
           ...(upsCustomRate ? { upsCustomRate: parseFloat(upsCustomRate) } : {}),
           ...(wifiCustomCost ? { wifiCustomCost: parseFloat(wifiCustomCost) } : {}),
@@ -1842,16 +1846,23 @@ export default function NewProjectPage() {
                 label: 'CCTV Provision',
                 sub: (() => {
                   const rate = cctvCustomRate ? parseFloat(cctvCustomRate) : r.cctv
-                  return `2 cameras × ${floorCount} floor${floorCount > 1 ? 's' : ''} × ${fmt(rate)} = ${fmt(2 * floorCount * rate)}`
+                  const units = cctvUnits ? parseInt(cctvUnits) : 2 * floorCount
+                  return `${units} camera${units !== 1 ? 's' : ''} × ${fmt(rate)} = ${fmt(units * rate)}`
                 })(),
                 state: hasCctv,
                 set: setHasCctv,
                 isDefault: false,
                 extra: hasCctv && (
                   <div className="pl-4 border-l-2 border-blue-100 mt-1 pb-2">
-                    <div className="w-56 space-y-1">
-                      <Label className="text-xs">Custom Rate (₹/camera) — leave blank for market rate</Label>
-                      <Input type="number" placeholder={`Market: ${fmt(r.cctv)}/camera`} value={cctvCustomRate} onChange={e => setCctvCustomRate(e.target.value)} />
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1">
+                        <Label className="text-xs">Total Cameras</Label>
+                        <Input type="number" min="1" placeholder={`Default: ${2 * floorCount}`} value={cctvUnits} onChange={e => setCctvUnits(e.target.value)} />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Rate (₹/camera)</Label>
+                        <Input type="number" placeholder={`Market: ${fmt(r.cctv)}`} value={cctvCustomRate} onChange={e => setCctvCustomRate(e.target.value)} />
+                      </div>
                     </div>
                   </div>
                 ),
