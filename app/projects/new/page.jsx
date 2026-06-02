@@ -1144,8 +1144,8 @@ export default function NewProjectPage() {
                   {isParking(floor.type) && (
                     <>
                       <Separator />
-                      <div className="p-3 bg-gray-50 rounded-lg">
-                        <p className="text-xs font-medium text-gray-500 mb-2">Guard / Security Washroom</p>
+                      <div className="p-3 bg-gray-50 rounded-lg space-y-3">
+                        <p className="text-xs font-medium text-gray-500">Guard / Security Washroom</p>
                         <div className="grid grid-cols-2 gap-3">
                           <div className="space-y-1.5">
                             <Label className="text-xs">Toilets</Label>
@@ -1156,6 +1156,17 @@ export default function NewProjectPage() {
                             <Input type="number" min="0" value={floor.washroomDoors} onChange={e => updateFloor(index, 'washroomDoors', e.target.value)} />
                           </div>
                         </div>
+                        {(parseInt(floor.toilets) || 0) > 0 && (
+                          <div className="space-y-1.5">
+                            <Label className="text-xs text-gray-500">Custom Price (₹) — leave blank to use standard plumbing rates</Label>
+                            <Input
+                              type="number"
+                              placeholder={`Auto: ${fmt((parseInt(floor.toilets)||1) * (mp('Plumbing Pipes',40000) + mp('Plumbing Fittings',30000) + mp('Plumbing Labour',10000)))}`}
+                              value={floor.guardWashroomCustomCost || ''}
+                              onChange={e => updateFloor(index, 'guardWashroomCustomCost', e.target.value)}
+                            />
+                          </div>
+                        )}
                       </div>
                     </>
                   )}
