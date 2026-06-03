@@ -74,6 +74,73 @@ const DEFAULT_FLOOR_GROUPS = [
 
 const VEHICLE_OPTIONS = ['', 'Tractor', '709', '6W', '10W']
 
+const SITE_PREP_ROWS = [
+  { key: 'site_cleaning', label: 'Site Cleaning', unit: '₹', divisible: false, type: 'number', table: 'boq_quantities' },
+  { key: 'survey',        label: 'Survey',        unit: '₹', divisible: false, type: 'number', table: 'boq_quantities' },
+  { key: 'soil_test',     label: 'Soil Test',     unit: '₹', divisible: false, type: 'number', table: 'boq_quantities' },
+  { key: 'excavation',    label: 'Excavation',    unit: '₹', divisible: false, type: 'number', table: 'boq_quantities' },
+  { key: 'soil_refilling',label: 'Soil Refilling',unit: '₹', divisible: false, type: 'number', table: 'boq_quantities' },
+  { key: 'anti_termite',  label: 'Anti Termite',  unit: '₹', divisible: false, type: 'number', table: 'boq_quantities' },
+  { key: 'cover_blocks',  label: 'Cover Blocks',  unit: '₹', divisible: false, type: 'number', table: 'boq_quantities' },
+]
+const SITE_PREP_DEFAULTS = {
+  site_cleaning:  { s20x30: 10000, s20x40: 10000, s30x40: 15000, s30x50: 20000, s40x40: 20000, s40x60: 20000 },
+  survey:         { s20x30: 8000,  s20x40: 8000,  s30x40: 8000,  s30x50: 8000,  s40x40: 8000,  s40x60: 8000  },
+  soil_test:      { s20x30: 20000, s20x40: 20000, s30x40: 20000, s30x50: 20000, s40x40: 20000, s40x60: 20000 },
+  excavation:     { s20x30: 20000, s20x40: 20000, s30x40: 25000, s30x50: 30000, s40x40: 30000, s40x60: 30000 },
+  soil_refilling: { s20x30: 15000, s20x40: 20000, s30x40: 25000, s30x50: 35000, s40x40: 30000, s40x60: 40000 },
+  anti_termite:   { s20x30: 5000,  s20x40: 5000,  s30x40: 5000,  s30x50: 5000,  s40x40: 5000,  s40x60: 5000  },
+  cover_blocks:   { s20x30: 5000,  s20x40: 5000,  s30x40: 5000,  s30x50: 5000,  s40x40: 5000,  s40x60: 5000  },
+}
+
+const FOOTING_VEHICLE_ROWS = [
+  { key: 'footing_msand', label: 'M Sand',          unit: 'Vehicle', divisible: false, type: 'vehicle', table: 'boq_vehicle_types' },
+  { key: 'footing_20mm',  label: '20mm Aggregate',  unit: 'Vehicle', divisible: false, type: 'vehicle', table: 'boq_vehicle_types' },
+  { key: 'footing_40mm',  label: '40mm Aggregate',  unit: 'Vehicle', divisible: false, type: 'vehicle', table: 'boq_vehicle_types' },
+]
+const FOOTING_VEHICLE_DEFAULTS = {
+  footing_msand: { s20x30: '6W',  s20x40: '6W',  s30x40: '6W',  s30x50: '6W',  s40x40: '6W',  s40x60: '10W' },
+  footing_20mm:  { s20x30: '6W',  s20x40: '6W',  s30x40: '6W',  s30x50: '6W',  s40x40: '6W',  s40x60: '10W' },
+  footing_40mm:  { s20x30: '709', s20x40: '709', s30x40: '709', s30x50: '709', s40x40: '709', s40x60: '6W'  },
+}
+
+const PLINTH_VEHICLE_ROWS = [
+  { key: 'plinth_msand', label: 'M Sand',         unit: 'Vehicle', divisible: false, type: 'vehicle', table: 'boq_vehicle_types' },
+  { key: 'plinth_20mm',  label: '20mm Aggregate', unit: 'Vehicle', divisible: false, type: 'vehicle', table: 'boq_vehicle_types' },
+  { key: 'plinth_40mm',  label: '40mm Aggregate', unit: 'Vehicle', divisible: false, type: 'vehicle', table: 'boq_vehicle_types' },
+]
+const PLINTH_VEHICLE_DEFAULTS = {
+  plinth_msand: { s20x30: '709', s20x40: '709', s30x40: '6W', s30x50: '6W', s40x40: '6W', s40x60: '10W' },
+  plinth_20mm:  { s20x30: '709', s20x40: '709', s30x40: '6W', s30x50: '6W', s40x40: '6W', s40x60: '10W' },
+  plinth_40mm:  { s20x30: '709', s20x40: '709', s30x40: '709',s30x50: '6W', s40x40: '6W', s40x60: '6W'  },
+}
+
+const PARAPET_ROWS = [
+  { key: 'parapet_blocks', label: 'Blocks',         unit: 'Nos',     divisible: false, type: 'number',  table: 'boq_quantities' },
+  { key: 'parapet_cement', label: 'Cement',         unit: 'Bags',    divisible: false, type: 'number',  table: 'boq_quantities' },
+  { key: 'parapet_msand',  label: 'M Sand',         unit: 'Vehicle', divisible: false, type: 'vehicle', table: 'boq_vehicle_types' },
+  { key: 'parapet_20mm',   label: '20mm Aggregate', unit: 'Vehicle', divisible: false, type: 'vehicle', table: 'boq_vehicle_types' },
+]
+const PARAPET_DEFAULTS = {
+  parapet_blocks: { s20x30: 500,   s20x40: 500,   s30x40: 1000,  s30x50: 1000,  s40x40: 1000,  s40x60: 1500  },
+  parapet_cement: { s20x30: 25,    s20x40: 30,    s30x40: 40,    s30x50: 40,    s40x40: 50,    s40x60: 50    },
+  parapet_msand:  { s20x30: '709', s20x40: '709', s30x40: '709', s30x50: '709', s40x40: '709', s40x60: '709' },
+  parapet_20mm:   { s20x30: '709', s20x40: '709', s30x40: '709', s30x50: '709', s40x40: '709', s40x60: '709' },
+}
+
+const CW_ROWS = [
+  { key: 'cw_blocks',  label: 'Blocks',    unit: 'Nos', divisible: false, type: 'number', table: 'boq_quantities' },
+  { key: 'cw_cement',  label: 'Cement',    unit: 'Bags',divisible: false, type: 'number', table: 'boq_quantities' },
+  { key: 'cw_labour',  label: 'Labour',    unit: '₹',   divisible: false, type: 'number', table: 'boq_quantities' },
+  { key: 'cw_plaster', label: 'Plaster',   unit: '₹',   divisible: false, type: 'number', table: 'boq_quantities' },
+]
+const CW_DEFAULTS = {
+  cw_blocks:  { s20x30: 600,   s20x40: 800,   s30x40: 1000,  s30x50: 1200,  s40x40: 1400,  s40x60: 2000  },
+  cw_cement:  { s20x30: 30,    s20x40: 40,    s30x40: 50,    s30x50: 60,    s40x40: 70,    s40x60: 80    },
+  cw_labour:  { s20x30: 10000, s20x40: 20000, s30x40: 30000, s30x50: 40000, s40x40: 50000, s40x60: 60000 },
+  cw_plaster: { s20x30: 10000, s20x40: 20000, s30x40: 30000, s30x50: 40000, s40x40: 50000, s40x60: 60000 },
+}
+
 const ROWS = [
   { key: 'blocks', label: 'Blocks',         unit: 'Nos',     divisible: false, type: 'number',  table: 'boq_quantities' },
   { key: 'bricks', label: 'Bricks',         unit: 'Nos',     divisible: false, type: 'number',  table: 'boq_quantities' },
@@ -509,8 +576,13 @@ export default function CalcSettingsPage() {
           </div>
         </div>
 
-        {/* Terrace quantities */}
+        {/* Additional editable sections */}
         {[
+          { title: 'Site Preparation & Soil', note: 'Site cleaning, survey, soil test, excavation, soil refilling, anti-termite, cover blocks — cost per site size', rows: SITE_PREP_ROWS, defaults: SITE_PREP_DEFAULTS },
+          { title: 'Footing — Sand & Aggregate Vehicles', note: 'M Sand, 20mm and 40mm aggregate vehicle types for footing stage', rows: FOOTING_VEHICLE_ROWS, defaults: FOOTING_VEHICLE_DEFAULTS },
+          { title: 'Plinth — Sand & Aggregate Vehicles', note: 'M Sand, 20mm and 40mm aggregate vehicle types for plinth stage', rows: PLINTH_VEHICLE_ROWS, defaults: PLINTH_VEHICLE_DEFAULTS },
+          { title: 'Compound Wall', note: 'Blocks, cement, labour and plastering quantities per site size', rows: CW_ROWS, defaults: CW_DEFAULTS },
+          { title: 'Parapet Wall', note: 'Blocks, cement and sand/aggregate vehicles for parapet wall', rows: PARAPET_ROWS, defaults: PARAPET_DEFAULTS },
           { title: 'Terrace Floor', note: 'Quantities for the topmost slab and headroom', rows: TERRACE_ROWS, defaults: TERRACE_DEFAULTS },
           { title: 'Screed Concrete', note: 'Terrace floor screed — cement, P Sand, 12mm aggregates and misc', rows: SCREED_ROWS, defaults: SCREED_DEFAULTS },
         ].map(({ title, note, rows: sectionRows, defaults }) => (
