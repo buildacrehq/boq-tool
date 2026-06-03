@@ -1229,7 +1229,26 @@ export default function NewProjectPage() {
                             <p className="text-xs text-gray-400">{`${parseInt(floor.bedroomDoors) || 0} × ₹${(parseFloat(floor.bedroomDoorPrice) || r.bedroomDoor).toLocaleString('en-IN')} = ${fmt((parseInt(floor.bedroomDoors) || 0) * (parseFloat(floor.bedroomDoorPrice) || r.bedroomDoor))}`}</p>
                           </div>
                           <div className="space-y-1.5">
-                            <Label className="text-xs">Washrooms</Label>
+                            <div className="flex items-center gap-1.5">
+                              <Label className="text-xs">Washrooms</Label>
+                              <div className="relative group">
+                                <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-gray-200 text-gray-500 text-xs cursor-default hover:bg-blue-100 hover:text-blue-600 select-none">i</span>
+                                <div className="absolute bottom-full left-0 mb-1.5 hidden group-hover:block z-20 w-52 bg-gray-900 text-white text-xs rounded-lg p-2.5 shadow-xl pointer-events-none">
+                                  <p className="font-semibold mb-1.5 text-gray-200">Plumbing — per toilet</p>
+                                  <div className="space-y-1">
+                                    <div className="flex justify-between"><span className="text-gray-400">Pipes</span><span>{fmt(mp('Plumbing Pipes', 40000))}</span></div>
+                                    <div className="flex justify-between"><span className="text-gray-400">Fittings</span><span>{fmt(mp('Plumbing Fittings', 30000))}</span></div>
+                                    <div className="flex justify-between"><span className="text-gray-400">Labour</span><span>{fmt(mp('Plumbing Labour', 10000))}</span></div>
+                                    <div className="flex justify-between"><span className="text-gray-400">Waterproofing</span><span>{fmt(mp('Washroom Waterproofing', 2000))}</span></div>
+                                    <div className="flex justify-between"><span className="text-gray-400">Cinder Backfilling</span><span>{fmt(mp('Cinder Backfilling', 4000))}</span></div>
+                                    <div className="flex justify-between border-t border-gray-600 pt-1 mt-1 font-semibold">
+                                      <span>Total/toilet</span>
+                                      <span className="text-blue-300">{fmt(mp('Plumbing Pipes',40000)+mp('Plumbing Fittings',30000)+mp('Plumbing Labour',10000)+mp('Washroom Waterproofing',2000)+mp('Cinder Backfilling',4000))}</span>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
                             <Input type="number" min="0" value={floor.washroomDoors} onChange={e => {
                               const v = e.target.value
                               setFloors(prev => { const u = [...prev]; u[index] = { ...u[index], washroomDoors: v, toilets: v }; return u })
