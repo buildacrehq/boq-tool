@@ -253,6 +253,11 @@ export default function NewProjectPage() {
   const [terraceRoomCustomWashroomCost, setTerraceRoomCustomWashroomCost] = useState('')
 
   // Always-on services with toggle + custom price (stored in floorsData[0])
+  const [hasParapet, setHasParapet] = useState(true)
+  const [hasWashroomWaterproofing, setHasWashroomWaterproofing] = useState(true)
+  const [washroomWaterproofingCustomRate, setWashroomWaterproofingCustomRate] = useState('')
+  const [hasCinderBackfilling, setHasCinderBackfilling] = useState(true)
+  const [cinderBackfillingCustomRate, setCinderBackfillingCustomRate] = useState('')
   const [labourShedEnabled, setLabourShedEnabled] = useState(true)
   const [labourShedCustomCost, setLabourShedCustomCost] = useState('')
   const [watchmanEnabled, setWatchmanEnabled] = useState(true)
@@ -336,6 +341,7 @@ export default function NewProjectPage() {
       paintingGrade, windowType, railingType, flooringType, customItems,
       hasTerrace, terraceCustomSqft, terraceWashrooms, terraceWashroomMode,
       rainwaterCustomCost, gasCustomRate, gasRftOverride, acCustomRate, acUnitsOverride, cctvCustomRate, cctvUnits, solarCustomCost, upsCustomRate, upsUnitsOverride, wifiCustomCost, paintingCustomRate,
+      hasParapet, hasWashroomWaterproofing, washroomWaterproofingCustomRate, hasCinderBackfilling, cinderBackfillingCustomRate,
       labourShedEnabled, labourShedCustomCost, watchmanEnabled, watchmanCustomCost, miscExpenseEnabled, miscExpenseCustomCost, earthingEnabled, earthingCustomCost,
       liftCustomCost, terraceRoomCustomRate, terraceRoomCustomWashroomCost,
     }
@@ -347,6 +353,7 @@ export default function NewProjectPage() {
       paintingGrade, windowType, railingType, flooringType, customItems,
       hasTerrace, terraceCustomSqft, terraceWashrooms, terraceWashroomMode,
       rainwaterCustomCost, gasCustomRate, gasRftOverride, acCustomRate, acUnitsOverride, cctvCustomRate, cctvUnits, solarCustomCost, upsCustomRate, upsUnitsOverride, wifiCustomCost, paintingCustomRate,
+      hasParapet, hasWashroomWaterproofing, washroomWaterproofingCustomRate, hasCinderBackfilling, cinderBackfillingCustomRate,
       labourShedEnabled, labourShedCustomCost, watchmanEnabled, watchmanCustomCost, miscExpenseEnabled, miscExpenseCustomCost, earthingEnabled, earthingCustomCost,
       liftCustomCost, terraceRoomCustomRate, terraceRoomCustomWashroomCost])
 
@@ -417,6 +424,11 @@ export default function NewProjectPage() {
       if (d.upsCustomRate !== undefined) setUpsCustomRate(d.upsCustomRate)
       if (d.wifiCustomCost !== undefined) setWifiCustomCost(d.wifiCustomCost)
       if (d.paintingCustomRate !== undefined) setPaintingCustomRate(d.paintingCustomRate)
+      if (d.hasParapet !== undefined) setHasParapet(d.hasParapet)
+      if (d.hasWashroomWaterproofing !== undefined) setHasWashroomWaterproofing(d.hasWashroomWaterproofing)
+      if (d.washroomWaterproofingCustomRate !== undefined) setWashroomWaterproofingCustomRate(d.washroomWaterproofingCustomRate)
+      if (d.hasCinderBackfilling !== undefined) setHasCinderBackfilling(d.hasCinderBackfilling)
+      if (d.cinderBackfillingCustomRate !== undefined) setCinderBackfillingCustomRate(d.cinderBackfillingCustomRate)
       if (d.labourShedEnabled !== undefined) setLabourShedEnabled(d.labourShedEnabled)
       if (d.labourShedCustomCost !== undefined) setLabourShedCustomCost(d.labourShedCustomCost)
       if (d.watchmanEnabled !== undefined) setWatchmanEnabled(d.watchmanEnabled)
@@ -611,6 +623,11 @@ export default function NewProjectPage() {
           ...(upsCustomRate ? { upsCustomRate: parseFloat(upsCustomRate) } : {}),
           ...(wifiCustomCost ? { wifiCustomCost: parseFloat(wifiCustomCost) } : {}),
           ...(paintingCustomRate ? { paintingCustomRate: parseFloat(paintingCustomRate) } : {}),
+          parapetEnabled: hasParapet,
+          washroomWaterproofingEnabled: hasWashroomWaterproofing,
+          ...(washroomWaterproofingCustomRate ? { washroomWaterproofingCustomRate: parseFloat(washroomWaterproofingCustomRate) } : {}),
+          cinderBackfillingEnabled: hasCinderBackfilling,
+          ...(cinderBackfillingCustomRate ? { cinderBackfillingCustomRate: parseFloat(cinderBackfillingCustomRate) } : {}),
           labourShedEnabled,
           ...(labourShedCustomCost ? { labourShedCustomCost: parseFloat(labourShedCustomCost) } : {}),
           watchmanEnabled,
@@ -663,6 +680,7 @@ export default function NewProjectPage() {
       windowType, railingType, marketPrices, customBlockPrice, customBrickPrice, boqData,
       ohtCustomPrice, mainGateCustomPrice, hasTerrace, terraceCustomSqft,
       rainwaterCustomCost, gasCustomRate, gasRftOverride, acCustomRate, acUnitsOverride, cctvCustomRate, cctvUnits, solarCustomCost, upsCustomRate, upsUnitsOverride, wifiCustomCost, paintingCustomRate,
+      hasParapet, hasWashroomWaterproofing, washroomWaterproofingCustomRate, hasCinderBackfilling, cinderBackfillingCustomRate,
       labourShedEnabled, labourShedCustomCost, watchmanEnabled, watchmanCustomCost, miscExpenseEnabled, miscExpenseCustomCost, earthingEnabled, earthingCustomCost,
       liftCustomCost, terraceRoomCustomRate, terraceRoomCustomWashroomCost])
 
@@ -718,6 +736,11 @@ export default function NewProjectPage() {
           ...(upsCustomRate ? { upsCustomRate: parseFloat(upsCustomRate) } : {}),
           ...(wifiCustomCost ? { wifiCustomCost: parseFloat(wifiCustomCost) } : {}),
           ...(paintingCustomRate ? { paintingCustomRate: parseFloat(paintingCustomRate) } : {}),
+          parapetEnabled: hasParapet,
+          washroomWaterproofingEnabled: hasWashroomWaterproofing,
+          ...(washroomWaterproofingCustomRate ? { washroomWaterproofingCustomRate: parseFloat(washroomWaterproofingCustomRate) } : {}),
+          cinderBackfillingEnabled: hasCinderBackfilling,
+          ...(cinderBackfillingCustomRate ? { cinderBackfillingCustomRate: parseFloat(cinderBackfillingCustomRate) } : {}),
           labourShedEnabled,
           ...(labourShedCustomCost ? { labourShedCustomCost: parseFloat(labourShedCustomCost) } : {}),
           watchmanEnabled,
@@ -1181,7 +1204,7 @@ export default function NewProjectPage() {
                     <>
                       <Separator />
                       <div className="p-3 bg-gray-50 rounded-lg space-y-3">
-                        <p className="text-xs font-medium text-gray-500">Guard / Security Washroom</p>
+                        <p className="text-xs font-medium text-gray-500">Washroom</p>
                         <div className="space-y-1.5">
                           <Label className="text-xs">No. of Washrooms</Label>
                           <Input
@@ -1784,6 +1807,13 @@ export default function NewProjectPage() {
                 isDefault: true,
               },
               {
+                label: 'Parapet Wall',
+                sub: 'Terrace perimeter wall — blocks + cement + M Sand + 20mm',
+                state: hasParapet,
+                set: setHasParapet,
+                isDefault: true,
+              },
+              {
                 label: 'Main Gate',
                 sub: mainGateCustomPrice ? `Custom price: ${fmt(parseFloat(mainGateCustomPrice))}` : `Entry gate — ${fmt(r.mainGateS)} (small) to ${fmt(r.mainGateL)} (large)`,
                 state: hasMainGate,
@@ -2055,6 +2085,36 @@ export default function NewProjectPage() {
                     <div className="w-56 space-y-1">
                       <Label className="text-xs">Custom Price (₹) — leave blank for market rate</Label>
                       <Input type="number" placeholder={`Market: ${fmt(mp('Earthing Pit', 18000))}`} value={earthingCustomCost} onChange={e => setEarthingCustomCost(e.target.value)} />
+                    </div>
+                  </div>
+                ),
+              },
+              {
+                label: 'Washroom Waterproofing',
+                sub: washroomWaterproofingCustomRate ? `Custom: ${fmt(parseFloat(washroomWaterproofingCustomRate))}/toilet` : `Applied to all floor washrooms — ${fmt(mp('Washroom Waterproofing', 2000))}/toilet`,
+                state: hasWashroomWaterproofing,
+                set: setHasWashroomWaterproofing,
+                isDefault: true,
+                extra: hasWashroomWaterproofing && (
+                  <div className="pl-4 border-l-2 border-blue-100 mt-1 pb-2">
+                    <div className="w-56 space-y-1">
+                      <Label className="text-xs">Custom Rate (₹/toilet)</Label>
+                      <Input type="number" placeholder={`Market: ${fmt(mp('Washroom Waterproofing', 2000))}`} value={washroomWaterproofingCustomRate} onChange={e => setWashroomWaterproofingCustomRate(e.target.value)} />
+                    </div>
+                  </div>
+                ),
+              },
+              {
+                label: 'Cinder Backfilling',
+                sub: cinderBackfillingCustomRate ? `Custom: ${fmt(parseFloat(cinderBackfillingCustomRate))}/toilet` : `Applied to all floor washrooms — ${fmt(mp('Cinder Backfilling', 4000))}/toilet`,
+                state: hasCinderBackfilling,
+                set: setHasCinderBackfilling,
+                isDefault: true,
+                extra: hasCinderBackfilling && (
+                  <div className="pl-4 border-l-2 border-blue-100 mt-1 pb-2">
+                    <div className="w-56 space-y-1">
+                      <Label className="text-xs">Custom Rate (₹/toilet)</Label>
+                      <Input type="number" placeholder={`Market: ${fmt(mp('Cinder Backfilling', 4000))}`} value={cinderBackfillingCustomRate} onChange={e => setCinderBackfillingCustomRate(e.target.value)} />
                     </div>
                   </div>
                 ),

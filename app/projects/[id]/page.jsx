@@ -46,6 +46,49 @@ const DUPLEX_END_TYPES = [
   { value: 'duplex_cont', label: 'Duplex Continuous' },
 ]
 
+const GROUND_GROUPS = [
+  { label: '1 BHK',      values: ['1bhk', '1bhk_2units', '1bhk_parking'] },
+  { label: '2 BHK',      values: ['2bhk', '2bhk_parking', '1bhk_2bhk', '2bhk_3bhk'] },
+  { label: '3 BHK',      values: ['3bhk'] },
+  { label: 'Duplex',     values: ['duplex_gf'] },
+  { label: 'Parking',    values: ['parking_only', 'parking_lift'] },
+  { label: 'Commercial', values: ['commercial_parking'] },
+]
+
+const UPPER_GROUPS = [
+  { label: '1 BHK',  values: ['1bhk', '1bhk_2units'] },
+  { label: '2 BHK',  values: ['2bhk', '1bhk_2bhk', '2bhk_3bhk'] },
+  { label: '3 BHK',  values: ['3bhk'] },
+  { label: 'Duplex', values: ['duplex_ff', 'duplex_sf'] },
+]
+
+const GROUND_RESTRICTIONS = {
+  '20x30': {
+    blocked: ['1bhk', '1bhk_2units', '1bhk_parking', '2bhk', '2bhk_parking', '1bhk_2bhk', '2bhk_3bhk', '3bhk', 'duplex_gf'],
+    message: '20×30 plot (600 sqft) — only parking types can be constructed on ground floor.',
+  },
+  '20x40': {
+    blocked: ['2bhk', '2bhk_parking', '1bhk_2bhk', '2bhk_3bhk', '3bhk', 'duplex_gf'],
+    message: '20×40 plot (800 sqft) — 2 BHK and above require a minimum 30×40 plot.',
+  },
+}
+
+const SIZE_BIN_THRESHOLDS = [
+  { area: 600,  key: '20x30' },
+  { area: 800,  key: '20x40' },
+  { area: 1200, key: '30x40' },
+  { area: 1500, key: '30x50' },
+  { area: 1600, key: '40x40' },
+  { area: 2400, key: '40x60' },
+]
+
+function getGroundFloorRestriction(sqft) {
+  if (!sqft || sqft <= 0) return null
+  const bin = SIZE_BIN_THRESHOLDS.find(b => sqft <= b.area)
+  if (!bin) return null
+  return GROUND_RESTRICTIONS[bin.key] || null
+}
+
 const MAIN_DOOR_TYPES = [
   { value: 'teak_3x7', label: 'Teak 3×7 — ₹50,000' },
   { value: 'teak_3x7_window', label: 'Teak 3×7 with Window — ₹70,000' },
@@ -986,18 +1029,48 @@ export default function ProjectPage() {
                     </div>
                     <div className="p-4 space-y-4 bg-white">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-1.5">
-                          <Label>Floor Type *</Label>
-                          <select className="w-full h-10 px-3 border border-gray-200 rounded-lg text-sm bg-white" value={floor.type} onChange={e => handleFloorTypeChange(index, e.target.value)}>
-                            <option value="">— Select floor type —</option>
-                            {(() => {
-                              const prevType = index > 0 ? floors[index - 1]?.type : null
-                              const isDuplexNext = ['duplex_gf', 'duplex_ff', 'duplex_sf', 'duplex_cont'].includes(prevType)
-                              if (isDuplexNext) return DUPLEX_END_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)
-                              return (index === 0 ? GROUND_TYPES : UPPER_TYPES).map(t => <option key={t.value} value={t.value}>{t.label}</option>)
-                            })()}
-                          </select>
-                        </div>
+                        {(() => {
+                          const restriction = index === 0 ? getGroundFloorRestriction(sqft) : null
+                          const isCurrentInvalid = restriction && floor.type && restriction.blocked.includes(floor.type)
+                          return (
+                            <div className="space-y-1.5">
+                              <Label>Floor Type *</Label>
+                              <select
+                                className={`w-full h-10 px-3 border rounded-lg text-sm bg-white ${isCurrentInvalid ? 'border-red-400 ring-1 ring-red-300' : 'border-gray-200'}`}
+                                value={floor.type}
+                                onChange={e => handleFloorTypeChange(index, e.target.value)}
+                              >
+                                <option value="">— Select floor type —</option>
+                                {(() => {
+                                  const prevType = index > 0 ? floors[index - 1]?.type : null
+                                  const isDuplexNext = ['duplex_gf', 'duplex_ff', 'duplex_sf', 'duplex_cont'].includes(prevType)
+                                  if (isDuplexNext) return DUPLEX_END_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)
+                                  const groups = index === 0 ? GROUND_GROUPS : UPPER_GROUPS
+                                  const types = index === 0 ? GROUND_TYPES : UPPER_TYPES
+                                  return groups.map(g => (
+                                    <optgroup key={g.label} label={g.label}>
+                                      {g.values.map(v => {
+                                        const t = types.find(x => x.value === v)
+                                        if (!t) return null
+                                        const isBlocked = restriction?.blocked.includes(t.value)
+                                        return (
+                                          <option key={t.value} value={t.value} disabled={isBlocked}>
+                                            {isBlocked ? `${t.label} — plot too small` : t.label}
+                                          </option>
+                                        )
+                                      })}
+                                    </optgroup>
+                                  ))
+                                })()}
+                              </select>
+                              {isCurrentInvalid ? (
+                                <p className="text-xs text-red-500 font-medium">This type is not suitable for the entered plot size. Please select again.</p>
+                              ) : restriction ? (
+                                <p className="text-xs text-amber-600">{restriction.message}</p>
+                              ) : null}
+                            </div>
+                          )
+                        })()}
                         <div className="space-y-1.5">
                           <Label>Construction Area (sqft)</Label>
                           <Input type="number" placeholder={sqft ? `Max ${sqft} sqft` : 'Enter sqft'} value={floor.sqft} onChange={e => updateFloor(index, 'sqft', e.target.value)} />
@@ -1035,17 +1108,23 @@ export default function ProjectPage() {
                       {isParking(floor.type) && (
                         <>
                           <Separator />
-                          <div className="p-3 bg-gray-50 rounded-lg">
-                            <p className="text-xs font-medium text-gray-500 mb-2">Guard / Security Washroom</p>
-                            <div className="grid grid-cols-2 gap-3">
+                          <div className="p-3 bg-gray-50 rounded-lg space-y-3">
+                            <p className="text-xs font-medium text-gray-500">Washroom</p>
+                            <div className="space-y-3">
                               <div className="space-y-1.5">
-                                <Label className="text-xs">Toilets</Label>
-                                <Input type="number" min="0" value={floor.toilets} onChange={e => updateFloor(index, 'toilets', e.target.value)} />
+                                <Label className="text-xs">No. of Washrooms</Label>
+                                <Input type="number" min="0" value={floor.toilets} onChange={e => {
+                                  const v = e.target.value
+                                  setFloors(prev => { const u = [...prev]; u[index] = { ...u[index], toilets: v, washroomDoors: v }; return u })
+                                }} />
+                                <p className="text-xs text-gray-400">Each washroom includes 1 door · plumbing pipes · fittings · labour</p>
                               </div>
-                              <div className="space-y-1.5">
-                                <Label className="text-xs">Washroom Doors</Label>
-                                <Input type="number" min="0" value={floor.washroomDoors} onChange={e => updateFloor(index, 'washroomDoors', e.target.value)} />
-                              </div>
+                              {(parseInt(floor.toilets) || 0) > 0 && (
+                                <div className="space-y-1.5">
+                                  <Label className="text-xs text-gray-500">Custom Price (₹) — leave blank to use standard plumbing rates</Label>
+                                  <Input type="number" placeholder={`Auto: ${formatCurrency((parseInt(floor.toilets)||1) * ((parseFloat(marketPrices['Plumbing Pipes']) || 40000) + (parseFloat(marketPrices['Plumbing Fittings']) || 30000) + (parseFloat(marketPrices['Plumbing Labour']) || 10000)))}`} value={floor.guardWashroomCustomCost || ''} onChange={e => updateFloor(index, 'guardWashroomCustomCost', e.target.value)} />
+                                </div>
+                              )}
                             </div>
                           </div>
                         </>
