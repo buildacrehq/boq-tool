@@ -626,7 +626,7 @@ export default function EditProjectPage() {
                       <>
                         <Separator />
                         <div className="p-3 bg-gray-50 rounded-lg">
-                          <p className="text-xs font-medium text-gray-500 mb-2">Guard / Security Washroom</p>
+                          <p className="text-xs font-medium text-gray-500 mb-2">Washroom</p>
                           <div className="grid grid-cols-2 gap-3">
                             <div className="space-y-1.5">
                               <Label className="text-xs">Toilets</Label>
