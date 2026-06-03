@@ -204,6 +204,7 @@ export default function ProjectPage() {
   const [hasTerrace, setHasTerrace] = useState(false)
   const [terraceCustomSqft, setTerraceCustomSqft] = useState('')
   const [terraceWashrooms, setTerraceWashrooms] = useState('0')
+  const [terraceWashroomMode, setTerraceWashroomMode] = useState('formula')
   const [terraceRoomCustomRate, setTerraceRoomCustomRate] = useState('')
   const [terraceRoomCustomWashroomCost, setTerraceRoomCustomWashroomCost] = useState('')
   const [railingType, setRailingType] = useState('')
@@ -325,6 +326,7 @@ export default function ProjectPage() {
         setTerraceWashrooms(proj.floors_data[0]?.terraceRoomWashrooms !== undefined ? String(proj.floors_data[0].terraceRoomWashrooms) : '0')
         setTerraceRoomCustomRate(proj.floors_data[0]?.terraceRoomCustomRate ? String(proj.floors_data[0].terraceRoomCustomRate) : '')
         setTerraceRoomCustomWashroomCost(proj.floors_data[0]?.terraceRoomCustomWashroomCost ? String(proj.floors_data[0].terraceRoomCustomWashroomCost) : '')
+        setTerraceWashroomMode(proj.floors_data[0]?.terraceWashroomMode || 'formula')
       } else {
         const count = proj.floor_count || proj.floors || 1
         setFloors(Array.from({ length: count }, (_, i) => createFloor(i)))
@@ -413,6 +415,7 @@ export default function ProjectPage() {
           terraceRoomEnabled: hasTerrace,
           ...(hasTerrace && terraceCustomSqft ? { terraceRoomSqft: parseFloat(terraceCustomSqft) } : {}),
           terraceRoomWashrooms: hasTerrace ? (parseInt(terraceWashrooms) || 0) : 0,
+          terraceWashroomMode,
           ...(hasTerrace && terraceRoomCustomRate ? { terraceRoomCustomRate: parseFloat(terraceRoomCustomRate) } : {}),
           ...(hasTerrace && terraceRoomCustomWashroomCost ? { terraceRoomCustomWashroomCost: parseFloat(terraceRoomCustomWashroomCost) } : {}),
         }
@@ -454,7 +457,7 @@ export default function ProjectPage() {
       hasMainGate, hasAc, hasCctv, hasSolar, hasUps, hasWifi, paintingGrade, flooringType,
       windowType, railingType, marketPrices, project, customBlockPrice, customBrickPrice, boqData, vehicleData,
       earthingEnabled, liftCustomCost, gasRftOverride, acUnitsOverride, upsUnitsOverride,
-      hasTerrace, terraceCustomSqft, terraceWashrooms, terraceRoomCustomRate, terraceRoomCustomWashroomCost])
+      hasTerrace, terraceCustomSqft, terraceWashrooms, terraceWashroomMode, terraceRoomCustomRate, terraceRoomCustomWashroomCost])
 
   const displayItems = useMemo(() => frozenBoq ?? liveItems, [frozenBoq, liveItems])
 
@@ -633,6 +636,7 @@ export default function ProjectPage() {
           terraceRoomEnabled: hasTerrace,
           ...(hasTerrace && terraceCustomSqft ? { terraceRoomSqft: parseFloat(terraceCustomSqft) } : {}),
           terraceRoomWashrooms: hasTerrace ? (parseInt(terraceWashrooms) || 0) : 0,
+          terraceWashroomMode,
           ...(hasTerrace && terraceRoomCustomRate ? { terraceRoomCustomRate: parseFloat(terraceRoomCustomRate) } : {}),
           ...(hasTerrace && terraceRoomCustomWashroomCost ? { terraceRoomCustomWashroomCost: parseFloat(terraceRoomCustomWashroomCost) } : {}),
         }
@@ -1266,6 +1270,58 @@ export default function ProjectPage() {
                     ))}
                   </div>
                 </div>
+              </CardContent>
+            </Card>
+
+            {/* Section 3b — Terrace Room */}
+            <Card>
+              <CardHeader><CardTitle className="text-base flex items-center gap-2"><Badge variant="outline">3b</Badge>Terrace Room</CardTitle></CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between py-2">
+                  <div><p className="text-sm font-medium">Terrace Room / Additional Room</p><p className="text-xs text-gray-400">Room constructed on top of terrace slab</p></div>
+                  <Switch checked={hasTerrace} onCheckedChange={setHasTerrace} />
+                </div>
+                {hasTerrace && (
+                  <>
+                    <Separator />
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1.5">
+                        <Label className="text-xs text-gray-500">Area (sqft)</Label>
+                        <Input type="number" placeholder="e.g. 200" value={terraceCustomSqft} onChange={e => setTerraceCustomSqft(e.target.value)} />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs text-gray-500">No. of Washrooms</Label>
+                        <Input type="number" placeholder="0" min="0" value={terraceWashrooms} onChange={e => setTerraceWashrooms(e.target.value)} />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs text-gray-500">Rate per sqft (₹) — override</Label>
+                        <Input type="number" placeholder={`Default: ₹${(parseFloat(marketPrices['Terrace Room Rate']) || 1700).toLocaleString('en-IN')}/sqft`} value={terraceRoomCustomRate} onChange={e => setTerraceRoomCustomRate(e.target.value)} />
+                      </div>
+                    </div>
+                    {(parseInt(terraceWashrooms) || 0) > 0 && (
+                      <div className="space-y-2">
+                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Washroom Calculation</p>
+                        <label className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer ${terraceWashroomMode === 'formula' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}>
+                          <input type="radio" name="trWashMode" value="formula" checked={terraceWashroomMode === 'formula'} onChange={() => setTerraceWashroomMode('formula')} className="mt-0.5" />
+                          <div className="flex-1">
+                            <p className="text-sm font-medium">Formula — ₹{(parseFloat(marketPrices['Terrace Room Washroom']) || 85000).toLocaleString('en-IN')} all-in per washroom</p>
+                            <p className="text-xs text-gray-400">Single lumpsum covering all plumbing</p>
+                            {terraceWashroomMode === 'formula' && (
+                              <Input type="number" placeholder={`Default: ₹${(parseFloat(marketPrices['Terrace Room Washroom']) || 85000).toLocaleString('en-IN')}`} value={terraceRoomCustomWashroomCost} onChange={e => setTerraceRoomCustomWashroomCost(e.target.value)} className="w-48 h-8 text-sm mt-2" />
+                            )}
+                          </div>
+                        </label>
+                        <label className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer ${terraceWashroomMode === 'regular' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}>
+                          <input type="radio" name="trWashMode" value="regular" checked={terraceWashroomMode === 'regular'} onChange={() => setTerraceWashroomMode('regular')} className="mt-0.5" />
+                          <div>
+                            <p className="text-sm font-medium">Regular — same as floor washrooms</p>
+                            <p className="text-xs text-gray-400">Itemized: Pipes + Fittings + Labour + Waterproofing + Cinder</p>
+                          </div>
+                        </label>
+                      </div>
+                    )}
+                  </>
+                )}
               </CardContent>
             </Card>
 

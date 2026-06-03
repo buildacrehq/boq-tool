@@ -279,6 +279,7 @@ export default function NewProjectPage() {
   const [hasTerrace, setHasTerrace] = useState(false)
   const [terraceCustomSqft, setTerraceCustomSqft] = useState('')
   const [terraceWashrooms, setTerraceWashrooms] = useState('0')
+  const [terraceWashroomMode, setTerraceWashroomMode] = useState('formula')
 
   const mp = (key, fallback) => parseFloat(marketPrices[key]) || fallback
   const fmt = (n) => `₹${Math.round(n).toLocaleString('en-IN')}`
@@ -333,7 +334,7 @@ export default function NewProjectPage() {
       hasCompoundWall, hasRainwater, hasGas, hasOht, ohtCapacity, ohtCustom, ohtCustomPrice, mainGateCustomPrice,
       hasMainGate, hasAc, hasCctv, hasSolar, hasUps, hasWifi,
       paintingGrade, windowType, railingType, flooringType, customItems,
-      hasTerrace, terraceCustomSqft, terraceWashrooms,
+      hasTerrace, terraceCustomSqft, terraceWashrooms, terraceWashroomMode,
       rainwaterCustomCost, gasCustomRate, gasRftOverride, acCustomRate, acUnitsOverride, cctvCustomRate, cctvUnits, solarCustomCost, upsCustomRate, upsUnitsOverride, wifiCustomCost, paintingCustomRate,
       labourShedEnabled, labourShedCustomCost, watchmanEnabled, watchmanCustomCost, miscExpenseEnabled, miscExpenseCustomCost, earthingEnabled, earthingCustomCost,
       liftCustomCost, terraceRoomCustomRate, terraceRoomCustomWashroomCost,
@@ -344,7 +345,7 @@ export default function NewProjectPage() {
       hasCompoundWall, hasRainwater, hasGas, hasOht, ohtCapacity, ohtCustom, ohtCustomPrice, mainGateCustomPrice,
       hasMainGate, hasAc, hasCctv, hasSolar, hasUps, hasWifi,
       paintingGrade, windowType, railingType, flooringType, customItems,
-      hasTerrace, terraceCustomSqft, terraceWashrooms,
+      hasTerrace, terraceCustomSqft, terraceWashrooms, terraceWashroomMode,
       rainwaterCustomCost, gasCustomRate, gasRftOverride, acCustomRate, acUnitsOverride, cctvCustomRate, cctvUnits, solarCustomCost, upsCustomRate, upsUnitsOverride, wifiCustomCost, paintingCustomRate,
       labourShedEnabled, labourShedCustomCost, watchmanEnabled, watchmanCustomCost, miscExpenseEnabled, miscExpenseCustomCost, earthingEnabled, earthingCustomCost,
       liftCustomCost, terraceRoomCustomRate, terraceRoomCustomWashroomCost])
@@ -403,6 +404,7 @@ export default function NewProjectPage() {
       if (d.hasTerrace !== undefined) setHasTerrace(d.hasTerrace)
       if (d.terraceCustomSqft !== undefined) setTerraceCustomSqft(d.terraceCustomSqft)
       if (d.terraceWashrooms !== undefined) setTerraceWashrooms(d.terraceWashrooms)
+      if (d.terraceWashroomMode !== undefined) setTerraceWashroomMode(d.terraceWashroomMode)
       if (d.rainwaterCustomCost !== undefined) setRainwaterCustomCost(d.rainwaterCustomCost)
       if (d.gasCustomRate !== undefined) setGasCustomRate(d.gasCustomRate)
       if (d.acCustomRate !== undefined) setAcCustomRate(d.acCustomRate)
@@ -620,6 +622,7 @@ export default function NewProjectPage() {
           terraceRoomEnabled: hasTerrace,
           ...(hasTerrace && terraceCustomSqft ? { terraceRoomSqft: parseFloat(terraceCustomSqft) } : {}),
           terraceRoomWashrooms: hasTerrace ? (parseInt(terraceWashrooms) || 0) : 0,
+          terraceWashroomMode,
           ...(hasTerrace && terraceRoomCustomRate ? { terraceRoomCustomRate: parseFloat(terraceRoomCustomRate) } : {}),
           ...(hasTerrace && terraceRoomCustomWashroomCost ? { terraceRoomCustomWashroomCost: parseFloat(terraceRoomCustomWashroomCost) } : {}),
           ...(hasLift && liftCustomCost ? { liftCustomCost: parseFloat(liftCustomCost) } : {}),
@@ -726,6 +729,7 @@ export default function NewProjectPage() {
           terraceRoomEnabled: hasTerrace,
           ...(hasTerrace && terraceCustomSqft ? { terraceRoomSqft: parseFloat(terraceCustomSqft) } : {}),
           terraceRoomWashrooms: hasTerrace ? (parseInt(terraceWashrooms) || 0) : 0,
+          terraceWashroomMode,
           ...(hasTerrace && terraceRoomCustomRate ? { terraceRoomCustomRate: parseFloat(terraceRoomCustomRate) } : {}),
           ...(hasTerrace && terraceRoomCustomWashroomCost ? { terraceRoomCustomWashroomCost: parseFloat(terraceRoomCustomWashroomCost) } : {}),
           ...(hasLift && liftCustomCost ? { liftCustomCost: parseFloat(liftCustomCost) } : {}),
@@ -1613,33 +1617,58 @@ export default function NewProjectPage() {
                   </div>
                   <div className="space-y-1.5">
                     <Label className="text-xs text-gray-500">Rate per sqft (₹) — override</Label>
-                    <Input
-                      type="number"
-                      placeholder={`Default: ₹${mp('Terrace Room Rate', 1700).toLocaleString('en-IN')}/sqft`}
-                      value={terraceRoomCustomRate}
-                      onChange={e => setTerraceRoomCustomRate(e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-xs text-gray-500">Per washroom cost (₹) — override</Label>
-                    <Input
-                      type="number"
-                      placeholder={`Default: ₹${mp('Terrace Room Washroom', 85000).toLocaleString('en-IN')}`}
-                      value={terraceRoomCustomWashroomCost}
-                      onChange={e => setTerraceRoomCustomWashroomCost(e.target.value)}
-                    />
+                    <Input type="number" placeholder={`Default: ₹${mp('Terrace Room Rate', 1700).toLocaleString('en-IN')}/sqft`} value={terraceRoomCustomRate} onChange={e => setTerraceRoomCustomRate(e.target.value)} />
                   </div>
                 </div>
+
+                {/* Washroom calculation mode */}
+                {(parseInt(terraceWashrooms) || 0) > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Washroom Calculation</p>
+                    <label className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${terraceWashroomMode === 'formula' ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300'}`}>
+                      <input type="radio" name="terraceWashroomMode" value="formula" checked={terraceWashroomMode === 'formula'} onChange={() => setTerraceWashroomMode('formula')} className="mt-0.5" />
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">Formula — ₹{mp('Terrace Room Washroom', 85000).toLocaleString('en-IN')} all-in per washroom</p>
+                        <p className="text-xs text-gray-400">Single lumpsum covering all plumbing, waterproofing, fittings</p>
+                        {terraceWashroomMode === 'formula' && (
+                          <div className="mt-2">
+                            <Input type="number" placeholder={`Default: ₹${mp('Terrace Room Washroom', 85000).toLocaleString('en-IN')}`} value={terraceRoomCustomWashroomCost} onChange={e => setTerraceRoomCustomWashroomCost(e.target.value)} className="w-48 h-8 text-sm" />
+                          </div>
+                        )}
+                      </div>
+                    </label>
+                    <label className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${terraceWashroomMode === 'regular' ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300'}`}>
+                      <input type="radio" name="terraceWashroomMode" value="regular" checked={terraceWashroomMode === 'regular'} onChange={() => setTerraceWashroomMode('regular')} className="mt-0.5" />
+                      <div>
+                        <p className="text-sm font-medium">Regular — same as floor washrooms</p>
+                        <p className="text-xs text-gray-400">Itemized: Pipes ₹{mp('Plumbing Pipes',40000).toLocaleString('en-IN')} + Fittings ₹{mp('Plumbing Fittings',30000).toLocaleString('en-IN')} + Labour ₹{mp('Plumbing Labour',10000).toLocaleString('en-IN')} + Waterproofing + Cinder</p>
+                      </div>
+                    </label>
+                  </div>
+                )}
+
                 {terraceCustomSqft && (() => {
                   const rate = parseFloat(terraceRoomCustomRate) || mp('Terrace Room Rate', 1700)
-                  const washCost = parseFloat(terraceRoomCustomWashroomCost) || mp('Terrace Room Washroom', 85000)
-                  const total = parseFloat(terraceCustomSqft) * rate + (parseInt(terraceWashrooms) || 0) * washCost
+                  const tWash = parseInt(terraceWashrooms) || 0
+                  const areaTotal = parseFloat(terraceCustomSqft) * rate
+                  let washTotal = 0
+                  let washDesc = ''
+                  if (tWash > 0) {
+                    if (terraceWashroomMode === 'regular') {
+                      washTotal = tWash * (mp('Plumbing Pipes',40000) + mp('Plumbing Fittings',30000) + mp('Plumbing Labour',10000) + mp('Washroom Waterproofing',2000) + mp('Cinder Backfilling',4000))
+                      washDesc = `${tWash} washroom${tWash>1?'s':''} × ₹${(washTotal/tWash).toLocaleString('en-IN')} (itemized)`
+                    } else {
+                      const washCost = parseFloat(terraceRoomCustomWashroomCost) || mp('Terrace Room Washroom', 85000)
+                      washTotal = tWash * washCost
+                      washDesc = `${tWash} washroom${tWash>1?'s':''} × ₹${washCost.toLocaleString('en-IN')}`
+                    }
+                  }
                   return (
                     <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 space-y-1">
                       <p className="text-xs text-gray-500">
-                        ({terraceCustomSqft} sqft × ₹{rate.toLocaleString('en-IN')}) + ({terraceWashrooms || 0} washrooms × ₹{washCost.toLocaleString('en-IN')})
+                        ({terraceCustomSqft} sqft × ₹{rate.toLocaleString('en-IN')}){tWash > 0 ? ` + (${washDesc})` : ''}
                       </p>
-                      <p className="text-sm font-semibold text-blue-700">= ₹{total.toLocaleString('en-IN')}</p>
+                      <p className="text-sm font-semibold text-blue-700">= ₹{Math.ceil(areaTotal + washTotal).toLocaleString('en-IN')}</p>
                     </div>
                   )
                 })()}
