@@ -265,11 +265,14 @@ export default function NewProjectPage() {
   // Custom price overrides for services (stored in floorsData[0], already supported by calculate.js)
   const [rainwaterCustomCost, setRainwaterCustomCost] = useState('')
   const [gasCustomRate, setGasCustomRate] = useState('')
+  const [gasRftOverride, setGasRftOverride] = useState('')
   const [acCustomRate, setAcCustomRate] = useState('')
+  const [acUnitsOverride, setAcUnitsOverride] = useState('')
   const [cctvCustomRate, setCctvCustomRate] = useState('')
   const [cctvUnits, setCctvUnits] = useState('')
   const [solarCustomCost, setSolarCustomCost] = useState('')
   const [upsCustomRate, setUpsCustomRate] = useState('')
+  const [upsUnitsOverride, setUpsUnitsOverride] = useState('')
   const [wifiCustomCost, setWifiCustomCost] = useState('')
   const [paintingCustomRate, setPaintingCustomRate] = useState('')
 
@@ -331,7 +334,7 @@ export default function NewProjectPage() {
       hasMainGate, hasAc, hasCctv, hasSolar, hasUps, hasWifi,
       paintingGrade, windowType, railingType, flooringType, customItems,
       hasTerrace, terraceCustomSqft, terraceWashrooms,
-      rainwaterCustomCost, gasCustomRate, acCustomRate, cctvCustomRate, cctvUnits, solarCustomCost, upsCustomRate, wifiCustomCost, paintingCustomRate,
+      rainwaterCustomCost, gasCustomRate, gasRftOverride, acCustomRate, acUnitsOverride, cctvCustomRate, cctvUnits, solarCustomCost, upsCustomRate, upsUnitsOverride, wifiCustomCost, paintingCustomRate,
       labourShedEnabled, labourShedCustomCost, watchmanEnabled, watchmanCustomCost, miscExpenseEnabled, miscExpenseCustomCost, earthingEnabled, earthingCustomCost,
       liftCustomCost, terraceRoomCustomRate, terraceRoomCustomWashroomCost,
     }
@@ -342,7 +345,7 @@ export default function NewProjectPage() {
       hasMainGate, hasAc, hasCctv, hasSolar, hasUps, hasWifi,
       paintingGrade, windowType, railingType, flooringType, customItems,
       hasTerrace, terraceCustomSqft, terraceWashrooms,
-      rainwaterCustomCost, gasCustomRate, acCustomRate, cctvCustomRate, cctvUnits, solarCustomCost, upsCustomRate, wifiCustomCost, paintingCustomRate,
+      rainwaterCustomCost, gasCustomRate, gasRftOverride, acCustomRate, acUnitsOverride, cctvCustomRate, cctvUnits, solarCustomCost, upsCustomRate, upsUnitsOverride, wifiCustomCost, paintingCustomRate,
       labourShedEnabled, labourShedCustomCost, watchmanEnabled, watchmanCustomCost, miscExpenseEnabled, miscExpenseCustomCost, earthingEnabled, earthingCustomCost,
       liftCustomCost, terraceRoomCustomRate, terraceRoomCustomWashroomCost])
 
@@ -405,6 +408,9 @@ export default function NewProjectPage() {
       if (d.acCustomRate !== undefined) setAcCustomRate(d.acCustomRate)
       if (d.cctvCustomRate !== undefined) setCctvCustomRate(d.cctvCustomRate)
       if (d.cctvUnits !== undefined) setCctvUnits(d.cctvUnits)
+      if (d.gasRftOverride !== undefined) setGasRftOverride(d.gasRftOverride)
+      if (d.acUnitsOverride !== undefined) setAcUnitsOverride(d.acUnitsOverride)
+      if (d.upsUnitsOverride !== undefined) setUpsUnitsOverride(d.upsUnitsOverride)
       if (d.solarCustomCost !== undefined) setSolarCustomCost(d.solarCustomCost)
       if (d.upsCustomRate !== undefined) setUpsCustomRate(d.upsCustomRate)
       if (d.wifiCustomCost !== undefined) setWifiCustomCost(d.wifiCustomCost)
@@ -596,6 +602,9 @@ export default function NewProjectPage() {
           ...(acCustomRate ? { acCustomRate: parseFloat(acCustomRate) } : {}),
           ...(cctvCustomRate ? { cctvCustomRate: parseFloat(cctvCustomRate) } : {}),
           ...(cctvUnits ? { cctvUnits: parseInt(cctvUnits) } : {}),
+          ...(gasRftOverride ? { gasRftOverride: parseInt(gasRftOverride) } : {}),
+          ...(acUnitsOverride ? { acUnitsOverride: parseInt(acUnitsOverride) } : {}),
+          ...(upsUnitsOverride ? { upsUnitsOverride: parseInt(upsUnitsOverride) } : {}),
           ...(solarCustomCost ? { solarCustomCost: parseFloat(solarCustomCost) } : {}),
           ...(upsCustomRate ? { upsCustomRate: parseFloat(upsCustomRate) } : {}),
           ...(wifiCustomCost ? { wifiCustomCost: parseFloat(wifiCustomCost) } : {}),
@@ -650,7 +659,7 @@ export default function NewProjectPage() {
       hasMainGate, hasAc, hasCctv, hasSolar, hasUps, hasWifi, paintingGrade, flooringType,
       windowType, railingType, marketPrices, customBlockPrice, customBrickPrice, boqData,
       ohtCustomPrice, mainGateCustomPrice, hasTerrace, terraceCustomSqft,
-      rainwaterCustomCost, gasCustomRate, acCustomRate, cctvCustomRate, cctvUnits, solarCustomCost, upsCustomRate, wifiCustomCost, paintingCustomRate,
+      rainwaterCustomCost, gasCustomRate, gasRftOverride, acCustomRate, acUnitsOverride, cctvCustomRate, cctvUnits, solarCustomCost, upsCustomRate, upsUnitsOverride, wifiCustomCost, paintingCustomRate,
       labourShedEnabled, labourShedCustomCost, watchmanEnabled, watchmanCustomCost, miscExpenseEnabled, miscExpenseCustomCost, earthingEnabled, earthingCustomCost,
       liftCustomCost, terraceRoomCustomRate, terraceRoomCustomWashroomCost])
 
@@ -699,6 +708,9 @@ export default function NewProjectPage() {
           ...(acCustomRate ? { acCustomRate: parseFloat(acCustomRate) } : {}),
           ...(cctvCustomRate ? { cctvCustomRate: parseFloat(cctvCustomRate) } : {}),
           ...(cctvUnits ? { cctvUnits: parseInt(cctvUnits) } : {}),
+          ...(gasRftOverride ? { gasRftOverride: parseInt(gasRftOverride) } : {}),
+          ...(acUnitsOverride ? { acUnitsOverride: parseInt(acUnitsOverride) } : {}),
+          ...(upsUnitsOverride ? { upsUnitsOverride: parseInt(upsUnitsOverride) } : {}),
           ...(solarCustomCost ? { solarCustomCost: parseFloat(solarCustomCost) } : {}),
           ...(upsCustomRate ? { upsCustomRate: parseFloat(upsCustomRate) } : {}),
           ...(wifiCustomCost ? { wifiCustomCost: parseFloat(wifiCustomCost) } : {}),
@@ -1827,17 +1839,24 @@ export default function NewProjectPage() {
               {
                 label: 'Gas Pipeline',
                 sub: (() => {
+                  const rft = gasRftOverride ? parseInt(gasRftOverride) : floorCount * 15
                   const rate = gasCustomRate ? parseFloat(gasCustomRate) : r.gas
-                  return gasCustomRate ? `Custom: ${fmt(rate)}/rft × ${floorCount * 15} rft = ${fmt(rate * floorCount * 15)}` : `${floorCount} floor${floorCount > 1 ? 's' : ''} × 15 rft × ${fmt(r.gas)}/rft = ${fmt(floorCount * 15 * r.gas)}`
+                  return `${rft} rft × ${fmt(rate)}/rft = ${fmt(rft * rate)}`
                 })(),
                 state: hasGas,
                 set: setHasGas,
                 isDefault: true,
                 extra: hasGas && (
                   <div className="pl-4 border-l-2 border-blue-100 mt-1 pb-2">
-                    <div className="w-56 space-y-1">
-                      <Label className="text-xs">Custom Rate (₹/rft) — leave blank for market rate</Label>
-                      <Input type="number" placeholder={`Market: ${fmt(r.gas)}/rft`} value={gasCustomRate} onChange={e => setGasCustomRate(e.target.value)} />
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1">
+                        <Label className="text-xs">Total RFT</Label>
+                        <Input type="number" min="0" placeholder={`Default: ${floorCount * 15} rft`} value={gasRftOverride} onChange={e => setGasRftOverride(e.target.value)} />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Rate (₹/rft)</Label>
+                        <Input type="number" placeholder={`Market: ${fmt(r.gas)}`} value={gasCustomRate} onChange={e => setGasCustomRate(e.target.value)} />
+                      </div>
                     </div>
                   </div>
                 ),
@@ -1845,18 +1864,24 @@ export default function NewProjectPage() {
               {
                 label: 'AC Provision',
                 sub: (() => {
-                  const pts = floors.reduce((s, f) => s + (parseInt(f.acPoints) || 0), 0)
+                  const pts = acUnitsOverride ? parseInt(acUnitsOverride) : floors.reduce((s, f) => s + (parseInt(f.acPoints) || 0), 0)
                   const rate = acCustomRate ? parseFloat(acCustomRate) : r.ac
-                  return pts > 0 ? `${pts} points × ${fmt(rate)} = ${fmt(pts * rate)}` : `${fmt(rate)} per point — set points per floor above`
+                  return `${pts} point${pts !== 1 ? 's' : ''} × ${fmt(rate)} = ${fmt(pts * rate)}`
                 })(),
                 state: hasAc,
                 set: setHasAc,
                 isDefault: false,
                 extra: hasAc && (
                   <div className="pl-4 border-l-2 border-blue-100 mt-1 pb-2">
-                    <div className="w-56 space-y-1">
-                      <Label className="text-xs">Custom Rate (₹/point) — leave blank for market rate</Label>
-                      <Input type="number" placeholder={`Market: ${fmt(r.ac)}/point`} value={acCustomRate} onChange={e => setAcCustomRate(e.target.value)} />
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1">
+                        <Label className="text-xs">Total AC Points</Label>
+                        <Input type="number" min="0" placeholder={`Default: ${floors.reduce((s, f) => s + (parseInt(f.acPoints) || 0), 0)} (from floors)`} value={acUnitsOverride} onChange={e => setAcUnitsOverride(e.target.value)} />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Rate (₹/point)</Label>
+                        <Input type="number" placeholder={`Market: ${fmt(r.ac)}`} value={acCustomRate} onChange={e => setAcCustomRate(e.target.value)} />
+                      </div>
                     </div>
                   </div>
                 ),
@@ -1904,19 +1929,25 @@ export default function NewProjectPage() {
               {
                 label: 'UPS Provision',
                 sub: (() => {
-                  const kFloors = floors.filter(f => !['parking_only','parking_lift','commercial_parking'].includes(f.type) && (parseInt(f.kitchens)||0) > 0).length
-                  const total = hasUps ? floors.filter(f => !['parking_only','parking_lift','commercial_parking'].includes(f.type)).length : kFloors
+                  const autoUnits = floors.filter(f => !['parking_only','parking_lift','commercial_parking'].includes(f.type)).length
+                  const total = upsUnitsOverride ? parseInt(upsUnitsOverride) : autoUnits
                   const rate = upsCustomRate ? parseFloat(upsCustomRate) : r.ups
-                  return `Auto for ${kFloors} kitchen floor${kFloors !== 1 ? 's' : ''}${hasUps ? ` + all floors` : ''} — ${fmt(total * rate)} total`
+                  return `${total} unit${total !== 1 ? 's' : ''} × ${fmt(rate)} = ${fmt(total * rate)}`
                 })(),
                 state: hasUps,
                 set: setHasUps,
                 isDefault: false,
                 extra: hasUps && (
                   <div className="pl-4 border-l-2 border-blue-100 mt-1 pb-2">
-                    <div className="w-56 space-y-1">
-                      <Label className="text-xs">Custom Rate (₹/floor) — leave blank for market rate</Label>
-                      <Input type="number" placeholder={`Market: ${fmt(r.ups)}/floor`} value={upsCustomRate} onChange={e => setUpsCustomRate(e.target.value)} />
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1">
+                        <Label className="text-xs">Total UPS Units</Label>
+                        <Input type="number" min="0" placeholder={`Default: ${floors.filter(f => !['parking_only','parking_lift','commercial_parking'].includes(f.type)).length}`} value={upsUnitsOverride} onChange={e => setUpsUnitsOverride(e.target.value)} />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Rate (₹/unit)</Label>
+                        <Input type="number" placeholder={`Market: ${fmt(r.ups)}`} value={upsCustomRate} onChange={e => setUpsCustomRate(e.target.value)} />
+                      </div>
                     </div>
                   </div>
                 ),
