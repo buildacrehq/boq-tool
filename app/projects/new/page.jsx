@@ -1226,7 +1226,7 @@ export default function NewProjectPage() {
                             <Label className="text-xs">Bedroom Doors</Label>
                             <Input type="number" min="0" value={floor.bedroomDoors} onChange={e => updateFloor(index, 'bedroomDoors', e.target.value)} />
                             <Input type="number" placeholder={String(r.bedroomDoor)} value={floor.bedroomDoorPrice || ''} onChange={e => updateFloor(index, 'bedroomDoorPrice', e.target.value)} className="h-8 text-sm" />
-                            <p className="text-xs text-gray-400">{parseInt(floor.bedroomDoors) > 0 ? `${floor.bedroomDoors} × ₹${(parseFloat(floor.bedroomDoorPrice) || r.bedroomDoor).toLocaleString('en-IN')} = ${fmt(parseInt(floor.bedroomDoors) * (parseFloat(floor.bedroomDoorPrice) || r.bedroomDoor))}` : `₹${r.bedroomDoor.toLocaleString('en-IN')}/door`}</p>
+                            <p className="text-xs text-gray-400">{`${parseInt(floor.bedroomDoors) || 0} × ₹${(parseFloat(floor.bedroomDoorPrice) || r.bedroomDoor).toLocaleString('en-IN')} = ${fmt((parseInt(floor.bedroomDoors) || 0) * (parseFloat(floor.bedroomDoorPrice) || r.bedroomDoor))}`}</p>
                           </div>
                           <div className="space-y-1.5">
                             <Label className="text-xs">Washrooms</Label>
@@ -1235,19 +1235,19 @@ export default function NewProjectPage() {
                               setFloors(prev => { const u = [...prev]; u[index] = { ...u[index], washroomDoors: v, toilets: v }; return u })
                             }} />
                             <Input type="number" placeholder={String(r.washroomDoor)} value={floor.washroomDoorPrice || ''} onChange={e => updateFloor(index, 'washroomDoorPrice', e.target.value)} className="h-8 text-sm" />
-                            <p className="text-xs text-gray-400">{parseInt(floor.washroomDoors) > 0 ? `${floor.washroomDoors} × ₹${(parseFloat(floor.washroomDoorPrice) || r.washroomDoor).toLocaleString('en-IN')} + plumbing` : 'Door + plumbing'}</p>
+                            <p className="text-xs text-gray-400">{`${parseInt(floor.washroomDoors) || 0} × ₹${(parseFloat(floor.washroomDoorPrice) || r.washroomDoor).toLocaleString('en-IN')} + plumbing`}</p>
                           </div>
                           <div className="space-y-1.5">
                             <Label className="text-xs">Balcony Doors</Label>
                             <Input type="number" min="0" value={floor.balconyDoors} onChange={e => updateFloor(index, 'balconyDoors', e.target.value)} />
                             <Input type="number" placeholder={String(r.balconyDoor)} value={floor.balconyDoorPrice || ''} onChange={e => updateFloor(index, 'balconyDoorPrice', e.target.value)} className="h-8 text-sm" />
-                            <p className="text-xs text-gray-400">{parseInt(floor.balconyDoors) > 0 ? `${floor.balconyDoors} × ₹${(parseFloat(floor.balconyDoorPrice) || r.balconyDoor).toLocaleString('en-IN')} = ${fmt(parseInt(floor.balconyDoors) * (parseFloat(floor.balconyDoorPrice) || r.balconyDoor))}` : `₹${r.balconyDoor.toLocaleString('en-IN')}/door`}</p>
+                            <p className="text-xs text-gray-400">{`${parseInt(floor.balconyDoors) || 0} × ₹${(parseFloat(floor.balconyDoorPrice) || r.balconyDoor).toLocaleString('en-IN')} = ${fmt((parseInt(floor.balconyDoors) || 0) * (parseFloat(floor.balconyDoorPrice) || r.balconyDoor))}`}</p>
                           </div>
                           <div className="space-y-1.5">
                             <Label className="text-xs">Utility Doors</Label>
                             <Input type="number" min="0" value={floor.utilityDoors} onChange={e => updateFloor(index, 'utilityDoors', e.target.value)} />
                             <Input type="number" placeholder={String(r.utilityDoor)} value={floor.utilityDoorPrice || ''} onChange={e => updateFloor(index, 'utilityDoorPrice', e.target.value)} className="h-8 text-sm" />
-                            <p className="text-xs text-gray-400">{parseInt(floor.utilityDoors) > 0 ? `${floor.utilityDoors} × ₹${(parseFloat(floor.utilityDoorPrice) || r.utilityDoor).toLocaleString('en-IN')} = ${fmt(parseInt(floor.utilityDoors) * (parseFloat(floor.utilityDoorPrice) || r.utilityDoor))}` : `₹${r.utilityDoor.toLocaleString('en-IN')}/door`}</p>
+                            <p className="text-xs text-gray-400">{`${parseInt(floor.utilityDoors) || 0} × ₹${(parseFloat(floor.utilityDoorPrice) || r.utilityDoor).toLocaleString('en-IN')} = ${fmt((parseInt(floor.utilityDoors) || 0) * (parseFloat(floor.utilityDoorPrice) || r.utilityDoor))}`}</p>
                           </div>
                           {!['duplex_cont', 'duplex_end', 'duplex_end_2mb', 'duplex_end_study'].includes(floor.type) && (
                             <div className="space-y-1.5">
