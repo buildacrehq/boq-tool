@@ -1178,15 +1178,18 @@ export default function NewProjectPage() {
                       <Separator />
                       <div className="p-3 bg-gray-50 rounded-lg space-y-3">
                         <p className="text-xs font-medium text-gray-500">Guard / Security Washroom</p>
-                        <div className="grid grid-cols-2 gap-3">
-                          <div className="space-y-1.5">
-                            <Label className="text-xs">Toilets</Label>
-                            <Input type="number" min="0" value={floor.toilets} onChange={e => updateFloor(index, 'toilets', e.target.value)} />
-                          </div>
-                          <div className="space-y-1.5">
-                            <Label className="text-xs">Washroom Doors</Label>
-                            <Input type="number" min="0" value={floor.washroomDoors} onChange={e => updateFloor(index, 'washroomDoors', e.target.value)} />
-                          </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">No. of Washrooms</Label>
+                          <Input
+                            type="number"
+                            min="0"
+                            value={floor.toilets}
+                            onChange={e => {
+                              const v = e.target.value
+                              setFloors(prev => { const u = [...prev]; u[index] = { ...u[index], toilets: v, washroomDoors: v }; return u })
+                            }}
+                          />
+                          <p className="text-xs text-gray-400">Each washroom includes 1 door · plumbing pipes · fittings · labour</p>
                         </div>
                         {(parseInt(floor.toilets) || 0) > 0 && (
                           <div className="space-y-1.5">
