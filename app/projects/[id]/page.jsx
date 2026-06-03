@@ -196,6 +196,16 @@ export default function ProjectPage() {
   const [paintingGrade, setPaintingGrade] = useState('royal_emulsion')
   const [paintingCustomRate, setPaintingCustomRate] = useState('')
   const [windowType, setWindowType] = useState('upvc_white')
+  const [liftCustomCost, setLiftCustomCost] = useState('')
+  const [earthingEnabled, setEarthingEnabled] = useState(true)
+  const [gasRftOverride, setGasRftOverride] = useState('')
+  const [acUnitsOverride, setAcUnitsOverride] = useState('')
+  const [upsUnitsOverride, setUpsUnitsOverride] = useState('')
+  const [hasTerrace, setHasTerrace] = useState(false)
+  const [terraceCustomSqft, setTerraceCustomSqft] = useState('')
+  const [terraceWashrooms, setTerraceWashrooms] = useState('0')
+  const [terraceRoomCustomRate, setTerraceRoomCustomRate] = useState('')
+  const [terraceRoomCustomWashroomCost, setTerraceRoomCustomWashroomCost] = useState('')
   const [railingType, setRailingType] = useState('')
   const [flooringType, setFlooringType] = useState('')
   // Edit form — Custom items
@@ -305,6 +315,16 @@ export default function ProjectPage() {
         setWashroomWaterproofingCustomRate(proj.floors_data[0]?.washroomWaterproofingCustomRate ? String(proj.floors_data[0].washroomWaterproofingCustomRate) : '')
         setHasCinderBackfilling(proj.floors_data[0]?.cinderBackfillingEnabled !== false)
         setCinderBackfillingCustomRate(proj.floors_data[0]?.cinderBackfillingCustomRate ? String(proj.floors_data[0].cinderBackfillingCustomRate) : '')
+        setEarthingEnabled(proj.floors_data[0]?.earthingEnabled !== false)
+        setLiftCustomCost(proj.floors_data[0]?.liftCustomCost ? String(proj.floors_data[0].liftCustomCost) : '')
+        setGasRftOverride(proj.floors_data[0]?.gasRftOverride ? String(proj.floors_data[0].gasRftOverride) : '')
+        setAcUnitsOverride(proj.floors_data[0]?.acUnitsOverride ? String(proj.floors_data[0].acUnitsOverride) : '')
+        setUpsUnitsOverride(proj.floors_data[0]?.upsUnitsOverride ? String(proj.floors_data[0].upsUnitsOverride) : '')
+        setHasTerrace(proj.floors_data[0]?.terraceRoomEnabled || false)
+        setTerraceCustomSqft(proj.floors_data[0]?.terraceRoomSqft ? String(proj.floors_data[0].terraceRoomSqft) : '')
+        setTerraceWashrooms(proj.floors_data[0]?.terraceRoomWashrooms !== undefined ? String(proj.floors_data[0].terraceRoomWashrooms) : '0')
+        setTerraceRoomCustomRate(proj.floors_data[0]?.terraceRoomCustomRate ? String(proj.floors_data[0].terraceRoomCustomRate) : '')
+        setTerraceRoomCustomWashroomCost(proj.floors_data[0]?.terraceRoomCustomWashroomCost ? String(proj.floors_data[0].terraceRoomCustomWashroomCost) : '')
       } else {
         const count = proj.floor_count || proj.floors || 1
         setFloors(Array.from({ length: count }, (_, i) => createFloor(i)))
@@ -385,6 +405,16 @@ export default function ProjectPage() {
           ...(washroomWaterproofingCustomRate ? { washroomWaterproofingCustomRate: parseFloat(washroomWaterproofingCustomRate) } : {}),
           cinderBackfillingEnabled: hasCinderBackfilling,
           ...(cinderBackfillingCustomRate ? { cinderBackfillingCustomRate: parseFloat(cinderBackfillingCustomRate) } : {}),
+          earthingEnabled,
+          ...(liftCustomCost ? { liftCustomCost: parseFloat(liftCustomCost) } : {}),
+          ...(gasRftOverride ? { gasRftOverride: parseInt(gasRftOverride) } : {}),
+          ...(acUnitsOverride ? { acUnitsOverride: parseInt(acUnitsOverride) } : {}),
+          ...(upsUnitsOverride ? { upsUnitsOverride: parseInt(upsUnitsOverride) } : {}),
+          terraceRoomEnabled: hasTerrace,
+          ...(hasTerrace && terraceCustomSqft ? { terraceRoomSqft: parseFloat(terraceCustomSqft) } : {}),
+          terraceRoomWashrooms: hasTerrace ? (parseInt(terraceWashrooms) || 0) : 0,
+          ...(hasTerrace && terraceRoomCustomRate ? { terraceRoomCustomRate: parseFloat(terraceRoomCustomRate) } : {}),
+          ...(hasTerrace && terraceRoomCustomWashroomCost ? { terraceRoomCustomWashroomCost: parseFloat(terraceRoomCustomWashroomCost) } : {}),
         }
       }),
       has_sump: hasSump, sump_capacity: sumpCapacity || null, sump_type: sumpType,
@@ -422,7 +452,9 @@ export default function ProjectPage() {
       hasMiscExpense, miscExpenseCustomCost, hasWashroomWaterproofing, washroomWaterproofingCustomRate,
       hasCinderBackfilling, cinderBackfillingCustomRate,
       hasMainGate, hasAc, hasCctv, hasSolar, hasUps, hasWifi, paintingGrade, flooringType,
-      windowType, railingType, marketPrices, project, customBlockPrice, customBrickPrice, boqData, vehicleData])
+      windowType, railingType, marketPrices, project, customBlockPrice, customBrickPrice, boqData, vehicleData,
+      earthingEnabled, liftCustomCost, gasRftOverride, acUnitsOverride, upsUnitsOverride,
+      hasTerrace, terraceCustomSqft, terraceWashrooms, terraceRoomCustomRate, terraceRoomCustomWashroomCost])
 
   const displayItems = useMemo(() => frozenBoq ?? liveItems, [frozenBoq, liveItems])
 
@@ -593,6 +625,16 @@ export default function ProjectPage() {
           ...(washroomWaterproofingCustomRate ? { washroomWaterproofingCustomRate: parseFloat(washroomWaterproofingCustomRate) } : {}),
           cinderBackfillingEnabled: hasCinderBackfilling,
           ...(cinderBackfillingCustomRate ? { cinderBackfillingCustomRate: parseFloat(cinderBackfillingCustomRate) } : {}),
+          earthingEnabled,
+          ...(liftCustomCost ? { liftCustomCost: parseFloat(liftCustomCost) } : {}),
+          ...(gasRftOverride ? { gasRftOverride: parseInt(gasRftOverride) } : {}),
+          ...(acUnitsOverride ? { acUnitsOverride: parseInt(acUnitsOverride) } : {}),
+          ...(upsUnitsOverride ? { upsUnitsOverride: parseInt(upsUnitsOverride) } : {}),
+          terraceRoomEnabled: hasTerrace,
+          ...(hasTerrace && terraceCustomSqft ? { terraceRoomSqft: parseFloat(terraceCustomSqft) } : {}),
+          terraceRoomWashrooms: hasTerrace ? (parseInt(terraceWashrooms) || 0) : 0,
+          ...(hasTerrace && terraceRoomCustomRate ? { terraceRoomCustomRate: parseFloat(terraceRoomCustomRate) } : {}),
+          ...(hasTerrace && terraceRoomCustomWashroomCost ? { terraceRoomCustomWashroomCost: parseFloat(terraceRoomCustomWashroomCost) } : {}),
         }
       })
 
